@@ -46,7 +46,7 @@ from oportunidades_proyecto import bp as oportunidades_bp, ensure_database as en
 from asistente_oga import bp as asistente_oga_bp
 
 APP_NAME = "SISTEMA TECNICO"
-APP_REV = "0.17.5"
+APP_REV = "0.17.5.3"
 
 ensure_security_storage()
 app = Flask(__name__)
@@ -613,7 +613,11 @@ def inicio():
 
 @app.route("/proyectos-diseno")
 def proyectos_diseno_page():
-    return redirect(url_for("proyectos_diseno.index", view=request.args.get("view", "dashboard")))
+    params = {"view": request.args.get("view", "dashboard")}
+    project_id = str(request.args.get("project_id", "")).strip()
+    if project_id:
+        params["project_id"] = project_id
+    return redirect(url_for("proyectos_diseno.index", **params))
 
 
 @app.route("/configuracion-inicial", methods=["GET", "POST"])

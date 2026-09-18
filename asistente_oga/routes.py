@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template, request, g
 
 from .engine import answer, capabilities
 from .readonly import stats
@@ -39,6 +39,13 @@ def consult():
     payload = request.get_json(silent=True) or {}
     message = str(payload.get("message") or "").strip()
     context = payload.get("context") if isinstance(payload.get("context"), dict) else {}
+    context = dict(context)
+    # Estos datos nunca se aceptan desde el navegador: se inyectan desde la
+    # sesion autenticada para aplicar permisos a consultas sensibles.
+    current_user = getattr(g, "current_user", None) or {}
+    context["_user_id"] = str(current_user.get("id") or "")
+    context["_username"] = str(current_user.get("username") or "")
+    context["_is_admin"] = bool(current_user.get("is_admin"))
     history = _safe_history(payload.get("history"))
     if len(message) > 4000:
         return jsonify({"ok": False, "error": "La consulta supera el limite de 4000 caracteres."}), 400

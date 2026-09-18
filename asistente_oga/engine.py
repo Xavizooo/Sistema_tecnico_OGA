@@ -36,18 +36,11 @@ def answer(message: str, context: dict[str, Any] | None = None, history: list[di
     if MUTATION_PATTERN.search(normalize(text)):
         return _read_only_denial()
 
-    if not database_ready():
-        return {
-            "ok": True,
-            "mode": "READ_ONLY",
-            "answer": "La base de Oportunidades todavia no esta disponible. Crea o importa oportunidades y vuelve a consultar.",
-            "cards": [],
-            "sources": [],
-            "engine": "Motor local",
-        }
-
     status = provider_status()
-    if status.get("configured"):
+    # La IA avanzada de esta revision conserva herramientas de Oportunidades.
+    # Si esa base no existe, usamos el motor local transversal en vez de bloquear
+    # consultas a Biblioteca, Proyectos, RQ, Planos, etc.
+    if status.get("configured") and database_ready():
         try:
             return run_agent(text, context or {}, history or [], execute_tool)
         except ProviderError as exc:
@@ -70,11 +63,19 @@ def answer(message: str, context: dict[str, Any] | None = None, history: list[di
 def capabilities() -> dict[str, Any]:
     base = local_capabilities()
     status = provider_status()
+    tools: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in list(base.get("tools") or []) + [{"name": name, "mode": "READ_ONLY"} for name in readonly_tool_names()]:
+        name = str(item.get("name") or "")
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        tools.append(dict(item))
     return {
         **base,
         "read_only": True,
         "mutations_available": False,
         "provider": status,
-        "tools": [{"name": name, "mode": "READ_ONLY"} for name in readonly_tool_names()],
+        "tools": tools,
         "stats": stats(),
     }

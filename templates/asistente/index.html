@@ -1,91 +1,124 @@
 {% extends 'base.html' %}
 {% block title %}Asistente OGA &middot; {{ app_name }}{% endblock %}
+{% block body_class %} oga-ai-body{% endblock %}
 
 {% block content %}
 <div class="oga-ai-page" id="ogaAiFull" data-consult-url="{{ url_for('asistente_oga.consult') }}">
-  <header class="oga-ai-page-head">
-    <div>
-      <span class="page-eyebrow">CONSULTA TECNICA ASISTIDA</span>
-      <h2>Asistente OGA <span class="oga-ai-readonly-pill">SOLO LECTURA</span></h2>
-      <p>Interpreta lenguaje natural, convierte la consulta en busquedas estructuradas y consulta informacion existente sin modificarla.</p>
-    </div>
-    <div class="oga-ai-page-stats">
-      <div><strong>{{ assistant_stats.total }}</strong><span>Oportunidades</span></div>
-      <div><strong>{{ assistant_stats.subsystems }}</strong><span>Subsistemas</span></div>
-      <div><strong>{{ assistant_stats.equipment }}</strong><span>Equipos</span></div>
-      <div><strong>{{ assistant_stats.offers }}</strong><span>Ofertas PDF</span></div>
-    </div>
-  </header>
+  <canvas class="oga-ai-particles" data-ai-particles="page" aria-hidden="true"></canvas>
+  <div class="oga-ai-ambient" aria-hidden="true">
+    <i class="oga-ai-orb orb-a"></i>
+    <i class="oga-ai-orb orb-b"></i>
+    <i class="oga-ai-orb orb-c"></i>
+    <i class="oga-ai-grid"></i>
+  </div>
 
-  <section class="oga-ai-trust-card">
-    <div class="oga-ai-lock">R</div>
-    <div>
-      <strong>Arquitectura de consulta de solo lectura</strong>
-      <p>La IA puede decidir que consulta ejecutar, pero solamente recibe herramientas READ_ONLY. SQLite se abre en modo de solo lectura y no existen herramientas para crear, editar, cargar, reemplazar o eliminar informacion.</p>
-    </div>
-    <div class="oga-ai-provider-status {{ 'connected' if assistant_provider.configured else 'local' }}">
-      <span>{{ 'IA AVANZADA' if assistant_provider.configured else 'MODO LOCAL' }}</span>
-      <strong>{{ assistant_provider.model if assistant_provider.configured else 'OpenAI sin configurar' }}</strong>
-    </div>
-  </section>
-
-  {% if not assistant_provider.configured %}
-  <section class="oga-ai-provider-note">
-    <strong>IA avanzada pendiente de conexion</strong>
-    <span>El asistente sigue funcionando con el motor local. Para habilitar interpretacion avanzada en lenguaje natural, configura <code>OPENAI_API_KEY</code> en el servidor.</span>
-  </section>
-  {% endif %}
-
-  <div class="oga-ai-workspace">
-    <aside class="oga-ai-guide">
-      <span class="oga-ai-eyebrow">FUENTE CONECTADA</span>
-      <h3>Oportunidades de Proyecto</h3>
-      <p>Pregunta normalmente. No necesitas memorizar filtros ni escribir una sintaxis especial.</p>
-      <div class="oga-ai-guide-list">
-        <button type="button" data-ai-prompt="Que proyectos hay?">Consulta general</button>
-        <button type="button" data-ai-prompt="Muestrame proyectos del cliente Nestle">Buscar por cliente</button>
-        <button type="button" data-ai-prompt="Que proyectos tienen entrada por BIG BAG y transporte en fase densa?">Cruzar criterios</button>
-        <button type="button" data-ai-prompt="Muestrame las ofertas del proyecto 3121">Localizar ofertas PDF</button>
-        <button type="button" data-ai-prompt="Busca proyectos similares a la OD actual">Comparar proyectos</button>
-      </div>
-      <div class="oga-ai-guide-note">
-        <strong>Consultas que ya entiende</strong>
-        <span>IDs, radicados y proyectos</span>
-        <span>Clientes y materiales</span>
-        <span>Equipos y criterios tecnicos</span>
-        <span>Ofertas PDF e imagenes</span>
-        <span>Similitud historica</span>
-      </div>
-    </aside>
-
-    <section class="oga-ai-chat-card">
-      <div class="oga-ai-chat-top">
+  <div class="oga-ai-page-inner">
+    <header class="oga-ai-page-head">
+      <div class="oga-ai-title-cluster">
+        <div class="oga-ai-core" aria-hidden="true"><span>AI</span></div>
         <div>
-          <small>Contexto de consulta</small>
-          <strong data-ai-context-label>Toda OGA</strong>
+          <span class="page-eyebrow">INTELIGENCIA DE CONSULTA · OGA SISTEMVAC</span>
+          <h2>Asistente OGA <span class="oga-ai-readonly-pill">SOLO LECTURA</span></h2>
+          <p>Consulta transversal de proyectos, oportunidades, biblioteca, RQ, planos, capacitaciones y datos operativos sin modificar ninguna fuente.</p>
         </div>
-        <select data-ai-scope>
-          <option value="global">Toda OGA</option>
-          <option value="current">Contexto actual</option>
-        </select>
       </div>
-      <div class="oga-ai-thread oga-ai-thread-full" data-ai-thread>
-        <div class="oga-ai-message assistant">
-          <div class="oga-ai-avatar">AI</div>
-          <div class="oga-ai-bubble">
-            <strong>Listo para consultar.</strong>
-            <span>Puedes escribir de forma natural: “que proyectos hay”, “busca los de Nestle”, “dame el ID del proyecto 3121” o “traeme sus ofertas PDF”.</span>
+      <div class="oga-ai-page-stats">
+        <div><strong>{{ assistant_stats.total }}</strong><span>Oportunidades</span></div>
+        <div><strong>{{ assistant_stats.subsystems }}</strong><span>Subsistemas</span></div>
+        <div><strong>{{ assistant_stats.equipment }}</strong><span>Equipos OD</span></div>
+        <div><strong>{{ assistant_stats.offers }}</strong><span>Ofertas PDF</span></div>
+      </div>
+    </header>
+
+    <section class="oga-ai-trust-card">
+      <div class="oga-ai-lock">R</div>
+      <div class="oga-ai-trust-copy">
+        <strong>Arquitectura estrictamente de consulta</strong>
+        <p>El asistente puede localizar, cruzar y explicar información existente. No dispone de herramientas para crear, editar, reemplazar, subir ni eliminar datos o archivos.</p>
+      </div>
+      <div class="oga-ai-provider-status {{ 'connected' if assistant_provider.configured else 'local' }}">
+        <span>{{ 'API CONFIGURADA' if assistant_provider.configured else 'MOTOR LOCAL' }}</span>
+        <strong>{{ assistant_provider.model if assistant_provider.configured else 'Disponible sin Internet' }}</strong>
+      </div>
+    </section>
+
+    {% if not assistant_provider.configured %}
+    <section class="oga-ai-provider-note">
+      <span class="oga-ai-provider-dot"></span>
+      <strong>Motor local activo</strong>
+      <span>Las consultas se resuelven localmente. OpenAI puede habilitarse más adelante sin cambiar la capa de seguridad de solo lectura.</span>
+    </section>
+    {% endif %}
+
+    <div class="oga-ai-workspace">
+      <aside class="oga-ai-guide">
+        <div class="oga-ai-guide-head">
+          <span class="oga-ai-eyebrow">FUENTES DE CONSULTA</span>
+          <span class="oga-ai-mini-live"><i></i> EN LÍNEA</span>
+        </div>
+        <h3>Toda la información de OGA</h3>
+        <p>Pregunta como lo harías a un compañero. El motor local identifica el módulo y convierte tu frase en una consulta de solo lectura.</p>
+        <div class="oga-ai-guide-list">
+          <button type="button" data-ai-prompt="Que proyectos hay actualmente en diseño?">Proyectos de Diseño</button>
+          <button type="button" data-ai-prompt="Busca proyectos de Nestle y dime de que modulo vienen">Búsqueda global</button>
+          <button type="button" data-ai-prompt="Que codigos de bomba de vacio hay en Factory?">Factory / Lista Maestra</button>
+          <button type="button" data-ai-prompt="Que documentos hay en biblioteca sobre filtros?">Biblioteca</button>
+          <button type="button" data-ai-prompt="Que planos faltan por revisar?">Revisor de Planos</button>
+          <button type="button" data-ai-prompt="Que videos hay en capacitaciones?">Capacitaciones</button>
+        </div>
+        <div class="oga-ai-guide-note">
+          <strong>ALCANCE ACTUAL</strong>
+          <span>Oportunidades y subsistemas</span>
+          <span>Proyectos Diseño y carga</span>
+          <span>RQ, Factory y repuestos</span>
+          <span>Biblioteca y documentos</span>
+          <span>Planos y capacitaciones</span>
+        </div>
+      </aside>
+
+      <section class="oga-ai-chat-card">
+        <div class="oga-ai-chat-top">
+          <div class="oga-ai-chat-state">
+            <span class="oga-ai-live-orb" aria-hidden="true"></span>
+            <div>
+              <small>Estado del asistente</small>
+              <strong data-ai-live-state>LISTO</strong>
+            </div>
+          </div>
+          <div class="oga-ai-context-control">
+            <div>
+              <small>Contexto de consulta</small>
+              <strong data-ai-context-label>Toda OGA</strong>
+            </div>
+            <select data-ai-scope>
+              <option value="global">Toda OGA</option>
+              <option value="current">Contexto actual</option>
+            </select>
           </div>
         </div>
-      </div>
-      <form class="oga-ai-compose oga-ai-compose-full" data-ai-form>
-        <textarea data-ai-input rows="3" maxlength="4000" placeholder='Ej. "Que proyectos tenemos con BIG BAG y harina?"' required></textarea>
-        <div class="oga-ai-compose-bottom">
-          <small>Enter para enviar &middot; Shift+Enter para nueva linea</small>
-          <button type="submit" data-ai-send>Consultar</button>
+
+        <div class="oga-ai-thread oga-ai-thread-full" data-ai-thread>
+          <div class="oga-ai-message assistant oga-ai-welcome">
+            <div class="oga-ai-avatar">AI</div>
+            <div class="oga-ai-bubble">
+              <strong>Asistente OGA listo.</strong>
+              <span>Puedes escribir normalmente. Por ejemplo: “¿qué proyectos hay?”, “busca Nestlé”, “¿qué diseñador tiene más proyectos?”, “busca bomba de vacío” o “muéstrame los planos pendientes”.</span>
+            </div>
+          </div>
         </div>
-      </form>
-    </section>
+
+        <form class="oga-ai-compose oga-ai-compose-full" data-ai-form>
+          <div class="oga-ai-input-shell">
+            <textarea data-ai-input rows="3" maxlength="4000" placeholder="Pregunta sobre cualquier módulo de OGA..." required></textarea>
+            <div class="oga-ai-input-glow" aria-hidden="true"></div>
+          </div>
+          <div class="oga-ai-compose-bottom">
+            <small>Enter para enviar · Shift+Enter para nueva línea · Solo lectura</small>
+            <button type="submit" data-ai-send><span>Consultar</span><i aria-hidden="true">↗</i></button>
+          </div>
+        </form>
+      </section>
+    </div>
   </div>
 </div>
 {% endblock %}

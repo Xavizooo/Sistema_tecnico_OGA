@@ -8,7 +8,8 @@
 <div id="projectDesignApp" class="project-design-app"
      data-base-url="{{ url_for('proyectos_diseno.index') }}"
      data-csrf-token="{{ csrf_token }}"
-     data-initial-view="{{ request.args.get('view', 'dashboard') }}">
+     data-initial-view="{{ request.args.get('view', 'dashboard') }}"
+     data-initial-project-id="{{ request.args.get('project_id', '') }}">
   <div class="project-page-heading">
     <div>
       <span class="project-eyebrow">GESTIÓN DE DISEÑO</span>

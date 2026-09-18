@@ -13,6 +13,7 @@
   const MODULE_BASE = (APP_ROOT?.dataset.baseUrl || '').replace(/\/$/, '');
   const CSRF_TOKEN = APP_ROOT?.dataset.csrfToken || '';
   const INITIAL_VIEW = APP_ROOT?.dataset.initialView || 'dashboard';
+  const INITIAL_PROJECT_ID = APP_ROOT?.dataset.initialProjectId || '';
   const ALERT_SESSION_KEY = 'oga_project_alerts_muted';
   const moduleUrl = (url) => (url.startsWith('/api/') || url.startsWith('/project-images/')) ? `${MODULE_BASE}${url}` : url;
 
@@ -60,7 +61,7 @@
     $$('.side-submenu a').forEach(link => {
       try {
         const target = new URL(link.href, window.location.origin);
-        if (target.pathname.includes('/proyectos-diseno/app/')) link.classList.toggle('active', target.searchParams.get('view') === name);
+        if (target.pathname.includes('/proyectos-diseno/app/') || target.pathname === '/proyectos-diseno') link.classList.toggle('active', target.searchParams.get('view') === name);
       } catch (_) {}
     });
     try {
@@ -90,7 +91,14 @@
     $('#holidayYear').value = new Date().getFullYear();
     renderAll();
     bindEvents();
-    showView(INITIAL_VIEW);
+    showView(INITIAL_PROJECT_ID ? 'projects' : INITIAL_VIEW);
+    if (INITIAL_PROJECT_ID) {
+      try {
+        await openProjectDetail(INITIAL_PROJECT_ID);
+      } catch (error) {
+        toast(error.message || 'No fue posible abrir el proyecto solicitado.', 'error');
+      }
+    }
     showAlertPopup();
   }
 

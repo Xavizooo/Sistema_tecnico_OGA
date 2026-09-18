@@ -189,6 +189,123 @@ def count_opportunities(tokens: Iterable[tuple[str | None, str]]) -> int:
         return int(row[0] if row else 0)
 
 
+def search_term_exists(value: str, field: str | None = None) -> bool:
+    """Return True when a free/natural-language term exists in the read-only index.
+
+    Used by the local language parser to discard conversational filler (for
+    example "tengan" or "maneja") without discarding a genuine unknown
+    search term when none of the words match the index.
+    """
+    term = normalize(value)
+    if not term:
+        return False
+    with readonly_connection() as conn:
+        if conn is None:
+            return False
+        try:
+            if field:
+                canonical = FIELD_MAP.get(field, field)
+                row = conn.execute(
+                    "SELECT 1 FROM search_index WHERE field=? AND value_norm LIKE ? LIMIT 1",
+                    (canonical, f"%{term}%"),
+                ).fetchone()
+            else:
+                row = conn.execute(
+                    "SELECT 1 FROM search_index WHERE value_norm LIKE ? LIMIT 1",
+                    (f"%{term}%",),
+                ).fetchone()
+        except sqlite3.Error:
+            return False
+        return bool(row)
+
+
+def search_opportunities_in_ids(
+    tokens: Iterable[tuple[str | None, str]], opportunity_ids: Iterable[int], limit: int = 20
+) -> list[dict[str, Any]]:
+    ids = []
+    for raw in opportunity_ids:
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if value > 0 and value not in ids:
+            ids.append(value)
+    ids = ids[:100]
+    if not ids:
+        return []
+    marks = ",".join("?" for _ in ids)
+    where = ["o.eliminado_en IS NULL", f"o.id IN ({marks})"]
+    params: list[Any] = list(ids)
+    for field, raw in tokens:
+        value = normalize(raw)
+        if not value:
+            continue
+        if field:
+            canonical = FIELD_MAP.get(field, field)
+            where.append(
+                "EXISTS (SELECT 1 FROM search_index sx WHERE sx.opportunity_id=o.id AND sx.field=? AND sx.value_norm LIKE ?)"
+            )
+            params.extend([canonical, f"%{value}%"])
+        else:
+            where.append(
+                "EXISTS (SELECT 1 FROM search_index sx WHERE sx.opportunity_id=o.id AND sx.value_norm LIKE ?)"
+            )
+            params.append(f"%{value}%")
+    params.append(max(1, min(int(limit), 100)))
+    with readonly_connection() as conn:
+        if conn is None:
+            return []
+        try:
+            rows = conn.execute(_summary_sql(" AND ".join(where)), params).fetchall()
+        except sqlite3.Error:
+            return []
+        return [dict(row) for row in rows]
+
+
+def count_opportunities_in_ids(
+    tokens: Iterable[tuple[str | None, str]], opportunity_ids: Iterable[int]
+) -> int:
+    ids = []
+    for raw in opportunity_ids:
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if value > 0 and value not in ids:
+            ids.append(value)
+    ids = ids[:100]
+    if not ids:
+        return 0
+    marks = ",".join("?" for _ in ids)
+    where = ["o.eliminado_en IS NULL", f"o.id IN ({marks})"]
+    params: list[Any] = list(ids)
+    for field, raw in tokens:
+        value = normalize(raw)
+        if not value:
+            continue
+        if field:
+            canonical = FIELD_MAP.get(field, field)
+            where.append(
+                "EXISTS (SELECT 1 FROM search_index sx WHERE sx.opportunity_id=o.id AND sx.field=? AND sx.value_norm LIKE ?)"
+            )
+            params.extend([canonical, f"%{value}%"])
+        else:
+            where.append(
+                "EXISTS (SELECT 1 FROM search_index sx WHERE sx.opportunity_id=o.id AND sx.value_norm LIKE ?)"
+            )
+            params.append(f"%{value}%")
+    with readonly_connection() as conn:
+        if conn is None:
+            return 0
+        try:
+            row = conn.execute(
+                f"SELECT COUNT(*) FROM opportunities o WHERE {' AND '.join(where)}", params
+            ).fetchone()
+        except sqlite3.Error:
+            return 0
+        return int(row[0] if row else 0)
+
+
 def get_opportunity(opportunity_id: int) -> dict[str, Any] | None:
     with readonly_connection() as conn:
         if conn is None:

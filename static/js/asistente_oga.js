@@ -2,6 +2,123 @@
   'use strict';
 
   const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
+
+  function setAssistantState(root, state) {
+    if (!root) return;
+    const thinking = state === 'thinking';
+    root.classList.toggle('is-thinking', thinking);
+    root.querySelectorAll('[data-ai-live-state]').forEach(label => {
+      label.textContent = thinking ? 'CONSULTANDO' : 'LISTO';
+    });
+  }
+
+  function initParticleField(canvas) {
+    if (!canvas || reduceMotion || canvas.dataset.aiParticleBound === '1') return;
+    canvas.dataset.aiParticleBound = '1';
+    const context = canvas.getContext('2d', { alpha: true });
+    if (!context) return;
+    const mode = canvas.dataset.aiParticles || 'page';
+    const host = canvas.parentElement;
+    const palette = mode === 'panel'
+      ? [[169,140,255],[116,94,224],[205,157,255]]
+      : [[169,140,255],[120,106,255],[213,158,255],[126,94,221]];
+    let width = 0;
+    let height = 0;
+    let ratio = 1;
+    let particles = [];
+    let raf = 0;
+
+    function buildParticles() {
+      const area = Math.max(1, width * height);
+      const divisor = mode === 'panel' ? 17500 : 22500;
+      const max = mode === 'panel' ? 32 : 58;
+      const min = mode === 'panel' ? 16 : 28;
+      const count = Math.max(min, Math.min(max, Math.round(area / divisor)));
+      particles = Array.from({ length: count }, () => {
+        const c = palette[Math.floor(Math.random() * palette.length)];
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - .5) * (mode === 'panel' ? .22 : .28),
+          vy: (Math.random() - .5) * (mode === 'panel' ? .20 : .24),
+          r: .55 + Math.random() * 1.35,
+          a: .12 + Math.random() * .38,
+          c
+        };
+      });
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const nextWidth = Math.max(1, Math.round(rect.width));
+      const nextHeight = Math.max(1, Math.round(rect.height));
+      if (nextWidth === width && nextHeight === height) return;
+      width = nextWidth;
+      height = nextHeight;
+      ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      buildParticles();
+    }
+
+    function loop() {
+      raf = requestAnimationFrame(loop);
+      if (document.hidden) return;
+      if (mode === 'panel' && host?.classList.contains('oga-ai-panel') && !host.classList.contains('open')) return;
+      resize();
+      context.clearRect(0, 0, width, height);
+      const active = host?.classList.contains('is-thinking');
+      const speed = active ? 1.75 : 1;
+      const connectionDistance = mode === 'panel' ? 76 : 94;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx * speed;
+        p.y += p.vy * speed;
+        if (p.x < -8) p.x = width + 8;
+        if (p.x > width + 8) p.x = -8;
+        if (p.y < -8) p.y = height + 8;
+        if (p.y > height + 8) p.y = -8;
+
+        context.beginPath();
+        context.arc(p.x, p.y, active ? p.r * 1.18 : p.r, 0, Math.PI * 2);
+        context.fillStyle = `rgba(${p.c[0]},${p.c[1]},${p.c[2]},${active ? Math.min(.72,p.a+.12) : p.a})`;
+        context.shadowBlur = active ? 11 : 6;
+        context.shadowColor = `rgba(${p.c[0]},${p.c[1]},${p.c[2]},.35)`;
+        context.fill();
+        context.shadowBlur = 0;
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const q = particles[j];
+          const dx = p.x - q.x;
+          const dy = p.y - q.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist >= connectionDistance) continue;
+          const alpha = (1 - dist / connectionDistance) * (active ? .10 : .052);
+          context.beginPath();
+          context.moveTo(p.x, p.y);
+          context.lineTo(q.x, q.y);
+          context.strokeStyle = `rgba(167,134,255,${alpha})`;
+          context.lineWidth = .55;
+          context.stroke();
+        }
+      }
+    }
+
+    resize();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
+    observer?.observe(canvas);
+    loop();
+    canvas._ogaAiCleanup = () => {
+      cancelAnimationFrame(raf);
+      observer?.disconnect();
+    };
+  }
+
+  function initParticles() {
+    document.querySelectorAll('[data-ai-particles]').forEach(initParticleField);
+  }
 
   function escapeText(value) {
     return String(value == null ? '' : value);
@@ -41,6 +158,13 @@
       'biblioteca.equipos': 'Biblioteca de equipos',
       'biblioteca.buscador': 'Buscador de referencias',
       'planos.planos_home': 'Revisor de Planos',
+      'proyectos_diseno.index': 'Proyectos Diseño',
+      'factory': 'Lista Maestra / Factory',
+      'rq': 'RQ · Requisiciones',
+      'repuestos': 'Repuestos',
+      'valor': 'Valor del proyecto',
+      'calendario': 'Calendario',
+      'historico': 'Histórico',
       'inicio': 'Inicio'
     };
     return names[ctx.endpoint] || (ctx.endpoint ? ctx.endpoint.replaceAll('_', ' ') : 'Pagina actual');
@@ -102,19 +226,19 @@
     }
     const actions = create('div', 'oga-ai-card-actions');
     if (item.url) {
-      const link = create('a', '', 'Abrir OD');
+      const link = create('a', '', item.action_label || 'Abrir');
       link.href = item.url;
       actions.append(link);
     }
     if (item.view_url) {
-      const link = create('a', '', item.kind === 'IMAGEN' ? 'Ver imagen' : 'Abrir PDF');
+      const link = create('a', '', item.view_label || (item.kind === 'IMAGEN' ? 'Ver imagen' : 'Abrir archivo'));
       link.href = item.view_url;
       link.target = '_blank';
       link.rel = 'noopener';
       actions.append(link);
     }
-    if (item.download_url && item.kind === 'PDF') {
-      const link = create('a', '', 'Descargar PDF');
+    if (item.download_url) {
+      const link = create('a', '', item.download_label || (item.kind === 'PDF' ? 'Descargar PDF' : 'Descargar'));
       link.href = item.download_url;
       actions.append(link);
     }
@@ -169,7 +293,39 @@
     const scope = root.querySelector('[data-ai-scope]');
     const labels = root.querySelectorAll('[data-ai-context-label]');
     if (!url || !form || !input || !thread) return;
+    setAssistantState(root, 'ready');
     const history = [];
+    const conversationState = {
+      lastResultIds: [],
+      lastOpportunityId: null,
+      assistantModule: '',
+      lastEntityKeys: []
+    };
+
+    function updateConversationState(data) {
+      const cards = Array.isArray(data?.cards) ? data.cards : [];
+      const sources = Array.isArray(data?.sources) ? data.sources : [];
+      const resultIds = cards
+        .filter(item => item && item.type === 'opportunity' && Number(item.id) > 0)
+        .map(item => Number(item.id));
+      const sourceIds = sources
+        .filter(item => item && item.type === 'opportunity' && Number(item.id) > 0)
+        .map(item => Number(item.id));
+
+      if (resultIds.length) {
+        conversationState.lastResultIds = [...new Set(resultIds)].slice(0, 20);
+        conversationState.lastOpportunityId = resultIds.length === 1 ? resultIds[0] : null;
+      }
+      if (sourceIds.length === 1) {
+        conversationState.lastOpportunityId = sourceIds[0];
+      }
+      if (data?.context_update && typeof data.context_update === 'object') {
+        conversationState.assistantModule = String(data.context_update.module || '');
+        conversationState.lastEntityKeys = Array.isArray(data.context_update.entity_keys)
+          ? data.context_update.entity_keys.map(String).slice(0, 20)
+          : [];
+      }
+    }
 
     function remember(role, content) {
       const text = String(content || '').trim();
@@ -206,6 +362,7 @@
       appendMessage(thread, 'user', message);
       remember('user', message);
       input.value = '';
+      setAssistantState(root, 'thinking');
       const loading = appendLoading(thread);
       if (send) send.disabled = true;
       try {
@@ -218,7 +375,13 @@
           },
           body: JSON.stringify({
             message,
-            context: currentContext(scope?.value || 'current'),
+            context: {
+              ...currentContext(scope?.value || 'current'),
+              last_result_ids: conversationState.lastResultIds,
+              last_opportunity_id: conversationState.lastOpportunityId,
+              assistant_module: conversationState.assistantModule,
+              last_entity_keys: conversationState.lastEntityKeys
+            },
             history: history.slice(0, -1)
           })
         });
@@ -226,6 +389,7 @@
         loading.remove();
         if (!response.ok || !data.ok) throw new Error(data.error || 'No fue posible completar la consulta.');
         const answer = data.answer || 'Consulta completada.';
+        updateConversationState(data);
         appendMessage(thread, 'assistant', answer, data.cards || [], data.engine || '', data.provider_warning || '');
         remember('assistant', answer);
       } catch (error) {
@@ -234,12 +398,15 @@
         appendMessage(thread, 'assistant', messageError);
         remember('assistant', messageError);
       } finally {
+        setAssistantState(root, 'ready');
         if (send) send.disabled = false;
         input.focus();
         refreshContext();
       }
     });
   }
+
+  initParticles();
 
   const panel = document.getElementById('ogaAiPanel');
   const launcher = document.getElementById('ogaAiLauncher');
@@ -255,7 +422,10 @@
       if (open) {
         const scope = panel.querySelector('[data-ai-scope]');
         panel.querySelectorAll('[data-ai-context-label]').forEach(label => { label.textContent = contextLabel(scope?.value || 'current'); });
-        setTimeout(() => panel.querySelector('[data-ai-input]')?.focus(), 120);
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+          panel.querySelector('[data-ai-input]')?.focus();
+        }, 120);
       }
     };
     launcher.addEventListener('click', () => setOpen(!panel.classList.contains('open')));

@@ -1,0 +1,14 @@
+HOTFIX OGA 0.17.5.2.2 - ENLACES DE OPORTUNIDADES DESDE ASISTENTE
+
+Corrige los botones Abrir OD generados por el motor local transversal.
+El motor estaba usando /oportunidades/?od=ID, pero la ruta real del modulo es
+/oportunidades-proyecto/?od=ID.
+
+INSTALACION
+1. Cierre Sistema OGA.
+2. Copie todo el contenido de este ZIP en la raiz de Sistema_OGA.
+3. Seleccione Reemplazar archivos en el destino.
+4. Ejecute Python INICIAR.py.
+5. Debe mostrar OGA 0.17.5.2.2 disponible en http://127.0.0.1:5005
+
+No modifica bases de datos, Excel, adjuntos ni configuraciones.
