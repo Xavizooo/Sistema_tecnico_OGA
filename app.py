@@ -43,9 +43,10 @@ from biblioteca import biblioteca_bp
 from proyectos_diseno.routes import bp as proyectos_diseno_bp
 from capacitaciones import bp as capacitaciones_bp, ensure_database as ensure_capacitaciones_database, ensure_worker_started as ensure_capacitaciones_worker
 from oportunidades_proyecto import bp as oportunidades_bp, ensure_database as ensure_oportunidades_database
+from asistente_oga import bp as asistente_oga_bp
 
 APP_NAME = "SISTEMA TECNICO"
-APP_REV = "0.17.3.1"
+APP_REV = "0.17.5"
 
 ensure_security_storage()
 app = Flask(__name__)
@@ -65,6 +66,7 @@ app.register_blueprint(biblioteca_bp)
 app.register_blueprint(proyectos_diseno_bp, url_prefix="/proyectos-diseno/app")
 app.register_blueprint(capacitaciones_bp)
 app.register_blueprint(oportunidades_bp)
+app.register_blueprint(asistente_oga_bp)
 
 LOGIN_WINDOW_SECONDS = 15 * 60
 LOGIN_IP_LIMIT = 25

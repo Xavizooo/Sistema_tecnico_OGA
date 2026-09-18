@@ -10,14 +10,15 @@
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/typography.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/asistente_oga.css') }}">
   {% block head %}{% endblock %}
 </head>
 
-<body class="app-body{% block body_class %}{% endblock %}">
+<body class="app-body{% block body_class %}{% endblock %}" data-oga-endpoint="{{ request.endpoint or '' }}" data-oga-path="{{ request.path }}">
   {% include '_header.html' %}
 
   <main class="main-area{% if admin_page %} admin-main{% endif %}">
-      {% if not admin_page and not biblioteca_page and not project_design_page and not capacitaciones_page and not opportunities_page %}
+      {% if not admin_page and not biblioteca_page and not project_design_page and not capacitaciones_page and not opportunities_page and not assistant_page %}
       <div class="top-actions">
         {% if meta.get('procesado') %}<span class="status-chip ok">● PROCESADO</span>{% else %}<span class="status-chip idle">○ SIN PROCESAR</span>{% endif %}
         <form method="post" action="{{ url_for('new_list') }}"
@@ -41,7 +42,7 @@
     </section>
   </main>
 
-  {% if not biblioteca_page and not project_design_page and not capacitaciones_page and not opportunities_page %}
+  {% if not biblioteca_page and not project_design_page and not capacitaciones_page and not opportunities_page and not assistant_page %}
   <div id="archiveModal" class="modal-backdrop hidden">
     <div class="modal-card">
       <span class="workspace-eyebrow">RESPALDO DEL PROYECTO</span>
@@ -60,7 +61,9 @@
   </div>
 
   {% endif %}
+  {% include 'asistente/_global_panel.html' %}
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/asistente_oga.js') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 

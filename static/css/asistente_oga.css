@@ -1,0 +1,87 @@
+.oga-ai-launcher{
+  position:fixed;right:24px;bottom:24px;z-index:980;border:0;border-radius:999px;
+  background:linear-gradient(135deg,var(--blue),#084f90);color:#fff;box-shadow:0 14px 36px rgba(7,70,126,.28);
+  display:flex;align-items:center;gap:9px;padding:10px 15px 10px 10px;font:inherit;font-weight:700;cursor:pointer
+}
+.oga-ai-launcher:hover{transform:translateY(-1px)}
+.oga-ai-launcher-mark,.oga-ai-avatar{
+  display:grid;place-items:center;background:#fff;color:var(--blue);border-radius:50%;font-size:11px;font-weight:800;letter-spacing:.4px
+}
+.oga-ai-launcher-mark{width:31px;height:31px}
+.oga-ai-launcher-text{font-size:13px}
+.oga-ai-overlay{position:fixed;inset:0;background:rgba(18,43,66,.16);z-index:981}
+.oga-ai-panel{
+  position:fixed;top:0;right:0;bottom:0;width:min(440px,96vw);z-index:982;background:#fff;
+  box-shadow:-20px 0 50px rgba(28,56,82,.18);display:flex;flex-direction:column;transform:translateX(105%);
+  transition:transform .22s ease;border-left:1px solid var(--line)
+}
+.oga-ai-panel.open{transform:translateX(0)}
+.oga-ai-panel-head{padding:19px 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.oga-ai-panel-head>div{display:flex;flex-direction:column;gap:3px}
+.oga-ai-panel-head strong{font-size:17px}
+.oga-ai-eyebrow{font-size:10px;letter-spacing:1.1px;font-weight:800;color:var(--blue)}
+.oga-ai-close{border:0;background:#edf4fb;color:#44657f;width:34px;height:34px;border-radius:8px;font-size:23px;cursor:pointer}
+.oga-ai-safety{margin:13px 16px 0;border:1px solid #cfe1ef;background:#f4f9fd;border-radius:10px;padding:10px 12px;display:flex;gap:9px;align-items:center}
+.oga-ai-safety span,.oga-ai-readonly-pill{background:#e7f2fb;color:#0a5b9e;border:1px solid #bfdaee;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.7px;padding:4px 7px;white-space:nowrap}
+.oga-ai-safety small{color:#61778b;line-height:1.3}
+.oga-ai-context-row,.oga-ai-chat-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid #edf2f6}
+.oga-ai-context-row>div,.oga-ai-chat-top>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.oga-ai-context-row small,.oga-ai-chat-top small{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.oga-ai-context-row strong,.oga-ai-chat-top strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
+.oga-ai-context-row select,.oga-ai-chat-top select{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:8px;padding:7px 9px;font:inherit;font-size:12px}
+.oga-ai-thread{flex:1;overflow:auto;padding:16px;background:#f8fafc;display:flex;flex-direction:column;gap:13px;scroll-behavior:smooth}
+.oga-ai-message{display:flex;gap:9px;align-items:flex-start;max-width:94%}
+.oga-ai-message.user{align-self:flex-end;flex-direction:row-reverse}
+.oga-ai-avatar{width:27px;height:27px;flex:0 0 auto;border:1px solid #cfe0ee;background:#fff}
+.oga-ai-message.user .oga-ai-avatar{background:var(--blue);color:#fff;border-color:var(--blue)}
+.oga-ai-bubble{border:1px solid #dfe8f0;background:#fff;border-radius:4px 12px 12px 12px;padding:10px 12px;line-height:1.48;font-size:13px;white-space:pre-wrap;box-shadow:0 1px 2px rgba(30,60,90,.03)}
+.oga-ai-message.user .oga-ai-bubble{background:#eaf4fc;border-color:#c9e0f2;border-radius:12px 4px 12px 12px}
+.oga-ai-bubble strong{display:block;margin-bottom:4px}.oga-ai-bubble span{display:block}
+.oga-ai-quick{display:flex;gap:6px;overflow:auto;padding:8px 12px;border-top:1px solid #edf2f6;background:#fff}
+.oga-ai-quick button,.oga-ai-guide-list button{border:1px solid #d4e2ee;background:#fff;color:#34536d;border-radius:999px;padding:6px 9px;font:inherit;font-size:11px;white-space:nowrap;cursor:pointer}
+.oga-ai-quick button:hover,.oga-ai-guide-list button:hover{border-color:#8fc0e7;color:var(--blue);background:#f6fbff}
+.oga-ai-compose{padding:11px 12px 8px;border-top:1px solid var(--line);background:#fff;display:flex;gap:8px;align-items:flex-end}
+.oga-ai-compose textarea{flex:1;resize:none;border:1px solid #cfdce7;border-radius:10px;padding:10px 11px;font:inherit;color:var(--text);outline:0;min-height:42px;max-height:130px}
+.oga-ai-compose textarea:focus{border-color:#75add8;box-shadow:0 0 0 3px rgba(11,100,180,.08)}
+.oga-ai-compose button{border:0;border-radius:9px;background:var(--blue);color:#fff;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer}
+.oga-ai-compose button:disabled{opacity:.55;cursor:wait}
+.oga-ai-open-full{display:block;padding:8px 12px 12px;text-align:center;color:var(--blue);text-decoration:none;font-size:11px;font-weight:700;background:#fff}
+
+.oga-ai-result-cards{display:grid;gap:8px;margin-top:9px;min-width:min(320px,72vw)}
+.oga-ai-card{border:1px solid #dbe6ef;background:#fff;border-radius:10px;padding:10px 11px;box-shadow:0 1px 2px rgba(30,60,90,.03)}
+.oga-ai-card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.oga-ai-card strong{font-size:12px;color:#20384c}.oga-ai-card small{font-size:10px;color:var(--muted)}
+.oga-ai-card-sub{font-size:11px;color:#526b80;margin-top:3px}.oga-ai-card-client{font-size:11px;margin-top:5px}
+.oga-ai-card-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.oga-ai-chip{font-size:9px;background:#eef5fa;border-radius:999px;padding:3px 6px;color:#4f6c82}
+.oga-ai-score{font-size:10px;font-weight:800;color:#0a6b45;background:#e8f7f1;border-radius:999px;padding:4px 7px;white-space:nowrap}
+.oga-ai-card-actions{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+.oga-ai-card-actions a{font-size:10px;font-weight:700;color:var(--blue);text-decoration:none;border:1px solid #cddfeb;border-radius:7px;padding:5px 7px;background:#fff}
+.oga-ai-card-actions a:hover{background:#eef7fd}
+.oga-ai-card-list{margin:6px 0 0;padding-left:17px;color:#50687a;font-size:10px;line-height:1.45}
+.oga-ai-loading{display:flex;gap:4px;align-items:center;padding:3px 0}
+.oga-ai-loading i{width:6px;height:6px;border-radius:50%;background:#86acc8;animation:ogaAiPulse 1s infinite ease-in-out}.oga-ai-loading i:nth-child(2){animation-delay:.15s}.oga-ai-loading i:nth-child(3){animation-delay:.3s}
+@keyframes ogaAiPulse{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+.oga-ai-page{max-width:1500px;margin:0 auto;padding-bottom:24px}
+.oga-ai-page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:14px}
+.oga-ai-page-head h2{margin:4px 0 5px;font-size:25px;display:flex;gap:10px;align-items:center}.oga-ai-page-head p{margin:0;color:var(--muted)}
+.oga-ai-page-stats{display:grid;grid-template-columns:repeat(4,minmax(92px,1fr));gap:8px}
+.oga-ai-page-stats>div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:90px;box-shadow:var(--shadow)}
+.oga-ai-page-stats strong{display:block;color:var(--blue);font-size:18px}.oga-ai-page-stats span{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700}
+.oga-ai-trust-card{display:flex;align-items:center;gap:12px;background:#f5f9fc;border:1px solid #d7e6f1;border-radius:11px;padding:11px 14px;margin-bottom:14px}
+.oga-ai-lock{width:34px;height:34px;border-radius:9px;background:#dcecf8;color:#0b64b4;display:grid;place-items:center;font-weight:900}
+.oga-ai-trust-card strong{display:block;margin-bottom:2px}.oga-ai-trust-card p{margin:0;color:#61788b;font-size:11px}
+.oga-ai-workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:14px;min-height:650px}
+.oga-ai-guide,.oga-ai-chat-card{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.oga-ai-guide{padding:17px;align-self:start}.oga-ai-guide h3{margin:5px 0 6px;font-size:17px}.oga-ai-guide p{margin:0 0 14px;color:var(--muted);font-size:11px;line-height:1.45}
+.oga-ai-guide-list{display:flex;flex-direction:column;gap:7px}.oga-ai-guide-list button{text-align:left;border-radius:8px;white-space:normal;padding:8px 9px}
+.oga-ai-guide-note{margin-top:17px;padding-top:13px;border-top:1px solid #e5edf3;display:flex;flex-direction:column;gap:5px}.oga-ai-guide-note strong{font-size:10px;color:#4d677c;text-transform:uppercase}.oga-ai-guide-note span{font-size:10px;color:#8293a2}
+.oga-ai-chat-card{display:flex;flex-direction:column;min-width:0;overflow:hidden}.oga-ai-thread-full{min-height:480px;max-height:610px;padding:22px}.oga-ai-thread-full .oga-ai-message{max-width:88%}.oga-ai-thread-full .oga-ai-bubble{font-size:13px;min-width:150px}
+.oga-ai-compose-full{display:block;padding:14px}.oga-ai-compose-full textarea{display:block;width:100%;min-height:72px}.oga-ai-compose-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}.oga-ai-compose-bottom small{color:#8193a2;font-size:10px}
+
+@media(max-width:1050px){.oga-ai-page-head{display:block}.oga-ai-page-stats{margin-top:12px;grid-template-columns:repeat(2,1fr)}.oga-ai-workspace{grid-template-columns:1fr}.oga-ai-guide{display:none}}
+@media(max-width:620px){.oga-ai-launcher{right:13px;bottom:13px}.oga-ai-launcher-text{display:none}.oga-ai-panel{width:100vw}.oga-ai-page-stats{grid-template-columns:repeat(2,1fr)}.oga-ai-page-head h2{font-size:21px}.oga-ai-thread-full{padding:13px}.oga-ai-message{max-width:100%}.oga-ai-result-cards{min-width:0}.oga-ai-context-row{align-items:flex-start;flex-direction:column}.oga-ai-context-row select{width:100%}}
+
+.oga-ai-provider-status{margin-left:auto;min-width:150px;padding:10px 14px;border-radius:12px;background:#eef2f7;display:flex;flex-direction:column;gap:2px;text-align:right}.oga-ai-provider-status span{font-size:10px;font-weight:800;letter-spacing:.08em}.oga-ai-provider-status strong{font-size:12px}.oga-ai-provider-status.connected{background:#e9f8ef}.oga-ai-provider-status.connected span{color:#167548}.oga-ai-provider-status.local span{color:#7a5a12}.oga-ai-provider-note{display:flex;gap:10px;align-items:center;margin:12px 0;padding:11px 14px;border:1px solid #e6d7a8;border-radius:12px;background:#fffaf0;font-size:12px}.oga-ai-provider-note strong{white-space:nowrap}.oga-ai-provider-note code{font-weight:800}
+.oga-ai-response-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:10px;color:#6b7280}.oga-ai-response-meta .warning{color:#9a6700}

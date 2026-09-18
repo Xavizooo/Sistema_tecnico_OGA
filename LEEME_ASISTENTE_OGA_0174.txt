@@ -1,0 +1,30 @@
+OGA 0.17.4 - ASISTENTE OGA / PRIMERA ETAPA
+
+BASE REQUERIDA
+- Instalar sobre OGA 0.17.3.1 (hotfix de Oportunidades ya aplicado).
+
+INSTALACION
+1. Cerrar Sistema OGA y la consola de Python.
+2. Hacer una copia de seguridad de la carpeta Sistema_OGA.
+3. Copiar TODO el contenido de este paquete dentro de la raiz de Sistema_OGA.
+4. Elegir "Reemplazar los archivos en el destino".
+5. Ejecutar Python INICIAR.py.
+6. La consola debe mostrar OGA 0.17.4.
+
+QUE AGREGA
+- Modulo Asistente OGA en el menu lateral.
+- Boton flotante Asistente OGA disponible en todas las paginas.
+- Contexto automatico de la OD seleccionada.
+- Consulta de Oportunidades, IDs, criterios, equipos, ofertas PDF, imagenes y similares.
+- Apertura/descarga de PDFs ya existentes.
+- Busqueda por texto y filtros de Oportunidades.
+
+SEGURIDAD - REGLA INNEGOCIABLE
+El Asistente OGA es SOLO LECTURA para TODOS los usuarios, incluidos administradores.
+No puede crear, editar, actualizar, reemplazar, subir, mover, renombrar ni eliminar datos o archivos.
+La conexion usada por sus herramientas abre SQLite con mode=ro y PRAGMA query_only=ON.
+El modulo no contiene endpoints de escritura de informacion OGA.
+
+NOTA
+Esta es la primera etapa del agente. El motor de consulta funciona localmente sobre Oportunidades.
+La conexion posterior con un modelo de IA se hara encima de estas herramientas de solo lectura.

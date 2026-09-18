@@ -1,0 +1,49 @@
+{% if current_user and not assistant_page %}
+<button class="oga-ai-launcher" id="ogaAiLauncher" type="button" aria-controls="ogaAiPanel" aria-expanded="false" title="Abrir Asistente OGA">
+  <span class="oga-ai-launcher-mark">AI</span>
+  <span class="oga-ai-launcher-text">Asistente OGA</span>
+</button>
+
+<aside class="oga-ai-panel" id="ogaAiPanel" aria-hidden="true" data-consult-url="{{ url_for('asistente_oga.consult') }}">
+  <div class="oga-ai-panel-head">
+    <div>
+      <span class="oga-ai-eyebrow">ASISTENTE OGA</span>
+      <strong>Consulta tecnica</strong>
+    </div>
+    <button type="button" class="oga-ai-close" id="ogaAiClose" aria-label="Cerrar">&times;</button>
+  </div>
+  <div class="oga-ai-safety">
+    <span>SOLO LECTURA</span>
+    <small>Puede consultar y localizar archivos; nunca modificar informacion.</small>
+  </div>
+  <div class="oga-ai-context-row">
+    <div>
+      <small>Contexto</small>
+      <strong data-ai-context-label>Toda OGA</strong>
+    </div>
+    <select data-ai-scope aria-label="Alcance de la consulta">
+      <option value="current">Contexto actual</option>
+      <option value="global">Toda OGA</option>
+    </select>
+  </div>
+  <div class="oga-ai-thread" data-ai-thread>
+    <div class="oga-ai-message assistant">
+      <div class="oga-ai-avatar">AI</div>
+      <div class="oga-ai-bubble">
+        Pregunta normalmente. Puedo convertir tu solicitud en consultas sobre oportunidades, criterios, equipos, ofertas PDF, imagenes y proyectos similares.
+      </div>
+    </div>
+  </div>
+  <div class="oga-ai-quick">
+    <button type="button" data-ai-prompt="Que proyectos hay?">Proyectos disponibles</button>
+    <button type="button" data-ai-prompt="Busca proyectos similares a la OD actual">Proyectos similares</button>
+    <button type="button" data-ai-prompt="Muestrame las ofertas PDF de la OD actual">Ofertas PDF</button>
+  </div>
+  <form class="oga-ai-compose" data-ai-form>
+    <textarea data-ai-input rows="2" maxlength="4000" placeholder="Pregunta sobre la informacion de OGA..." required></textarea>
+    <button type="submit" data-ai-send>Enviar</button>
+  </form>
+  <a class="oga-ai-open-full" href="{{ url_for('asistente_oga.index') }}">Abrir Asistente OGA completo</a>
+</aside>
+<div class="oga-ai-overlay" id="ogaAiOverlay" hidden></div>
+{% endif %}

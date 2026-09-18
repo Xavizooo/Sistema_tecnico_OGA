@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Asistente OGA &middot; {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="oga-ai-page" id="ogaAiFull" data-consult-url="{{ url_for('asistente_oga.consult') }}">
+  <header class="oga-ai-page-head">
+    <div>
+      <span class="page-eyebrow">CONSULTA TECNICA ASISTIDA</span>
+      <h2>Asistente OGA <span class="oga-ai-readonly-pill">SOLO LECTURA</span></h2>
+      <p>Interpreta lenguaje natural, convierte la consulta en busquedas estructuradas y consulta informacion existente sin modificarla.</p>
+    </div>
+    <div class="oga-ai-page-stats">
+      <div><strong>{{ assistant_stats.total }}</strong><span>Oportunidades</span></div>
+      <div><strong>{{ assistant_stats.subsystems }}</strong><span>Subsistemas</span></div>
+      <div><strong>{{ assistant_stats.equipment }}</strong><span>Equipos</span></div>
+      <div><strong>{{ assistant_stats.offers }}</strong><span>Ofertas PDF</span></div>
+    </div>
+  </header>
+
+  <section class="oga-ai-trust-card">
+    <div class="oga-ai-lock">R</div>
+    <div>
+      <strong>Arquitectura de consulta de solo lectura</strong>
+      <p>La IA puede decidir que consulta ejecutar, pero solamente recibe herramientas READ_ONLY. SQLite se abre en modo de solo lectura y no existen herramientas para crear, editar, cargar, reemplazar o eliminar informacion.</p>
+    </div>
+    <div class="oga-ai-provider-status {{ 'connected' if assistant_provider.configured else 'local' }}">
+      <span>{{ 'IA AVANZADA' if assistant_provider.configured else 'MODO LOCAL' }}</span>
+      <strong>{{ assistant_provider.model if assistant_provider.configured else 'OpenAI sin configurar' }}</strong>
+    </div>
+  </section>
+
+  {% if not assistant_provider.configured %}
+  <section class="oga-ai-provider-note">
+    <strong>IA avanzada pendiente de conexion</strong>
+    <span>El asistente sigue funcionando con el motor local. Para habilitar interpretacion avanzada en lenguaje natural, configura <code>OPENAI_API_KEY</code> en el servidor.</span>
+  </section>
+  {% endif %}
+
+  <div class="oga-ai-workspace">
+    <aside class="oga-ai-guide">
+      <span class="oga-ai-eyebrow">FUENTE CONECTADA</span>
+      <h3>Oportunidades de Proyecto</h3>
+      <p>Pregunta normalmente. No necesitas memorizar filtros ni escribir una sintaxis especial.</p>
+      <div class="oga-ai-guide-list">
+        <button type="button" data-ai-prompt="Que proyectos hay?">Consulta general</button>
+        <button type="button" data-ai-prompt="Muestrame proyectos del cliente Nestle">Buscar por cliente</button>
+        <button type="button" data-ai-prompt="Que proyectos tienen entrada por BIG BAG y transporte en fase densa?">Cruzar criterios</button>
+        <button type="button" data-ai-prompt="Muestrame las ofertas del proyecto 3121">Localizar ofertas PDF</button>
+        <button type="button" data-ai-prompt="Busca proyectos similares a la OD actual">Comparar proyectos</button>
+      </div>
+      <div class="oga-ai-guide-note">
+        <strong>Consultas que ya entiende</strong>
+        <span>IDs, radicados y proyectos</span>
+        <span>Clientes y materiales</span>
+        <span>Equipos y criterios tecnicos</span>
+        <span>Ofertas PDF e imagenes</span>
+        <span>Similitud historica</span>
+      </div>
+    </aside>
+
+    <section class="oga-ai-chat-card">
+      <div class="oga-ai-chat-top">
+        <div>
+          <small>Contexto de consulta</small>
+          <strong data-ai-context-label>Toda OGA</strong>
+        </div>
+        <select data-ai-scope>
+          <option value="global">Toda OGA</option>
+          <option value="current">Contexto actual</option>
+        </select>
+      </div>
+      <div class="oga-ai-thread oga-ai-thread-full" data-ai-thread>
+        <div class="oga-ai-message assistant">
+          <div class="oga-ai-avatar">AI</div>
+          <div class="oga-ai-bubble">
+            <strong>Listo para consultar.</strong>
+            <span>Puedes escribir de forma natural: “que proyectos hay”, “busca los de Nestle”, “dame el ID del proyecto 3121” o “traeme sus ofertas PDF”.</span>
+          </div>
+        </div>
+      </div>
+      <form class="oga-ai-compose oga-ai-compose-full" data-ai-form>
+        <textarea data-ai-input rows="3" maxlength="4000" placeholder='Ej. "Que proyectos tenemos con BIG BAG y harina?"' required></textarea>
+        <div class="oga-ai-compose-bottom">
+          <small>Enter para enviar &middot; Shift+Enter para nueva linea</small>
+          <button type="submit" data-ai-send>Consultar</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}
