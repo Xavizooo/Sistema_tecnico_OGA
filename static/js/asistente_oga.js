@@ -21,8 +21,8 @@
     const mode = canvas.dataset.aiParticles || 'page';
     const host = canvas.parentElement;
     const palette = mode === 'panel'
-      ? [[169,140,255],[116,94,224],[205,157,255]]
-      : [[169,140,255],[120,106,255],[213,158,255],[126,94,221]];
+      ? [[255,255,255],[236,246,255],[217,238,255]]
+      : [[255,255,255],[241,248,255],[221,239,255],[202,229,255]];
     let width = 0;
     let height = 0;
     let ratio = 1;
@@ -31,19 +31,19 @@
 
     function buildParticles() {
       const area = Math.max(1, width * height);
-      const divisor = mode === 'panel' ? 17500 : 22500;
-      const max = mode === 'panel' ? 32 : 58;
-      const min = mode === 'panel' ? 16 : 28;
+      const divisor = mode === 'panel' ? 8500 : 10500;
+      const max = mode === 'panel' ? 72 : 118;
+      const min = mode === 'panel' ? 38 : 64;
       const count = Math.max(min, Math.min(max, Math.round(area / divisor)));
       particles = Array.from({ length: count }, () => {
         const c = palette[Math.floor(Math.random() * palette.length)];
         return {
           x: Math.random() * width,
           y: Math.random() * height,
-          vx: (Math.random() - .5) * (mode === 'panel' ? .22 : .28),
-          vy: (Math.random() - .5) * (mode === 'panel' ? .20 : .24),
-          r: .55 + Math.random() * 1.35,
-          a: .12 + Math.random() * .38,
+          vx: (Math.random() - .5) * (mode === 'panel' ? .17 : .22),
+          vy: (Math.random() - .5) * (mode === 'panel' ? .15 : .20),
+          r: .42 + Math.random() * 1.18,
+          a: .06 + Math.random() * .24,
           c
         };
       });
@@ -71,7 +71,7 @@
       context.clearRect(0, 0, width, height);
       const active = host?.classList.contains('is-thinking');
       const speed = active ? 1.75 : 1;
-      const connectionDistance = mode === 'panel' ? 76 : 94;
+      const connectionDistance = mode === 'panel' ? 66 : 82;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.x += p.vx * speed;
@@ -83,9 +83,9 @@
 
         context.beginPath();
         context.arc(p.x, p.y, active ? p.r * 1.18 : p.r, 0, Math.PI * 2);
-        context.fillStyle = `rgba(${p.c[0]},${p.c[1]},${p.c[2]},${active ? Math.min(.72,p.a+.12) : p.a})`;
-        context.shadowBlur = active ? 11 : 6;
-        context.shadowColor = `rgba(${p.c[0]},${p.c[1]},${p.c[2]},.35)`;
+        context.fillStyle = `rgba(${p.c[0]},${p.c[1]},${p.c[2]},${active ? Math.min(.50,p.a+.09) : p.a})`;
+        context.shadowBlur = active ? 9 : 4;
+        context.shadowColor = `rgba(255,255,255,.22)`;
         context.fill();
         context.shadowBlur = 0;
 
@@ -95,11 +95,11 @@
           const dy = p.y - q.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist >= connectionDistance) continue;
-          const alpha = (1 - dist / connectionDistance) * (active ? .10 : .052);
+          const alpha = (1 - dist / connectionDistance) * (active ? .055 : .025);
           context.beginPath();
           context.moveTo(p.x, p.y);
           context.lineTo(q.x, q.y);
-          context.strokeStyle = `rgba(167,134,255,${alpha})`;
+          context.strokeStyle = `rgba(255,255,255,${alpha})`;
           context.lineWidth = .55;
           context.stroke();
         }
