@@ -299,7 +299,8 @@ body {
 .upload-inline {
     display: flex;
     gap: 8px;
-    align-items: center
+    align-items: center;
+    margin: 5px;
 }
 
 .upload-row input[type=file],
