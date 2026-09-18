@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% from 'oportunidades/_subsystem_fields.html' import subsystem_fields %}
+{% block title %}Oportunidades de Proyecto · {{ app_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/oportunidades.css') }}">{% endblock %}
+
+{% block content %}
+<div class="od-page" id="odApp"
+  data-search-url="{{ url_for('oportunidades.api_search') }}"
+  data-detail-url-template="{{ url_for('oportunidades.api_detail_html', opportunity_id=999999) }}"
+  data-data-url-template="{{ url_for('oportunidades.api_detail_data', opportunity_id=999999) }}"
+  data-edit-url-template="{{ url_for('oportunidades.edit', opportunity_id=999999) }}"
+  data-add-subsystem-url-template="{{ url_for('oportunidades.create_subsystem_route', opportunity_id=999999) }}"
+  data-edit-subsystem-url-template="{{ url_for('oportunidades.edit_subsystem_route', subsystem_id=999999) }}"
+  data-add-offer-url-template="{{ url_for('oportunidades.add_offer', subsystem_id=999999) }}"
+  data-add-image-url-template="{{ url_for('oportunidades.add_image', subsystem_id=999999) }}"
+  data-add-point-url-template="{{ url_for('oportunidades.add_point_route', subsystem_id=999999, kind='entrada') }}"
+  data-add-equipment-url-template="{{ url_for('oportunidades.add_equipment_route', subsystem_id=999999) }}">
+
+  <div class="od-page-head">
+    <div>
+      <span class="page-eyebrow">GESTIÓN COMERCIAL Y TÉCNICA</span>
+      <h2>Oportunidades de Proyecto <span class="od-soft-tag">OD</span></h2>
+      <p>Consulta proyectos por información general o por criterios técnicos de sus subsistemas.</p>
+    </div>
+    <div class="od-head-actions">
+      <div class="od-kpi"><strong>{{ od_stats.total }}</strong><span>Oportunidades</span></div>
+      <div class="od-kpi"><strong>{{ od_stats.subsistemas }}</strong><span>Subsistemas</span></div>
+      <button class="btn outline od-phase2" type="button" title="Se habilitará en la Fase 2" disabled>Subida masiva · Fase 2</button>
+      {% if current_user and current_user.is_admin %}<button class="btn primary" id="odNewButton" type="button">+ Nueva OD</button>{% endif %}
+    </div>
+  </div>
+
+  <div class="od-search-card">
+    <div class="od-search-box">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+      <input id="odSearch" value="{{ query }}" autocomplete="off" placeholder='Buscar: azucar cliente:"Manuelita" estado:"En análisis" responsable:Juan'>
+      <button id="odClearSearch" type="button" title="Limpiar búsqueda">×</button>
+    </div>
+    <details class="od-search-help">
+      <summary>Filtro avanzado</summary>
+      <p>El texto libre busca también dentro de subsistemas, criterios, equipos, entradas, salidas, ofertas e imágenes. Combine condiciones con <code>campo:valor</code>.</p>
+      <div>{% for field in search_fields %}<button type="button" class="od-search-token" data-token="{{ field }}:">{{ field }}:</button>{% endfor %}</div>
+      <small>Ejemplo: <b>azucar cliente:"Ingenio Manuelita" material:inox estado:"En análisis"</b></small>
+    </details>
+  </div>
+
+  <div class="od-master-detail">
+    <section class="od-list-pane">
+      <div class="od-list-head"><strong id="odResultCount">{{ opportunities|length }} resultados</strong><span>Seleccione una OD</span></div>
+      <div class="od-list" id="odList">
+        {% for od in opportunities %}
+        <button class="od-list-row {% if selected and selected.id == od.id %}active{% endif %}" type="button" data-id="{{ od.id }}">
+          <span class="od-row-main"><b>{{ od.radicado }}</b><strong>{{ od.proyecto }}</strong><em>{{ od.cliente }}</em></span>
+          <span class="od-row-name">{{ od.nombre }}</span>
+          <span class="od-row-meta"><i class="od-status-dot"></i>{{ od.estado }} · {{ od.subsystem_count }} subsistema{% if od.subsystem_count != 1 %}s{% endif %}</span>
+        </button>
+        {% else %}<div class="od-list-empty"><strong>No hay oportunidades</strong><p>Cree la primera OD o cambie la búsqueda.</p></div>{% endfor %}
+      </div>
+    </section>
+
+    <section class="od-detail-pane" id="odDetail">
+      {% if selected %}{% set opportunity = selected %}{% include 'oportunidades/_detail.html' %}{% else %}
+      <div class="od-empty-detail"><strong>Seleccione una oportunidad</strong><p>El detalle técnico aparecerá aquí sin abandonar el listado.</p></div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+{% if current_user and current_user.is_admin %}
+<div class="od-modal-backdrop hidden" id="odNewModal" role="dialog" aria-modal="true" aria-labelledby="odNewTitle">
+  <div class="od-modal od-modal-xl">
+    <div class="od-modal-head"><div><span class="od-kicker">NUEVA OPORTUNIDAD</span><h3 id="odNewTitle">Crear OD</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
+    <form method="post" action="{{ url_for('oportunidades.create') }}" enctype="multipart/form-data" class="od-modal-body">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <div class="od-form-section">
+        <div class="od-form-section-head"><div><strong>Información general</strong><small>Radicado y proyecto se conservan como identificadores separados.</small></div></div>
+        <div class="od-form-grid od-form-grid-3">
+          <label>Radicado<input name="radicado" required></label>
+          <label>Proyecto<input name="proyecto" required></label>
+          <label>Estado<select name="estado">{% for state in statuses %}<option>{{ state }}</option>{% endfor %}</select></label>
+          <label class="wide-2">Nombre de la oportunidad<input name="nombre" required></label>
+          <label>Fecha de inicio<input type="date" name="fecha_inicio"></label>
+          <label class="wide">Descripción<textarea name="descripcion" rows="2"></textarea></label>
+          <label>Cliente<input name="cliente" required></label>
+          <label>Planta<input name="planta"></label>
+          <label>Tipo de oportunidad<input name="tipo_oportunidad"></label>
+          <label>Ciudad<input name="ciudad"></label>
+          <label>País<input name="pais"></label>
+          <label>Industria / sector<input name="industria"></label>
+          <label>Valor estimado<input name="valor_estimado" placeholder="Ej. 125000000 COP"></label>
+          <label class="wide-2">Equipo responsable<select name="responsables" multiple size="4">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select><small>Ctrl + clic permite seleccionar varios responsables.</small></label>
+          <label class="wide">Observaciones<textarea name="observaciones" rows="2"></textarea></label>
+        </div>
+      </div>
+      {{ subsystem_fields('sub_', {'nombre':'Principal'}) }}
+      <div class="od-form-section">
+        <div class="od-form-section-head"><div><strong>Archivos del subsistema inicial</strong><small>Luego podrá agregar tantas ofertas e imágenes como necesite.</small></div></div>
+        <div class="od-form-grid od-form-grid-2">
+          <label>Título oferta inicial<input name="oferta_titulo" placeholder="Ej. Oferta Rev00"></label>
+          <label>Oferta PDF<input type="file" name="oferta_inicial" accept="application/pdf,.pdf"></label>
+          <label>Título imagen<input name="imagen_titulo" placeholder="Ej. Concepto inicial"></label>
+          <label>Imagen<input type="file" name="imagen_inicial" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"></label>
+        </div>
+      </div>
+      <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Crear oportunidad</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="od-modal-backdrop hidden" id="odEditModal" role="dialog" aria-modal="true">
+  <div class="od-modal od-modal-lg">
+    <div class="od-modal-head"><div><span class="od-kicker">ADMINISTRACIÓN</span><h3>Editar oportunidad</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
+    <form method="post" id="odEditForm" class="od-modal-body">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <div class="od-form-grid od-form-grid-3">
+        <label>Radicado<input name="radicado" required></label><label>Proyecto<input name="proyecto" required></label>
+        <label>Estado<select name="estado">{% for state in statuses %}<option>{{ state }}</option>{% endfor %}</select></label>
+        <label class="wide-2">Nombre<input name="nombre" required></label><label>Fecha inicio<input type="date" name="fecha_inicio"></label>
+        <label class="wide">Descripción<textarea name="descripcion" rows="2"></textarea></label>
+        <label>Cliente<input name="cliente" required></label><label>Planta<input name="planta"></label><label>Tipo oportunidad<input name="tipo_oportunidad"></label>
+        <label>Ciudad<input name="ciudad"></label><label>País<input name="pais"></label><label>Industria<input name="industria"></label>
+        <label>Valor estimado<input name="valor_estimado"></label>
+        <label class="wide-2">Equipo responsable<select name="responsables" multiple size="5">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select></label>
+        <label class="wide">Observaciones<textarea name="observaciones" rows="2"></textarea></label>
+      </div>
+      <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar cambios</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="od-modal-backdrop hidden" id="odSubsystemModal" role="dialog" aria-modal="true">
+  <div class="od-modal od-modal-xl">
+    <div class="od-modal-head"><div><span class="od-kicker">SUBSISTEMA</span><h3 id="odSubsystemModalTitle">Nuevo subsistema</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
+    <form method="post" id="odSubsystemForm" class="od-modal-body">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      {{ subsystem_fields('', {}) }}
+      <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar subsistema</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="od-modal-backdrop hidden" id="odAttachmentModal" role="dialog" aria-modal="true">
+  <div class="od-modal od-modal-sm">
+    <div class="od-modal-head"><div><span class="od-kicker">ARCHIVO</span><h3 id="odAttachmentTitle">Agregar archivo</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
+    <form method="post" enctype="multipart/form-data" id="odAttachmentForm" class="od-modal-body">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <div class="od-form-grid"><label>Título<input name="titulo" id="odAttachmentLabel" placeholder="Ej. Oferta Rev01"></label><label>Archivo<input type="file" name="archivo" id="odAttachmentFile" required></label></div>
+      <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Agregar</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="od-modal-backdrop hidden" id="odPointModal" role="dialog" aria-modal="true">
+  <div class="od-modal od-modal-sm">
+    <div class="od-modal-head"><div><span class="od-kicker">SUBSISTEMA</span><h3 id="odPointTitle">Agregar punto</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
+    <form method="post" id="odPointForm" class="od-modal-body"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <div class="od-form-grid"><label>Tipo<input name="tipo" required placeholder="Ej. BIG BAG"></label><label>Cantidad<input name="cantidad" value="1"></label><label>Restricción de altura<input name="restriccion_altura" placeholder="SI / NO"></label></div>
+      <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Agregar</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="od-modal-backdrop hidden" id="odEquipmentModal" role="dialog" aria-modal="true">
+  <div class="od-modal od-modal-sm">
+    <div class="od-modal-head"><div><span class="od-kicker">SUBSISTEMA</span><h3>Agregar equipo</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
+    <form method="post" id="odEquipmentForm" class="od-modal-body"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <div class="od-form-grid"><label>Tipo de equipo<input name="tipo_equipo" required placeholder="Ej. BOM"></label><label>Referencia<input name="referencia"></label><label>Cantidad<input name="cantidad" value="1"></label></div>
+      <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Agregar</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="od-modal-backdrop hidden" id="odImageModal" role="dialog" aria-modal="true">
+  <div class="od-image-viewer"><div class="od-image-viewer-head"><strong id="odImageTitle">Imagen</strong><button type="button" data-close-modal>×</button></div><img id="odImagePreview" alt="Vista de proyecto"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ url_for('static', filename='js/oportunidades.js') }}"></script>{% endblock %}

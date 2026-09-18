@@ -1,0 +1,27 @@
+OGA - OPORTUNIDADES DE PROYECTO - FASE 1
+Base: V17.1 recibida el 18/09/2026
+Revisión resultante: 0.17.2
+
+INSTALACION
+1. Cierre el Sistema OGA.
+2. Haga una copia de seguridad de la carpeta V17.1 actual.
+3. Copie TODO el contenido de este paquete dentro de la carpeta raiz Sistema_OGA.
+4. Cuando Windows pregunte, seleccione Reemplazar los archivos en el destino.
+5. Inicie el sistema normalmente con INICIAR.py.
+
+NO es necesario copiar bases de datos manualmente.
+En el primer inicio se crea automaticamente:
+  data/oportunidades_proyecto/oportunidades.db
+  data/oportunidades_proyecto/archivos/
+
+FASE 1
+- Consulta para todos los usuarios.
+- Crear, editar, eliminar y adjuntar archivos: solo administradores.
+- Busqueda libre y avanzada campo:valor.
+- Equipo responsable desde usuarios activos del sistema.
+- OD con varios subsistemas.
+- Ofertas PDF e imagenes independientes por subsistema.
+- Criterios tecnicos, puntos de entrada/salida y equipos.
+- Registro de acciones en la auditoria general.
+
+La subida masiva desde Excel queda reservada para la Fase 2.

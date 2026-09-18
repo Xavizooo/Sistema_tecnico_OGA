@@ -49,6 +49,25 @@
       </div>
     </details>
 
+    <details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('oportunidades.') %}open{% endif %}>
+      <summary>
+        <span class="summary-main">
+          <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Oportunidades</span>
+        </span>
+        <svg class="side-chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </summary>
+      <div class="side-submenu">
+        <a class="{% if request.endpoint and request.endpoint.startswith('oportunidades.') %}active{% endif %}"
+          href="{{ url_for('oportunidades.index') }}">Oportunidades de proyecto</a>
+        {% if current_user and current_user.is_admin %}
+        <a href="{{ url_for('oportunidades.index') }}#nueva-od" data-od-sidebar-new>Nueva OD</a>
+        {% endif %}
+      </div>
+    </details>
+
     <details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('capacitaciones.') %}open{%
       endif %}>
       <summary>
@@ -183,11 +202,12 @@
     </button>
     <div class="topbar-title">
       <strong>OGA</strong>
-      <span>Generador de RQ · Revisor de Planos · Biblioteca · Proyectos · Capacitaciones</span>
+      <span>Generador de RQ · Revisor de Planos · Biblioteca · Proyectos · Oportunidades · Capacitaciones</span>
     </div>
   </div>
   <div class="topbar-right">
-    {% if request.endpoint and request.endpoint.startswith('capacitaciones.') %}<span
+    {% if request.endpoint and request.endpoint.startswith('oportunidades.') %}<span
+      class="topbar-state ok"><i></i>Oportunidades</span>{% elif request.endpoint and request.endpoint.startswith('capacitaciones.') %}<span
       class="topbar-state ok"><i></i>Capacitaciones</span>{% elif request.endpoint and
     request.endpoint.startswith('proyectos_diseno.') %}<span class="topbar-state ok"><i></i>Proyectos </span>{%
     elif biblioteca_page %}<span class="topbar-state ok"><i></i>Biblioteca compartida</span>{% elif

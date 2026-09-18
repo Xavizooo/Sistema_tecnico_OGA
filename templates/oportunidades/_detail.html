@@ -1,0 +1,168 @@
+{% if opportunity %}
+<div class="od-detail-shell" data-opportunity-id="{{ opportunity.id }}">
+  <div class="od-detail-head">
+    <div>
+      <span class="od-kicker">OD · RADICADO {{ opportunity.radicado }}</span>
+      <h2>{{ opportunity.nombre }}</h2>
+      <p>{{ opportunity.descripcion or 'Sin descripción general.' }}</p>
+    </div>
+    <div class="od-detail-actions">
+      <span class="od-status od-status-{{ opportunity.estado|lower|replace(' ', '-')|replace('á','a')|replace('ó','o') }}">{{ opportunity.estado }}</span>
+      {% if current_user and current_user.is_admin %}
+      <button class="btn outline od-js-edit-opportunity" type="button" data-id="{{ opportunity.id }}">Editar OD</button>
+      <form method="post" action="{{ url_for('oportunidades.delete', opportunity_id=opportunity.id) }}" onsubmit="return confirm('¿Eliminar esta oportunidad? Se ocultará del módulo y quedará registrada en auditoría.');">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+        <button class="btn danger-soft" type="submit">Eliminar</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="od-overview-grid">
+    <article class="od-info-card">
+      <h3>Detalles de la oportunidad</h3>
+      <dl class="od-info-list">
+        <div><dt>Proyecto</dt><dd>{{ opportunity.proyecto }}</dd></div>
+        <div><dt>Radicado</dt><dd>{{ opportunity.radicado }}</dd></div>
+        <div><dt>Cliente</dt><dd>{{ opportunity.cliente }}</dd></div>
+        <div><dt>Inicio</dt><dd>{{ opportunity.fecha_inicio or '—' }}</dd></div>
+        <div><dt>Tipo</dt><dd>{{ opportunity.tipo_oportunidad or '—' }}</dd></div>
+        <div><dt>Industria</dt><dd>{{ opportunity.industria or '—' }}</dd></div>
+        <div><dt>Valor estimado</dt><dd>{{ opportunity.valor_estimado or '—' }}</dd></div>
+      </dl>
+    </article>
+    <article class="od-info-card">
+      <h3>Ubicación y equipo responsable</h3>
+      <dl class="od-info-list">
+        <div><dt>Planta</dt><dd>{{ opportunity.planta or '—' }}</dd></div>
+        <div><dt>Ciudad</dt><dd>{{ opportunity.ciudad or '—' }}</dd></div>
+        <div><dt>País</dt><dd>{{ opportunity.pais or '—' }}</dd></div>
+      </dl>
+      <div class="od-team-block">
+        <span>Equipo responsable</span>
+        <div class="od-team-chips">
+          {% for user in opportunity.responsibles %}
+          <span title="{{ user.username }}">{{ user.name or user.username }}</span>
+          {% else %}<em>Sin responsables asignados</em>{% endfor %}
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="od-subsystem-heading">
+    <div><span class="od-kicker">CONTENIDO TÉCNICO</span><h3>Subsistemas</h3></div>
+    {% if current_user and current_user.is_admin %}
+    <button class="btn primary od-js-add-subsystem" type="button" data-opportunity-id="{{ opportunity.id }}">+ Nuevo subsistema</button>
+    {% endif %}
+  </div>
+
+  {% if opportunity.subsystems %}
+  <div class="od-subsystem-tabs" role="tablist">
+    {% for subsystem in opportunity.subsystems %}
+    <button type="button" class="od-subsystem-tab {% if loop.first %}active{% endif %}" data-subsystem-target="{{ subsystem.id }}">{{ subsystem.nombre }}</button>
+    {% endfor %}
+  </div>
+
+  {% for subsystem in opportunity.subsystems %}
+  <section class="od-subsystem-panel {% if not loop.first %}hidden{% endif %}" data-subsystem-panel="{{ subsystem.id }}">
+    <div class="od-subsystem-titlebar">
+      <div>
+        <h3>{{ subsystem.nombre }}</h3>
+        <p>{{ subsystem.descripcion_proceso or subsystem.nombre_proceso or 'Subsistema sin descripción.' }}</p>
+      </div>
+      {% if current_user and current_user.is_admin %}
+      <div class="od-inline-actions">
+        <button type="button" class="btn outline od-js-edit-subsystem" data-id="{{ subsystem.id }}" data-opportunity-id="{{ opportunity.id }}">Editar</button>
+        <form method="post" action="{{ url_for('oportunidades.delete_subsystem_route', subsystem_id=subsystem.id) }}" onsubmit="return confirm('¿Eliminar este subsistema?');">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+          <button class="btn danger-soft" type="submit">Eliminar</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="od-resource-actions">
+      <button class="od-resource-button od-js-show-offers" type="button" data-panel="offers-{{ subsystem.id }}"><span>PDF</span> Ofertas <b>{{ subsystem.offers|length }}</b></button>
+      <button class="od-resource-button od-js-show-images" type="button" data-panel="images-{{ subsystem.id }}"><span>IMG</span> Imágenes <b>{{ subsystem.images|length }}</b></button>
+      {% if current_user and current_user.is_admin %}
+      <button class="od-resource-button subtle od-js-add-offer" type="button" data-subsystem-id="{{ subsystem.id }}">+ Oferta</button>
+      <button class="od-resource-button subtle od-js-add-image" type="button" data-subsystem-id="{{ subsystem.id }}">+ Imagen</button>
+      {% endif %}
+    </div>
+
+    <div class="od-resource-panel hidden" id="offers-{{ subsystem.id }}">
+      <div class="od-resource-panel-head"><strong>Ofertas del subsistema</strong><span>Los PDF se conservan como documentos independientes.</span></div>
+      <div class="od-file-list">
+        {% for item in subsystem.offers %}
+        <div class="od-file-row">
+          <div><strong>{{ item.titulo or item.nombre_original }}</strong><small>{{ item.nombre_original }} · {{ (item.tamano / 1048576)|round(2) }} MB · {{ item.creado_por_nombre or item.creado_por_usuario }}</small></div>
+          <div class="od-inline-actions">
+            <a class="btn outline" href="{{ url_for('oportunidades.attachment_download', attachment_id=item.id) }}">Descargar</a>
+            {% if current_user and current_user.is_admin %}
+            <form method="post" action="{{ url_for('oportunidades.attachment_delete', attachment_id=item.id) }}" onsubmit="return confirm('¿Eliminar esta oferta?');">
+              <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="od-icon-danger" type="submit" title="Eliminar">×</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}<div class="od-empty-mini">Todavía no hay ofertas PDF en este subsistema.</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="od-resource-panel hidden" id="images-{{ subsystem.id }}">
+      <div class="od-resource-panel-head"><strong>Imágenes del desarrollo</strong><span>Vista conceptual o referencia de lo que se piensa desarrollar.</span></div>
+      <div class="od-image-grid">
+        {% for item in subsystem.images %}
+        <figure>
+          <button type="button" class="od-image-thumb od-js-image-preview" data-image-url="{{ url_for('oportunidades.attachment_view', attachment_id=item.id) }}" data-image-title="{{ item.titulo or item.nombre_original }}">
+            <img loading="lazy" src="{{ url_for('oportunidades.attachment_view', attachment_id=item.id) }}" alt="{{ item.titulo or item.nombre_original }}">
+          </button>
+          <figcaption><strong>{{ item.titulo or item.nombre_original }}</strong><small>{{ item.nombre_original }}</small></figcaption>
+          {% if current_user and current_user.is_admin %}
+          <form method="post" action="{{ url_for('oportunidades.attachment_delete', attachment_id=item.id) }}" onsubmit="return confirm('¿Eliminar esta imagen?');">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="od-image-delete" type="submit">×</button>
+          </form>
+          {% endif %}
+        </figure>
+        {% else %}<div class="od-empty-mini">Todavía no hay imágenes en este subsistema.</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="od-criteria-section">
+      <div class="od-section-title"><div><span class="od-kicker green">CRITERIOS DE ENTRADA</span><h4>Información técnica relevante</h4></div></div>
+      {% if subsystem.criteria %}
+      <div class="od-criteria-grid">
+        {% for criterion in subsystem.criteria %}
+        <div class="od-criterion"><small>{{ criterion.label }}</small><strong>{{ criterion.value }}</strong></div>
+        {% endfor %}
+      </div>
+      {% else %}<div class="od-empty-mini">Este subsistema aún no tiene criterios técnicos registrados.</div>{% endif %}
+    </div>
+
+    <div class="od-three-columns">
+      <article class="od-mini-card">
+        <div class="od-mini-card-head"><strong>Puntos de entrada</strong>{% if current_user and current_user.is_admin %}<button type="button" class="od-mini-add od-js-add-point" data-kind="entrada" data-subsystem-id="{{ subsystem.id }}">+</button>{% endif %}</div>
+        {% for item in subsystem.entry_points %}
+        <div class="od-small-row"><span>{{ item.tipo }}</span><small>{{ item.cantidad or '—' }} ud · Altura: {{ item.restriccion_altura or '—' }}</small>{% if current_user and current_user.is_admin %}<form method="post" action="{{ url_for('oportunidades.delete_child_route', table='entry_points', row_id=item.id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit">×</button></form>{% endif %}</div>
+        {% else %}<em>Sin registros</em>{% endfor %}
+      </article>
+      <article class="od-mini-card">
+        <div class="od-mini-card-head"><strong>Puntos de salida</strong>{% if current_user and current_user.is_admin %}<button type="button" class="od-mini-add od-js-add-point" data-kind="salida" data-subsystem-id="{{ subsystem.id }}">+</button>{% endif %}</div>
+        {% for item in subsystem.exit_points %}
+        <div class="od-small-row"><span>{{ item.tipo }}</span><small>{{ item.cantidad or '—' }} ud · Altura: {{ item.restriccion_altura or '—' }}</small>{% if current_user and current_user.is_admin %}<form method="post" action="{{ url_for('oportunidades.delete_child_route', table='exit_points', row_id=item.id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit">×</button></form>{% endif %}</div>
+        {% else %}<em>Sin registros</em>{% endfor %}
+      </article>
+      <article class="od-mini-card">
+        <div class="od-mini-card-head"><strong>Equipos</strong>{% if current_user and current_user.is_admin %}<button type="button" class="od-mini-add od-js-add-equipment" data-subsystem-id="{{ subsystem.id }}">+</button>{% endif %}</div>
+        {% for item in subsystem.equipment %}
+        <div class="od-small-row"><span>{{ item.tipo_equipo }} · {{ item.referencia }}</span><small>{{ item.cantidad or '—' }} ud</small>{% if current_user and current_user.is_admin %}<form method="post" action="{{ url_for('oportunidades.delete_child_route', table='equipment', row_id=item.id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit">×</button></form>{% endif %}</div>
+        {% else %}<em>Sin registros</em>{% endfor %}
+      </article>
+    </div>
+  </section>
+  {% endfor %}
+  {% else %}
+  <div class="od-empty-detail"><strong>Sin subsistemas</strong><p>Esta oportunidad todavía no tiene contenido técnico.</p></div>
+  {% endif %}
+</div>
+{% endif %}

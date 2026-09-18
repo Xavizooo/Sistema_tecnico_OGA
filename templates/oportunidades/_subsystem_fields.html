@@ -1,0 +1,63 @@
+{% macro subsystem_fields(prefix='', values={}) %}
+<div class="od-form-section">
+  <div class="od-form-section-head">
+    <div><strong>Identificación del subsistema</strong><small>Información visible en el detalle técnico.</small></div>
+  </div>
+  <div class="od-form-grid od-form-grid-2">
+    <label>Nombre del subsistema
+      <input name="{{ prefix }}nombre" value="{{ values.get('nombre','') }}" placeholder="Ej. Principal" required>
+    </label>
+    <label>Nombre del proceso
+      <input name="{{ prefix }}nombre_proceso" value="{{ values.get('nombre_proceso','') }}" placeholder="Ej. Transporte de azúcar">
+    </label>
+    <label class="wide">Descripción del proceso
+      <textarea name="{{ prefix }}descripcion_proceso" rows="2" placeholder="Qué debe realizar este subsistema">{{ values.get('descripcion_proceso','') }}</textarea>
+    </label>
+  </div>
+</div>
+
+<div class="od-form-section">
+  <div class="od-form-section-head">
+    <div><strong>Criterios de entrada</strong><small>Todos son opcionales y también alimentan la búsqueda avanzada.</small></div>
+  </div>
+  <div class="od-form-grid od-form-grid-3">
+    <label>Material transportado<input name="{{ prefix }}material_transportado" value="{{ values.get('material_transportado','') }}"></label>
+    <label>Flujo (kg/h)<input name="{{ prefix }}flujo_kg_h" value="{{ values.get('flujo_kg_h','') }}"></label>
+    <label>Tipo de flujo<input name="{{ prefix }}tipo_flujo" value="{{ values.get('tipo_flujo','') }}" placeholder="Continuo / Bache"></label>
+    <label>Distancia horizontal (m)<input name="{{ prefix }}distancia_horizontal_m" value="{{ values.get('distancia_horizontal_m','') }}"></label>
+    <label>Distancia vertical (m)<input name="{{ prefix }}distancia_vertical_m" value="{{ values.get('distancia_vertical_m','') }}"></label>
+    <label>Curvas x 90°<input name="{{ prefix }}curvas_90" value="{{ values.get('curvas_90','') }}"></label>
+    <label>Voltaje de potencia (V)<input name="{{ prefix }}voltaje_potencia" value="{{ values.get('voltaje_potencia','') }}"></label>
+    <label>Material contacto producto<input name="{{ prefix }}material_contacto" value="{{ values.get('material_contacto','') }}"></label>
+    <label>Material estructural<input name="{{ prefix }}material_estructural" value="{{ values.get('material_estructural','') }}"></label>
+    <label>Clasificación ATEX<input name="{{ prefix }}atex" value="{{ values.get('atex','') }}"></label>
+    <label>Clasificación NEC<input name="{{ prefix }}nec" value="{{ values.get('nec','') }}"></label>
+    <label>Ubicación<input name="{{ prefix }}ubicacion" value="{{ values.get('ubicacion','') }}" placeholder="Interior / Exterior / Parcial"></label>
+    <label>Pesaje OGA<input name="{{ prefix }}pesaje_oga" value="{{ values.get('pesaje_oga','') }}"></label>
+    <label>Aire comprimido<input name="{{ prefix }}aire_comprimido" value="{{ values.get('aire_comprimido','') }}"></label>
+    <label>Tipo de transporte<input name="{{ prefix }}tipo_transporte" value="{{ values.get('tipo_transporte','') }}"></label>
+  </div>
+</div>
+
+<details class="od-advanced-fields">
+  <summary>Más criterios técnicos</summary>
+  <div class="od-form-grid od-form-grid-3">
+    <label>Dist. unidad soplado/vacío (m)<input name="{{ prefix }}distancia_unidad_soplado_m" value="{{ values.get('distancia_unidad_soplado_m','') }}"></label>
+    <label>Curvas unidad soplado/vacío<input name="{{ prefix }}curvas_unidad_soplado" value="{{ values.get('curvas_unidad_soplado','') }}"></label>
+    <label>Preferencia tipología<input name="{{ prefix }}preferencia_tipologia" value="{{ values.get('preferencia_tipologia','') }}"></label>
+    <label>Preferencia acoples<input name="{{ prefix }}preferencia_acoples" value="{{ values.get('preferencia_acoples','') }}"></label>
+    <label>Diámetro tubería<input name="{{ prefix }}diametro_tuberia" value="{{ values.get('diametro_tuberia','') }}"></label>
+    <label>Tipo de acople<input name="{{ prefix }}tipo_acople" value="{{ values.get('tipo_acople','') }}"></label>
+    <label>Potencia (hp)<input name="{{ prefix }}potencia_hp" value="{{ values.get('potencia_hp','') }}"></label>
+    <label>Caudal (CFM)<input name="{{ prefix }}caudal_cfm" value="{{ values.get('caudal_cfm','') }}"></label>
+    <label>Diferencial presión (PSI)<input name="{{ prefix }}diferencial_presion_psi" value="{{ values.get('diferencial_presion_psi','') }}"></label>
+    <label>Tipo de bomba<input name="{{ prefix }}tipo_bomba" value="{{ values.get('tipo_bomba','') }}"></label>
+    <label>Área filtración (m²)<input name="{{ prefix }}area_filtracion_m2" value="{{ values.get('area_filtracion_m2','') }}"></label>
+    <label>Micraje filtración<input name="{{ prefix }}micraje_filtracion" value="{{ values.get('micraje_filtracion','') }}"></label>
+    <label>Consumo aire (CFM)<input name="{{ prefix }}consumo_aire_cfm" value="{{ values.get('consumo_aire_cfm','') }}"></label>
+    <label>Presión alimentación (PSI)<input name="{{ prefix }}presion_alimentacion_psi" value="{{ values.get('presion_alimentacion_psi','') }}"></label>
+    <label>Es multiequipos<input name="{{ prefix }}es_multiequipos" value="{{ values.get('es_multiequipos','') }}"></label>
+    <label class="wide">Observaciones técnicas<textarea name="{{ prefix }}observaciones" rows="2">{{ values.get('observaciones','') }}</textarea></label>
+  </div>
+</details>
+{% endmacro %}
