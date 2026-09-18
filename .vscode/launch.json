@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "OGA - REV 15 - RQ / PLANOS / BIBLIOTECA",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/INICIAR.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "subProcess": true
+    }
+  ]
+}

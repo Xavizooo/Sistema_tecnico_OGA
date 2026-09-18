@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Configuración inicial · OGA</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/typography.css') }}">
+</head>
+
+<body class="login-page setup-page">
+  <main class="login-shell setup-shell" aria-labelledby="setupTitle">
+    <section class="login-brand-panel" aria-label="OGA Sistema Técnico y Comercial">
+      <div class="login-brand-lockup">
+        <span class="login-oga-mark">OGA<sup>®</sup></span>
+        <strong>Sistema Técnico y Comercial</strong>
+      </div>
+      <p>Configuración protegida del acceso a las herramientas internas.</p>
+    </section>
+
+    <section class="login-form-panel">
+      <div class="login-form-wrap setup-form-wrap">
+        <span class="setup-kicker">PRIMER INICIO</span>
+        <h1 id="setupTitle">Crear administrador</h1>
+        <p class="login-subtitle">Esta pantalla aparece una sola vez. La contraseña será permanente y podrá cambiarse posteriormente.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+          <div class="login-alert {{ category }}" role="alert">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form class="login-form setup-form" method="post" autocomplete="off" data-confirm-password>
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+          <label for="name">Nombre completo</label>
+          <div class="login-input-wrap">
+            <input id="name" name="name" maxlength="100" required autofocus>
+          </div>
+
+          <label for="username">Usuario</label>
+          <div class="login-input-wrap">
+            <input id="username" name="username" maxlength="50" placeholder="Ej. lider.diseno" autocomplete="username" required>
+          </div>
+
+          <label for="password">Contraseña <span class="field-hint">mínimo 12 caracteres</span></label>
+          <div class="login-input-wrap">
+            <input id="password" name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+            <button class="password-toggle" type="button" data-password-toggle="password" aria-label="Mostrar contraseña">VER</button>
+          </div>
+
+          <label for="password_confirm">Confirmar contraseña</label>
+          <div class="login-input-wrap">
+            <input id="password_confirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+          </div>
+
+          <button class="login-submit" type="submit">Crear administrador y continuar</button>
+        </form>
+      </div>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+</body>
+
+</html>

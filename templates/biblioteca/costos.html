@@ -1,0 +1,14 @@
+{% extends 'biblioteca/base.html' %}
+{% block biblioteca_content %}
+<div class="single-panel">
+  <section class="card cost-card">
+    <div class="card-header"><h2>CARGA MASIVA DE COSTOS</h2></div>
+    <p class="helper-text">Hay {{ cost_count }} costos registrados.</p><p class="helper-text">Sube un Excel con columnas <strong>referencia</strong> y <strong>costo</strong>.</p>
+    <div class="biblio-notice">La carga reemplaza el listado completo de costos, igual que en Biblioteca v6. No modifica equipos, referencias ni documentos.</div>
+    <form onsubmit="return confirm('Esta carga reemplazará todos los costos actuales. ¿Continuar?');" method="post" enctype="multipart/form-data" class="cost-upload-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <input type="file" name="archivo_costos" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12" required>
+      <button class="primary-btn" type="submit">{{ biblio_icon('upload') }} Cargar Excel</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

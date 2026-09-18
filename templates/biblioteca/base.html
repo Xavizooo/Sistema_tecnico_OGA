@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Biblioteca · OGA{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/biblioteca.css') }}">{% endblock %}
+{% block body_class %} biblioteca-view{% endblock %}
+{% block content %}
+<div class="biblioteca-module">
+  <header class="bib-page-heading">
+    <div><span class="bib-eyebrow">HERRAMIENTAS / BIBLIOTECA</span>
+      <h1>{% if current_page == 'buscador' %}Buscador de referencias{% elif current_page == 'costos' %}Costos de biblioteca{% else %}Biblioteca de equipos{% endif %}</h1>
+      <p>{% if current_page == 'buscador' %}Filtra las características y consulta los documentos de cada referencia.{% elif current_page == 'costos' %}Actualiza el valor de tus referencias desde un archivo Excel.{% else %}Organiza equipos, características y documentación en un solo lugar.{% endif %}</p>
+    </div>
+    <span class="bib-catalog-badge">Catálogo compartido</span>
+  </header>
+  <nav class="biblioteca-tabs" aria-label="Módulos de biblioteca">
+    <a class="{% if current_page == 'biblioteca' %}active{% endif %}" href="{{ url_for('biblioteca.equipos') }}">Equipos y referencias</a>
+    <a class="{% if current_page == 'buscador' %}active{% endif %}" href="{{ url_for('biblioteca.buscador') }}">Buscador de referencias</a>
+    <a class="{% if current_page == 'costos' %}active{% endif %}" href="{{ url_for('biblioteca.costos') }}">Costos</a>
+  </nav>
+  {% block biblioteca_content %}{% endblock %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>window.bibliotecaUrls = {{ biblioteca_urls|tojson }};</script>
+<script src="{{ url_for('static', filename='js/biblioteca.js') }}"></script>
+{% block biblioteca_scripts %}{% endblock %}
+{% endblock %}

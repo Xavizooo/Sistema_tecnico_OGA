@@ -1,0 +1,3 @@
+Las imagenes de proyectos se guardan en esta carpeta.
+El nombre del archivo debe contener el numero del proyecto para poder cargarse.
+Ejemplo: para el proyecto 3945, un nombre valido es 3945_equipo.jpg

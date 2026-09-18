@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}{{ video.nombre }} · Capacitaciones{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/capacitaciones.css') }}">{% endblock %}
+{% block content %}
+<div class="workspace-toolbar training-detail-toolbar">
+  <div>
+    <span class="workspace-eyebrow">CAPACITACIONES</span>
+    <h1>{{ video.nombre }}</h1>
+    <p>{{ video.descripcion or 'Sin descripción.' }}</p>
+  </div>
+  <a class="btn outline" href="{{ url_for('capacitaciones.index') }}">VOLVER A VIDEOS</a>
+</div>
+
+<div class="training-detail-grid">
+  <section class="card training-player-card">
+    {% if video.estado == 'LISTO' %}
+      <video id="trainingPlayer" class="training-player" controls preload="metadata"
+        {% if video.ruta_poster %}poster="{{ url_for('capacitaciones.poster', video_id=video.id) }}"{% endif %}
+        data-hls="{{ url_for('capacitaciones.hls', video_id=video.id, filename='stream.m3u8') }}"
+        data-mp4="{{ url_for('capacitaciones.media_mp4', video_id=video.id) }}">
+        Su navegador no soporta reproducción de video HTML5.
+      </video>
+      <div class="training-player-note">Reproducción progresiva optimizada para la red interna.</div>
+    {% elif video.estado in ['PENDIENTE','PROCESANDO'] %}
+      <div class="training-processing" data-video-id="{{ video.id }}">
+        <span class="training-spinner"></span>
+        <h3>Preparando video…</h3>
+        <p>Puede salir de esta ventana. El procesamiento continúa en segundo plano.</p>
+        <div class="training-progress"><i style="width: {{ video.progreso or 0 }}%"></i></div>
+        <strong class="training-progress-number">{{ video.progreso or 0 }}%</strong>
+      </div>
+    {% else %}
+      <div class="training-processing training-processing-error">
+        <span class="training-error-symbol">!</span>
+        <h3>No fue posible procesar este video</h3>
+        <p>{{ video.error or 'Error de transcodificación.' }}</p>
+        {% if current_user and current_user.is_admin %}
+        <form method="post" action="{{ url_for('capacitaciones.retry_video', video_id=video.id) }}">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+          <button class="btn outline" type="submit">REINTENTAR</button>
+        </form>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+
+  <aside class="card training-info-card">
+    <span class="workspace-eyebrow">INFORMACIÓN</span>
+    <dl>
+      <div><dt>Estado</dt><dd><span class="training-status status-{{ video.estado|lower }}">{{ video.estado }}</span></dd></div>
+      <div><dt>Publicado por</dt><dd>{{ video.subido_por_nombre or video.subido_por_usuario or 'Usuario' }}</dd></div>
+      <div><dt>Archivo original</dt><dd>{{ video.archivo_original }}</dd></div>
+      {% if video.duracion_seg %}<div><dt>Duración</dt><dd>{{ (video.duracion_seg / 60)|round(1) }} min</dd></div>{% endif %}
+      {% if video.tamano_origen %}<div><dt>Tamaño cargado</dt><dd>{{ video.tamano_origen|filesize }}</dd></div>{% endif %}
+      {% if video.tamano_salida %}<div><dt>Tamaño optimizado</dt><dd>{{ video.tamano_salida|filesize }}</dd></div>{% endif %}
+    </dl>
+    {% if current_user and current_user.is_admin %}
+    <div class="training-admin-zone">
+      <small>Solo administradores</small>
+      <form method="post" action="{{ url_for('capacitaciones.delete', video_id=video.id) }}"
+        onsubmit="return confirm('¿Eliminar definitivamente este video de Capacitaciones?');">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+        <button class="btn danger" type="submit">ELIMINAR VIDEO</button>
+      </form>
+    </div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/capacitaciones.js') }}"></script>{% endblock %}

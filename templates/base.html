@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/typography.css') }}">
+  {% block head %}{% endblock %}
+</head>
+
+<body class="app-body{% block body_class %}{% endblock %}">
+  {% include '_header.html' %}
+
+  <main class="main-area{% if admin_page %} admin-main{% endif %}">
+      {% if not admin_page and not biblioteca_page and not project_design_page and not capacitaciones_page %}
+      <div class="top-actions">
+        {% if meta.get('procesado') %}<span class="status-chip ok">● PROCESADO</span>{% else %}<span class="status-chip idle">○ SIN PROCESAR</span>{% endif %}
+        <form method="post" action="{{ url_for('new_list') }}"
+          onsubmit="return confirm('NUEVA LISTA borrará el trabajo actual sin archivarlo. La Lista Maestra Factory se conserva. ¿Continuar?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+          <button class="btn danger-soft" type="submit">NUEVA LISTA</button>
+        </form>
+        <button type="button" class="btn outline" onclick="openArchiveModal()">ARCHIVAR</button>
+
+      </div>
+      {% endif %}
+
+    <section class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </section>
+  </main>
+
+  {% if not biblioteca_page and not project_design_page and not capacitaciones_page %}
+  <div id="archiveModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <span class="workspace-eyebrow">RESPALDO DEL PROYECTO</span>
+      <h3>ARCHIVAR TRABAJO</h3>
+      <p>Se guardará en HISTÓRICO. Solo se conservan los cinco trabajos más recientes.</p>
+      <form method="post" action="{{ url_for('archive') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+        <label>NOMBRE / N.º PROYECTO
+          <input name="name" required placeholder="Ej. 3966 - NUTRIMENTI">
+        </label>
+        <div class="modal-actions">
+          <button class="btn outline" type="button" onclick="closeArchiveModal()">CANCELAR</button>
+          <button class="btn primary" type="submit">ARCHIVAR</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% endif %}
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+
+</html>

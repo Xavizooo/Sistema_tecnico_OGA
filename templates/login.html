@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f8fc">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Iniciar sesión · OGA</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/typography.css') }}">
+</head>
+<body class="login-page login-reference">
+  <main class="login-shell" aria-labelledby="loginTitle">
+    <section class="login-brand-panel" aria-label="OGA Sistema Técnico y Comercial">
+      <div class="login-brand-decoration login-brand-decoration-a"></div>
+      <div class="login-brand-decoration login-brand-decoration-b"></div>
+      <div class="login-brand-lockup">
+        <span class="login-oga-mark">OGA<sup>®</sup></span>
+        <strong>Sistema Técnico y Comercial</strong>
+      </div>
+      <div class="login-brand-caption">GESTIÓN TÉCNICA · MATERIALES · PLANOS</div>
+    </section>
+
+    <section class="login-form-panel">
+      <div class="login-form-wrap">
+        <div class="login-main-logo" aria-label="OGA"><span>OGA<sup>®</sup></span></div>
+        <h1 id="loginTitle">Bienvenido de nuevo</h1>
+        <p class="login-subtitle">Inicia sesión para acceder a tu cuenta.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+          <div class="login-alert {{ category }}" role="alert">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form class="login-form" method="post" autocomplete="on">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+          <label for="username">Usuario <span>*</span></label>
+          <div class="login-input-wrap">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg>
+            <input id="username" name="username" value="{{ username or '' }}" autocomplete="username" maxlength="50" placeholder="usuario.oga" required autofocus>
+          </div>
+
+          <label for="password">Contraseña <span>*</span></label>
+          <div class="login-input-wrap">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M5 10h14v10H5z"/></svg>
+            <input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required>
+            <button class="password-toggle" type="button" data-password-toggle="password" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
+            </button>
+          </div>
+
+          <button class="login-submit" type="submit"><span>Iniciar sesión</span><b aria-hidden="true">→</b></button>
+        </form>
+
+        <div class="login-security-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.8 2.9 8 7 10 4.1-2 7-5.2 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+          <span>Acceso exclusivo para personal autorizado de OGA.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="login-footer">OGA SISTEMVAC · SISTEMA TÉCNICO Y COMERCIAL</footer>
+  <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+</body>
+</html>

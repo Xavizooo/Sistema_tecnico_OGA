@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{{ app_name }}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/typography.css') }}">
+</head>
+<body class="app-body home-body">
+  {% include '_header.html' %}
+
+  <main class="home-main app-page-shell">
+    <section class="management-hero">
+      <div class="management-hero-copy">
+        <span class="welcome-pill">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.2 5.7.8-4.1 4 .9 5.7-5.1-2.7-5.1 2.7.9-5.7-4.1-4 5.7-.8z"/></svg>
+          Bienvenido de vuelta
+        </span>
+        <h1>Sistema Técnico <span>OGA</span></h1>
+        <p>Gestiona materiales, requisiciones, costos, revisión de planos, proyectos, biblioteca y capacitaciones desde un solo lugar.</p>
+      </div>
+
+      <div class="welcome-work-card">
+        <span class="welcome-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.2 5.7.8-4.1 4 .9 5.7-5.1-2.7-5.1 2.7.9-5.7-4.1-4 5.7-.8z"/></svg>
+        </span>
+        <h2>¡Bienvenido a tu espacio de trabajo!</h2>
+        <p>Utiliza el menú lateral para navegar entre Generador de RQ, Revisor de Planos, Biblioteca, Proyectos Diseño y Capacitaciones.</p>
+        <div class="welcome-callout">
+          <strong>Comienza tu jornada productiva</strong>
+          <span>La Lista Maestra queda disponible como acceso principal y los demás módulos están organizados por herramienta.</span>
+        </div>
+      </div>
+    </section>
+
+    
+  </main>
+
+  <footer class="landing-footer app-footer">{{ app_name }} · OGA SISTEMVAC</footer>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

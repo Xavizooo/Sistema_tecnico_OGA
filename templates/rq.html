@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .rq-externos-manual { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 14px; }
+  .rq-externos-manual form.inline-add { display: none; gap: 8px; align-items: center; }
+  .rq-externos-manual form.inline-add.open { display: flex; }
+  .rq-externos-manual input[name="codigo"] { width: 180px; }
+  .rq-quitar-form { display: inline; }
+  .rq-quitar-btn { background: none; border: none; color: #9C0006; cursor: pointer; font-weight: 700; padding: 0 4px; }
+  .rq-quitar-btn:hover { text-decoration: underline; }
+</style>
+<div class="page-heading split">
+  <div>
+    <h2>RQ</h2>
+    <p>Primero revise el movimiento propuesto. Las cantidades solo se descuentan cuando carga el MOV o la RQ realmente
+      ejecutados.</p>
+  </div>
+  <a class="btn outline" href="{{ url_for('export_file', kind='rq') }}">EXPORTAR RQ COMPLETA</a>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h3>MOVIMIENTO PROPUESTO DESDE B1</h3>
+    <div class="table-wrap compact">
+      <table>
+        <thead>
+          <tr>
+            <th>CÓDIGO</th>
+            <th>NOMBRE</th>
+            <th>UD</th>
+            <th>PENDIENTE</th>
+            <th>B1</th>
+            <th>MOV</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in mov %}<tr>
+            <td>{{r.CODIGO}}</td>
+            <td>{{r.NOMBRE}}</td>
+            <td>{{r.UD}}</td>
+            <td>{{r.PENDIENTE|num}}</td>
+            <td>{{r['EXISTENCIA B1']|num}}</td>
+            <td><strong>{{r['MOV PROPUESTO']|num}}</strong></td>
+          </tr>{% else %}<tr>
+            <td colspan="6" class="empty">No hay movimientos propuestos.</td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if mov %}<a class="text-link" href="{{ url_for('export_file', kind='mov') }}">Exportar movimiento propuesto</a>{%
+    endif %}
+    <form class="subform" method="post" enctype="multipart/form-data" action="{{ url_for('load_mov') }}">
+      <h4>CARGAR MOVIMIENTO REALIZADO</h4>
+      <div class="form-row"><input name="number" placeholder="N.º MOV" required><input type="file" name="file"
+          accept=".xls,.xlsx" required><button class="btn primary" type="submit">CARGAR MOV</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>FECHA BASE DE RQ</h3>
+    <p>Cada material calcula su propia fecha. Se excluyen sábados, domingos, festivos de Colombia y días especiales del
+      calendario.</p>
+    <form class="form-row" method="post" action="{{ url_for('rq_date') }}"><input type="date" name="fecha_base"
+        value="{{ fecha_base }}" required><button class="btn primary" type="submit">ACTUALIZAR FECHAS</button></form>
+    <form class="subform" method="post" enctype="multipart/form-data" action="{{ url_for('load_rq') }}">
+      <h4>CARGAR RQ REALIZADA</h4>
+      <div class="form-row"><input name="number" placeholder="N.º RQ" required><input type="file" name="file"
+          accept=".xls,.xlsx" required><button class="btn primary" type="submit">CARGAR RQ</button></div>
+    </form>
+  </div>
+</div>
+
+<section class="rq-category-grid" aria-label="RQ por clasificación">
+  {% for group in rq_groups %}
+  <div class="card rq-category-card {% if group.is_unclassified %}rq-unclassified{% endif %}">
+    <div class="card-title-row rq-category-heading">
+      <div>
+        <span class="page-eyebrow">CLASIFICACIÓN</span>
+        <h3>{{ group.label }}</h3>
+        <p>{{ group.rows|length }} referencia{% if group.rows|length != 1 %}s{% endif %}</p>
+      </div>
+      <a class="btn {% if group.is_unclassified %}danger{% else %}outline{% endif %}"
+        href="{{ url_for('export_rq_category', slug=group.slug) }}">EXPORTAR EXCEL</a>
+    </div>
+
+    {% if group.category == 'EXTERNO' %}
+    <div class="rq-externos-manual">
+      <button type="button" class="btn outline small"
+        onclick="document.getElementById('form-agregar-externo').classList.toggle('open')">+ AGREGAR A
+        EXTERNOS</button>
+      <form id="form-agregar-externo" class="inline-add" method="post" action="{{ url_for('externos_add') }}">
+        <input name="codigo" placeholder="Código Factory" required>
+        <button class="btn primary small" type="submit">AGREGAR</button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>CÓDIGO</th>
+            <th>NOMBRE</th>
+            <th>UD</th>
+            <th>CANTIDAD</th>
+            <th>FECHA REQUERIDA</th>
+            {% if group.category == 'EXTERNO' %}<th></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in group.rows %}
+          <tr>
+            <td><strong>{{r.CODIGO}}</strong></td>
+            <td>{{r.NOMBRE}}</td>
+            <td>{{r.UD}}</td>
+            <td><strong>{{r.CANTIDAD|num}}</strong></td>
+            <td>{{r['FECHA REQUERIDA']}}</td>
+            {% if group.category == 'EXTERNO' %}
+            <td>
+              <form class="rq-quitar-form" method="post" action="{{ url_for('externos_remove') }}">
+                <input type="hidden" name="codigo" value="{{r.CODIGO}}">
+                <button type="submit" class="rq-quitar-btn" title="Quitar de externos">✕</button>
+              </form>
+            </td>
+            {% endif %}
+          </tr>
+          {% if r.NOTA %}{% for nota in r.NOTA.split('\n') if nota.strip() and nota.strip().upper() != 'NO' %}
+          <tr class="rq-note-row {% if 'VERIFICAR TERMINADO' in nota %}warning-row{% endif %}">
+            <td></td>
+            <td><b>NOTA:</b></td>
+            <td colspan="{% if group.category == 'EXTERNO' %}4{% else %}3{% endif %}">{{nota}}</td>
+          </tr>
+          {% endfor %}{% endif %}
+          {% else %}
+          <tr>
+            <td colspan="{% if group.category == 'EXTERNO' %}6{% else %}5{% endif %}" class="empty">
+              {% if group.category == 'EXTERNO' %}Sin códigos agregados todavía.{% else %}Sin referencias.{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="card">
+    <p class="empty">No hay RQ propuesta. Presione PROCESAR en CARGAR LISTA.</p>
+  </div>
+  {% endfor %}
+</section>
+
+<div class="card">
+  <h3>MOV / RQ CARGADOS</h3>
+  <p><span class="legend green"></span> Correcto &nbsp; <span class="legend red"></span> Faltante &nbsp; <span
+      class="legend blue"></span> Sobrante</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>TIPO</th>
+          <th>NÚMERO</th>
+          <th>CÓDIGO</th>
+          <th>CANTIDAD</th>
+          <th>ESTADO</th>
+          <th>OBSERVACIÓN</th>
+          <th>FECHA</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in trace %}<tr class="status-{{r.ESTADO|lower}}">
+          <td>{{r.TIPO}}</td>
+          <td><strong>{{r.NUMERO}}</strong></td>
+          <td>{{r.CODIGO}}</td>
+          <td>{{r.CANTIDAD|num}}</td>
+          <td>{{r.ESTADO}}</td>
+          <td>{{r.OBSERVACION}}</td>
+          <td>{{r.FECHA}}</td>
+        </tr>{% else %}<tr>
+          <td colspan="7" class="empty">Aún no se han cargado movimientos ni RQ reales.</td>
+        </tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

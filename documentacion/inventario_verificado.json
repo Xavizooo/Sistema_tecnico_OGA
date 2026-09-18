@@ -1,0 +1,81 @@
+{
+  "archive_bytes": 947573260,
+  "uncompressed_bytes": 1017495354,
+  "categories": {
+    ".git": [
+      332982928,
+      332877907,
+      31
+    ],
+    "app.py": [
+      27697,
+      5668,
+      1
+    ],
+    "build": [
+      38307444,
+      34036194,
+      16
+    ],
+    "data": [
+      278628632,
+      269781049,
+      188
+    ],
+    "desktop.ini": [
+      114,
+      114,
+      1
+    ],
+    "OGA_Biblioteca.exe": [
+      11452390,
+      11267225,
+      1
+    ],
+    "OGA_Biblioteca.spec": [
+      844,
+      410,
+      1
+    ],
+    "requirements.txt": [
+      52,
+      52,
+      1
+    ],
+    "static": [
+      16955,
+      5051,
+      2
+    ],
+    "templates": [
+      21283,
+      5311,
+      4
+    ],
+    "_internal": [
+      356012044,
+      299295752,
+      943
+    ],
+    "__pycache__": [
+      44971,
+      17871,
+      1
+    ]
+  },
+  "identical_internal_data_files": 188,
+  "identical_internal_data_bytes": 278628632,
+  "different_internal_data": [],
+  "only_internal_data": [
+    [
+      "oga_biblio_v6/_internal/data/archivos/planos_pdf/FDV1324784.pdf",
+      1594442
+    ]
+  ],
+  "sha256_identical_original_data_files": 188,
+  "rev14_files_kept_identical": 69,
+  "referenced_pdf_missing": [],
+  "pdf_total_kept": 185,
+  "functional_checks": 56,
+  "regression_tests": 7
+}

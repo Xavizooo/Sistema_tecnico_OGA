@@ -1,0 +1,18 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+build/
+dist/
+_internal/
+*.exe
+*.zip
+*.zip.*
+.DS_Store
+desktop.ini
+# Work data and account information are local and should not be public.
+data/
+work/
+planos_uploads/
+planos_revisados/
+planos_state.json

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading split">
+    <div>
+        <h2>VALOR</h2>
+        <p>Lista de precios ordenada de mayor a menor y costo del trabajo.</p>
+    </div><a class="btn outline" href="{{ url_for('export_file', kind='valor') }}">EXPORTAR EXCEL</a>
+</div>
+<div class="kpi-grid">
+    <div class="kpi"><span>VALOR TOTAL</span><strong>{{total|peso}}</strong></div>
+    <div class="kpi"><span>REFERENCIAS SIN VALOR</span><strong>{{missing}}</strong></div>
+</div>
+{% if equipos %}<div class="card">
+    <h3>VALOR POR EQUIPO</h3>
+    <div class="table-wrap compact">
+        <table>
+            <thead>
+                <tr>
+                    <th>EQUIPO</th>
+                    <th>VALOR</th>
+                    <th>SIN VALOR</th>
+                </tr>
+            </thead>
+            <tbody>{% for r in equipos %}<tr>
+                    <td>{{r.EQUIPO}}</td>
+                    <td><strong>{{r.VALOR|peso}}</strong></td>
+                    <td>{{r['SIN VALOR']}}</td>
+                </tr>{% endfor %}</tbody>
+        </table>
+    </div>
+</div>{% endif %}
+<div class="card">
+    <div class="card-title-search">
+        <div>
+            <h3>REFERENCIAS · DE MAYOR A MENOR PRECIO</h3>
+            <br>
+        </div>
+        <form class="search" action="{{ url_for('valor') }}" method="GET">
+            <input type="text" name="q" value="{{ busqueda }}" placeholder="Buscar...">
+            <button class="btn primary small" type="submit">Buscar</button>
+        </form>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>CÓDIGO</th>
+                    <th>NOMBRE</th>
+                    <th>UD</th>
+                    <th>CANTIDAD</th>
+                    <th>PRECIO</th>
+                    <th>SUBTOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}<tr class="{% if r.PRECIO == 'VALOR NO DISPONIBLE' %}missing-cost-row{% endif %}">
+                    <td>{{r.CODIGO}}</td>
+                    <td>{{r.NOMBRE}}</td>
+                    <td>{{r.UD}}</td>
+                    <td>{{r.CANTIDAD|num}}</td>
+                    <td>{{r.PRECIO|peso}}</td>
+                    <td><strong>{{r.SUBTOTAL|peso}}</strong></td>
+                </tr>{% else %}<tr>
+                    <td colspan="6" class="empty">No hay valores calculados.</td>
+                </tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

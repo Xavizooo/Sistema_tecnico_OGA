@@ -1,0 +1,83 @@
+PRUEBAS SOBRE UNA COPIA TEMPORAL
+
+OK - Catalogo incluye documentos PDF
+OK - Instalacion sin usuarios abre configuracion inicial
+OK - Biblioteca requiere iniciar sesion
+OK - Los documentos requieren iniciar sesion
+OK - Inicio de sesion real
+OK - Pantalla /inicio
+OK - Pantalla /factory
+OK - Pantalla /cargar
+OK - Pantalla /lm
+OK - Pantalla /rq
+OK - Pantalla /valor
+OK - Pantalla /repuestos
+OK - Pantalla /calendario
+OK - Pantalla /historico
+OK - Pantalla /copias-seguridad
+OK - Pantalla /planos/
+OK - Pantalla /biblioteca
+OK - Pantalla /biblioteca/equipos
+OK - Pantalla /biblioteca/buscador
+OK - Pantalla /biblioteca/costos
+OK - Un unico menu principal
+OK - Biblioteca no muestra Nueva lista ni Archivar de RQ
+OK - Busqueda literal no interpreta regex
+OK - POST sin token bloqueado
+OK - POST con token falso bloqueado
+OK - Crear equipo
+OK - Codigo de equipo duplicado rechazado
+OK - Editar equipo
+OK - Crear caracteristica 1
+OK - Crear caracteristica 2
+OK - Caracteristicas y subcaracteristicas guardadas
+OK - Editar caracteristica
+OK - Generar referencia con seleccion
+OK - Nombre incorrecto de archivo rechazado
+OK - Crear referencia y adjuntar PDF
+OK - Archivo PDF guardado sin alterar bytes
+OK - Costo guardado
+OK - Referencia duplicada rechazada
+OK - Vista referencia existente y costo formateado
+OK - Vista PDF protegida
+OK - Descarga PDF completa
+OK - Tipo de documento desconocido rechazado
+OK - Traversal con separador de Windows bloqueado
+OK - No elimina equipos con referencias
+OK - No elimina caracteristicas usadas
+OK - Actualizar costo de referencia
+OK - Buscador por equipo y caracteristicas
+OK - Excel ilegible no borra costos
+OK - Columnas incorrectas no modifican costos
+OK - Carga masiva reemplaza listado completo
+OK - Ingreso de colaborador
+OK - Catalogo compartido entre usuarios
+OK - Eliminar referencia y PDF asociado
+OK - Eliminar equipo sin referencias y sus caracteristicas
+OK - Auditoria de Biblioteca registrada
+OK - Cerrar sesion retira acceso a Biblioteca
+
+56 comprobaciones superadas. Los datos originales no se modificaron.
+
+REGRESION RQ
+test_accepts_inventor_length_variants (test_engine_linear_rules.LengthParsingTests.test_accepts_inventor_length_variants) ... ok
+test_legacy_round_fallback_is_restricted_to_round_stock (test_engine_linear_rules.LengthParsingTests.test_legacy_round_fallback_is_restricted_to_round_stock) ... ok
+test_incompatible_linear_rule_does_not_erase_unit_quantity (test_engine_linear_rules.RuleTests.test_incompatible_linear_rule_does_not_erase_unit_quantity) ... ok
+test_round_uses_length_plus_five_mm_and_returns_meters (test_engine_linear_rules.RuleTests.test_round_uses_length_plus_five_mm_and_returns_meters) ... ok
+test_rule_inference_requires_meter_unit (test_engine_linear_rules.RuleTests.test_rule_inference_requires_meter_unit) ... ok
+test_sheet_equivalent_is_rounded_only_once (test_engine_linear_rules.RuleTests.test_sheet_equivalent_is_rounded_only_once) ... ok
+test_tube_uses_length_plus_ten_mm_per_piece (test_engine_linear_rules.RuleTests.test_tube_uses_length_plus_ten_mm_per_piece) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.017s
+
+OK
+
+RENDERIZADO OFFLINE CON CHROMIUM
+ · OGA widths [1440, 1440]
+modal bounds {'x': 0, 'y': 0, 'width': 1440, 'height': 1000}
+
+Interfaz verificada a 1440x1000 y 390x844, sin desbordamiento horizontal.
+Modales y filtros ejercitados. Sin errores de JavaScript en la verificacion final.
+Los PDF se comprobaron mediante respuestas HTTP de prueba y bytes; no se
+ejecuto el visor nativo del navegador en Windows.

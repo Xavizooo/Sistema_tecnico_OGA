@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading split">
+  <div>
+    <h2>LISTA DE REPUESTOS</h2>
+    <p>Generada automáticamente desde la Lista Maestra Factory.</p>
+  </div><a class="btn outline" href="{{ url_for('export_file', kind='repuestos') }}">EXPORTAR EXCEL</a>
+</div>
+
+<div class="grid-2 spare-guides">
+  <div class="card guide-card">
+    <h3>TIPO DE REPUESTO</h3>
+    <div class="guide-row"><span class="guide-code">CR</span>
+      <div><b>CRÍTICO</b><small>La falla puede detener el equipo o la producción. Alta prioridad de
+          disponibilidad.</small></div>
+    </div>
+    <div class="guide-row"><span class="guide-code">IM</span>
+      <div><b>IMPORTANTE</b><small>La falla afecta el funcionamiento, pero existe margen para intervenir o conseguir el
+          repuesto.</small></div>
+    </div>
+    <div class="guide-row"><span class="guide-code">BR</span>
+      <div><b>BAJA ROTACIÓN</b><small>Repuesto de menor impacto; su ausencia no genera una parada inmediata.</small>
+      </div>
+    </div>
+  </div>
+  <div class="card guide-card">
+    <h3>FRECUENCIA DE CAMBIO</h3>
+    <div class="guide-row"><span class="guide-code">FA</span>
+      <div><b>FRECUENCIA ALTA</b><small>Se cambia o consume regularmente por desgaste o mantenimiento
+          preventivo.</small></div>
+    </div>
+    <div class="guide-row"><span class="guide-code">FM</span>
+      <div><b>FRECUENCIA MEDIA</b><small>Se cambia algunas veces durante la vida útil del equipo, según sus condiciones
+          de operación.</small></div>
+    </div>
+    <div class="guide-row"><span class="guide-code">FB</span>
+      <div><b>FRECUENCIA BAJA</b><small>Rara vez se cambia; normalmente se requiere por falla, daño o reparación
+          mayor.</small></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>CÓDIGO</th>
+          <th>NOMBRE</th>
+          <th>CANTIDAD</th>
+          <th>UD</th>
+          <th>CLASE</th>
+          <th>FRECUENCIA</th>
+          <th>NOTA</th>
+          <th>OBSERVACIÓN / EQUIPO</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}<tr>
+          <td>{{r.CODIGO}}</td>
+          <td>{{r.NOMBRE}}</td>
+          <td>{{r.CANTIDAD|num}}</td>
+          <td>{{r.UD}}</td>
+          <td><span class="pill">{{r.CLASIFICACION}}</span></td>
+          <td><span class="pill">{{r.FRECUENCIA}}</span></td>
+          <td class="multiline">{{r.NOTA}}</td>
+          <td>{{r.OBSERVACION}}</td>
+        </tr>{% else %}<tr>
+          <td colspan="8" class="empty">No hay repuestos calculados.</td>
+        </tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

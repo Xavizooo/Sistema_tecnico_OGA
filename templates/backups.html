@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading split">
+  <div>
+    <span class="page-eyebrow">PROTECCIÓN DEL TRABAJO</span>
+    <h2>COPIAS DE SEGURIDAD</h2>
+    <p>El sistema guarda el trabajo después de cada carga o procesamiento y antes de iniciar una nueva lista.</p>
+  </div>
+  <form method="post" action="{{ url_for('backup_create') }}">
+    <button class="btn primary" type="submit">+ CREAR COPIA AHORA</button>
+  </form>
+</div>
+
+<div class="backup-summary-grid">
+  <div class="backup-summary-card">
+    <span>ESTADO</span>
+    <strong>AUTOGUARDADO ACTIVO</strong>
+    <p>No depende de que la pestaña permanezca abierta.</p>
+  </div>
+  <div class="backup-summary-card">
+    <span>COPIAS CONSERVADAS</span>
+    <strong>{{ copies|length }} / 10</strong>
+    <p>Las más antiguas se eliminan automáticamente.</p>
+  </div>
+  <div class="backup-summary-card">
+    <span>ÚLTIMA COPIA</span>
+    <strong>{% if copies %}{{ copies[0].fecha }}{% else %}SIN COPIAS{% endif %}</strong>
+    <p>{% if copies %}{{ copies[0].motivo }}{% else %}Se creará al realizar una acción.{% endif %}</p>
+  </div>
+</div>
+
+<div class="info-strip backup-note">
+  <strong>RECUPERACIÓN AUTOMÁTICA:</strong>
+  si se cierra el navegador o se apaga el computador, abra nuevamente el programa. El trabajo actual seguirá disponible.
+  Use esta pantalla únicamente si necesita regresar a un punto anterior.
+</div>
+
+<div class="card">
+  <div class="card-title-row">
+    <div>
+      <h3>PUNTOS DE RECUPERACIÓN</h3>
+      <p>Restaurar una copia reemplaza el trabajo visible, pero primero se guarda automáticamente el estado actual.</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>N.º</th>
+          <th>FECHA Y HORA</th>
+          <th>MOTIVO</th>
+          <th>ESTADO</th>
+          <th>TAMAÑO</th>
+          <th>ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for copy in copies %}
+        <tr>
+          <td><span class="row-location">{{ loop.index }}</span></td>
+          <td><strong>{{ copy.fecha }}</strong></td>
+          <td>{{ copy.motivo }}</td>
+          <td>{% if copy.procesado %}<span class="state gestionado">PROCESADO</span>{% else %}<span class="state parcial">EN PROCESO</span>{% endif %}</td>
+          <td>{{ copy.tamano|filesize }}</td>
+          <td>
+            <div class="actions-cell">
+              <form method="post" action="{{ url_for('backup_recover', autosave_id=copy.id) }}"
+                onsubmit="return confirm('¿Restaurar esta copia? El estado actual se guardará antes de reemplazarlo.');">
+                <button class="btn small primary" type="submit">RESTAURAR</button>
+              </form>
+              <form method="post" action="{{ url_for('backup_delete', autosave_id=copy.id) }}"
+                onsubmit="return confirm('¿Eliminar definitivamente esta copia de seguridad?');">
+                <button class="btn small danger" type="submit">ELIMINAR</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty">Todavía no hay copias. Cargue un archivo o use CREAR COPIA AHORA.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

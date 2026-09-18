@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .factory-form-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .form-section {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    padding: 16px 18px 18px;
+  }
+
+  .form-section-title {
+    margin: 0 0 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #5B6570;
+  }
+
+  .form-section .field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px 18px;
+  }
+
+  .form-section .field-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+  }
+
+  .form-section .field-grid label.wide {
+    grid-column: 1 / -1;
+  }
+
+  .form-section .field-grid input,
+  .form-section .field-grid select {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .factory-form .form-submit {
+    margin-top: 4px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 640px) {
+    .form-section .field-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .factory-form .form-submit {
+      justify-content: stretch;
+    }
+
+    .factory-form .form-submit .btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="page-heading split">
+  <div>
+    <h2>LISTA MAESTRA FACTORY</h2>
+    <p>La lista maestra se edita en Excel. Desde el programa solo se agregan códigos nuevos.</p>
+  </div><a class="btn outline" href="{{ url_for('factory_download') }}">DESCARGAR MAESTRA</a>
+</div>
+
+<div class="grid-2 factory-top">
+  <div class="card">
+    <h3>LISTA MAESTRA FACTORY</h3>
+    <p>Se mantiene aunque use NUEVA LISTA. Solo cambia cuando cargue otra lista maestra o agregue un código nuevo.</p>
+    {% if current_user.is_admin %}
+    <div class="button-row">
+      <form method="post" action="{{ url_for('factory_reload') }}"><button class="btn primary" type="submit">ACTUALIZAR
+          DESDE EL EXCEL</button></form>
+      <form class="upload-inline" method="post" enctype="multipart/form-data" action="{{ url_for('factory_replace') }}">
+        <input type="file" name="file" accept=".xlsx" required><button class="btn danger" type="submit"
+          onclick="return confirm('Esto reemplazará la Lista Maestra Factory actual. Se generará un respaldo. ¿Continuar?');">CARGAR
+          NUEVA MAESTRA</button></form>
+    </div>
+    {% else %}
+    <div class="info-strip">La actualización de la Lista Maestra está reservada para administradores.</div>
+    {% endif %}
+    <div class="metric"><strong>{{total}}</strong><span> códigos cargados</span></div>
+  </div>
+  <div class="card rules-card">
+    <h3>REGLAS FIJAS</h3>
+    <p>En el Excel maestro solo asigne el número de regla a cada referencia.</p>
+    <div class="rules-mini">{% for k,v in rules.items() %}<div><b>REGLA {{k}}</b><span>{{v}}</span></div>{% endfor %}
+    </div>
+  </div>
+</div>
+
+{% if current_user.is_admin %}
+<div class="card">
+  <h3>NUEVO CÓDIGO FACTORY</h3>
+  <p>Al guardar se agrega como una nueva fila del Excel maestro. Los códigos existentes no se editan desde el programa.
+  </p>
+
+  <form class="factory-form" method="post" action="{{ url_for('factory_new') }}">
+    <div class="factory-form-sections">
+
+      <div class="form-section">
+        <p class="form-section-title">Identificación</p>
+        <div class="field-grid">
+          <label>Código<input name="CODIGO" required></label>
+          <label class="wide">Nombre / Descripción<input name="NOMBRE" required></label>
+          <label>U<select name="U">
+              <option>Ud</option>
+              <option>M</option>
+            </select></label>
+          <label>Últ. costo<input name="ULT.COSTO" type="number" step="any" placeholder="$"></label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Clasificación y regla</p>
+        <div class="field-grid">
+          <label>Tipo<select name="TIPO">
+              <option>ENSAMBLE</option>
+              <option>PRODUCCION</option>
+              <option>C.TEMPRANA</option>
+            </select></label>
+          <label>Regla<select name="REGLA">
+              <option>NO</option>{% for k in rules.keys() %}<option>{{k}}</option>{% endfor %}
+            </select></label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Repuestos</p>
+        <div class="master-legend"><b>TIPO REPUESTO:</b> CR Crítico · IM Importante · BR Baja rotación &nbsp;&nbsp;
+          <b>FRECUENCIA:</b> FA Alta · FM Media · FB Baja</div>
+        <div class="field-grid">
+          <label>Repuesto<select name="REPUESTO">
+              <option>NO</option>
+              <option>SI</option>
+            </select></label>
+          <label>Tipo de repuesto<select name="TIPO DE REPUESTO">
+              <option>NO</option>
+              <option>CR</option>
+              <option>IM</option>
+              <option>BR</option>
+            </select></label>
+          <label>Frecuencia<select name="FRECUENCIA DE CAMBIO">
+              <option>NO</option>
+              <option>FA</option>
+              <option>FM</option>
+              <option>FB</option>
+            </select></label>
+          <label>Repuesto derivado<select name="REPUESTO DERIVADO">
+              <option>NO</option>
+              <option>SI</option>
+            </select></label>
+          <label class="wide">Repuestos asociados<input name="DESCRIPCION DE LOS REPUESTOS ASOCIADOS"
+              placeholder="Ej. 1103010011;1103010012"></label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <p class="form-section-title">Nota</p>
+        <div class="field-grid">
+          <label>¿Lleva nota?<select name="NOTA" id="selectNOTA">
+              <option value="NO">NO</option>
+              <option value="SI">SI</option>
+            </select></label>
+          <label class="wide">Descripción de la nota<input name="DESCRIPCION DE LA NOTA" id="inputDescripcion"
+              placeholder="Separe varias notas con ;"></label>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="form-submit"><button class="btn primary" type="submit">+ GUARDAR CÓDIGO</button></div>
+  </form>
+
+  <script>
+    (function () {
+      const selectNota = document.getElementById('selectNOTA');
+      const inputDescripcion = document.getElementById('inputDescripcion');
+
+      function toggleNotaRequired() {
+        const esSi = selectNota.value === 'SI';
+        inputDescripcion.required = esSi;
+        inputDescripcion.placeholder = esSi
+          ? 'Obligatorio: separe varias notas con ;'
+          : 'Separe varias notas con ;';
+      }
+
+      selectNota.addEventListener('change', toggleNotaRequired);
+      toggleNotaRequired();
+    })();
+  </script>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-title-row">
+    <div>
+      <h3>LISTA MAESTRA FACTORY</h3>
+      <p>Vista rápida de 75 registros por página. UBICACIÓN corresponde a la fila real del Excel.</p>
+    </div>
+    <form class="search" method="get"><input name="q" value="{{q}}" placeholder="Buscar código o nombre"><button
+        class="btn primary small">BUSCAR</button></form>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>UBICACIÓN</th>
+          <th>CÓDIGO</th>
+          <th>NOMBRE</th>
+          <th>U</th>
+          <th>ULT.COSTO</th>
+          <th>REPUESTO</th>
+          <th>TIPO REP.</th>
+          <th>FRECUENCIA</th>
+          <th>REP. DERIVADO</th>
+          <th>TIPO</th>
+          <th>NOTA</th>
+          <th>DESCRIPCION</th>
+          <th>REGLA</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}<tr>
+          <td><span class="row-location">{{r.UBICACION}}</span></td>
+          <td><strong>{{r.CODIGO}}</strong></td>
+          <td>{{r.NOMBRE}}</td>
+          <td>{{r.U}}</td>
+          <td>{{r['ULT.COSTO']|peso}}</td>
+          <td>{{r.REPUESTO}}</td>
+          <td>{{r['TIPO DE REPUESTO']}}</td>
+          <td>{{r['FRECUENCIA DE CAMBIO']}}</td>
+          <td>{{r['REPUESTO DERIVADO']}}</td>
+          <td>{{r.TIPO}}</td>
+          <td>{{r.NOTA}}</td>
+          <td>{{r['DESCRIPCION DE LA NOTA']}}</td>
+          <td>{{r.REGLA}}</td>
+        </tr>{% else %}<tr>
+          <td colspan="12" class="empty">No hay registros.</td>
+        </tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">{% if page>1 %}<a href="?q={{q}}&page={{page-1}}">← ANTERIOR</a>{% endif %}<span>Página
+      {{page}} de {{pages}}</span>{% if page<pages %}<a href="?q={{q}}&page={{page+1}}">SIGUIENTE →</a>{% endif %}</div>
+</div>
+{% endblock %}

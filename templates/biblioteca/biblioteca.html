@@ -1,0 +1,133 @@
+{% extends 'biblioteca/base.html' %}
+{% block biblioteca_content %}
+<div class="content-grid bib-grid">
+  <section class="card equipos-card">
+    <div class="card-header row-between">
+      <h2>EQUIPOS</h2>
+      <button class="primary-btn" type="button" onclick="openModal('modalEquipoNuevo')">{{ biblio_icon('plus') }} Nuevo equipo</button>
+    </div>
+    <form method="get" class="search-box">
+      <input type="hidden" name="equipo" value="{{ selected_equipo.codigo if selected_equipo else '' }}">
+      {{ biblio_icon('search') }}
+      <input type="text" name="q_equipo" placeholder="Buscar" value="{{ q_equipo }}">
+    </form>
+    <div class="table-head equipos-head"><span>ITEM</span><span>CÓDIGO</span><span>NOMBRE</span><span></span></div>
+    <div class="equipos-list">
+      {% for e in equipos %}
+      <div class="equipo-row {% if selected_equipo and e.codigo==selected_equipo.codigo %}active{% endif %}">
+        <a href="{{ url_for('biblioteca.equipos', equipo=e.codigo) }}" class="equipo-main"><span>{{ e.item }}</span><span class="tag">{{ e.codigo }}</span><span>{{ e.nombre }}</span></a>
+        <div class="actions">
+          <button type="button" class="icon-btn blue" title="Editar equipo" onclick='openEditEquipo({{ e|tojson|safe }})'>{{ biblio_icon('edit') }}</button>
+          <form method="post" action="{{ url_for('biblioteca.delete_equipo', codigo=e.codigo) }}" onsubmit="return confirm('¿Eliminar este equipo?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="icon-btn red" title="Eliminar">{{ biblio_icon('trash') }}</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card chars-card">
+    <div class="card-header"><h2>CARACTERÍSTICA</h2></div>
+    {% if selected_equipo %}
+      <div class="selected-title">
+        <span class="pill">{{ selected_equipo.codigo }}</span>
+        <strong>{{ selected_equipo.nombre }}</strong>
+        <button class="primary-btn small" type="button" onclick="openModal('modalCaracteristicaNueva')">{{ biblio_icon('plus') }} Nueva característica</button>
+      </div>
+      <input type="hidden" id="biblioteca-equipo-codigo" value="{{ selected_equipo.codigo }}">
+        <div class="chars-grid main-scroll">
+          {% for c in chars %}
+          <div class="char-block">
+            <div class="char-index">{{ c.orden }}</div>
+            <div class="char-body">
+              <div class="char-label {{ color_class(c.grupo_color) }}">
+                {{ c.nombre }}
+                <div class="char-actions">
+                  <button class="icon-btn blue mini" type="button" title="Editar característica" onclick='openEditChar({{ c|tojson|safe }})'>{{ biblio_icon('edit') }}</button>
+                  <form method="post" action="{{ url_for('biblioteca.delete_caracteristica', equipo_codigo=c.equipo_codigo, orden=c.orden) }}" onsubmit="return confirm('¿Eliminar esta característica?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <button class="icon-btn red mini" type="submit" title="Eliminar característica">{{ biblio_icon('trash') }}</button>
+                  </form>
+                </div>
+              </div>
+              <select class="subchoice" name="subchoice_{{ c.orden }}">
+                {% for s in c.subcaracteristicas %}
+                {% set code = s.codigo|string %}
+                <option value="{{ code }}" {% if selected_map[c.orden]==code %}selected{% endif %}>{{ code }}. {{ s.texto }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="center-search"><button class="primary-btn wide" type="button" onclick="submitBibliotecaSearch()">Buscar</button></div>
+    {% else %}
+      <p>No hay equipos creados.</p>
+    {% endif %}
+  </section>
+
+  <section class="card image-card">
+    <div class="card-header"><h2>VISTA PREVIA</h2></div>
+    <div class="ref-label">Referencia Encontrada</div>
+    <div class="image-top-row">
+      <div class="reference-box">{{ generated_ref }}</div>
+      {% if selected_equipo %}<button class="primary-btn" type="button" onclick="openModal('modalReferenciaNueva')">{{ biblio_icon('plus') }} Crear referencia</button>{% endif %}
+    </div>
+    <div class="cost-line">Costo: <strong>{{ format_money(selected_ref.costo if selected_ref else '') }}</strong></div>
+    {% if selected_ref %}
+      <div class="status success-text">Referencia existente</div>
+      {% if selected_ref.has_planos %}
+      <div class="pdf-viewer-wrap"><iframe class="pdf-viewer" title="Vista previa del plano PDF" loading="lazy" src="{{ url_for('biblioteca.uploaded_file', kind='planos', filename=selected_ref.planos) }}#toolbar=0&navpanes=0&page=1"></iframe></div>
+      {% else %}
+      <div class="pdf-viewer-wrap empty"><span>Sin plano PDF para esta referencia</span></div>
+      {% endif %}
+    {% else %}
+      <div class="status error-text">Referencia no existente</div>
+      <div class="pdf-viewer-wrap empty"><span>Sin plano PDF para esta referencia</span></div>
+    {% endif %}
+  </section>
+
+  <section class="card refs-card">
+    <div class="card-header"><h2>REFERENCIAS</h2></div>
+    <div class="tiny-tab">Detalles de las referencias de {{ selected_equipo.codigo if selected_equipo else '' }}</div>
+    <form method="get" class="search-box compact">
+      <input type="hidden" name="equipo" value="{{ selected_equipo.codigo if selected_equipo else '' }}">
+      {{ biblio_icon('search') }}
+      <input type="text" name="q_ref" placeholder="Buscar en referencias..." value="{{ q_ref }}">
+    </form>
+    <div class="refs-table">
+      <div class="refs-head no-image"><span>CÓDIGO</span><span>COSTO</span><span>Planos</span><span>3D</span><span>Lista M.</span><span>Ficha T.</span><span></span></div>
+      {% for r in referencias %}
+      <div class="refs-row no-image">
+        <span>{{ r.referencia_codigo }}</span>
+        <span>{{ format_money(r.costo) }}</span>
+        <span>{{ biblio_icon('check' if r.has_planos else 'minus', 'available' if r.has_planos else 'unavailable') }}</span>
+        <span>{{ biblio_icon('check' if r.has_modelo3d else 'minus', 'available' if r.has_modelo3d else 'unavailable') }}</span>
+        <span>{{ biblio_icon('check' if r.has_lista_materiales else 'minus', 'available' if r.has_lista_materiales else 'unavailable') }}</span>
+        <span>{{ biblio_icon('check' if r.has_ficha_tecnica else 'minus', 'available' if r.has_ficha_tecnica else 'unavailable') }}</span>
+        <div class="row-inline">
+          <button type="button" class="icon-btn blue" title="Editar referencia" onclick='openEditReferencia({{ r|tojson|safe }})'>{{ biblio_icon('edit') }}</button>
+          <button type="button" class="icon-btn green" title="Descargar archivos" onclick='openDownloadModal({{ r|tojson|safe }})'>{{ biblio_icon('download') }}</button>
+          <form method="post" action="{{ url_for('biblioteca.delete_referencia', referencia=r.referencia_codigo) }}" onsubmit="return confirm('¿Eliminar esta referencia?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="icon-btn red" title="Eliminar">{{ biblio_icon('trash') }}</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="modalEquipoNuevo"><div class="modal-card"><div class="modal-header"><h3>Nuevo equipo</h3><button class="close-btn" type="button" onclick="closeModal('modalEquipoNuevo')">&times;</button></div><form method="post" action="{{ url_for('biblioteca.create_equipo') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><label>CÓDIGO</label><input name="codigo" required><label>NOMBRE</label><input name="nombre" required><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalEquipoNuevo')">Cancelar</button><button type="submit" class="primary-btn">Crear</button></div></form></div></div>
+<div class="modal" id="modalEquipoEditar"><div class="modal-card"><div class="modal-header"><h3>Editar Equipo</h3><button class="close-btn" type="button" onclick="closeModal('modalEquipoEditar')">&times;</button></div><form method="post" id="formEquipoEditar"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><label>CÓDIGO</label><input name="codigo" id="edit-equipo-codigo" required><label>NOMBRE</label><input name="nombre" id="edit-equipo-nombre" required><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalEquipoEditar')">Cancelar</button><button type="submit" class="primary-btn">Guardar</button></div></form></div></div>
+
+<div class="modal" id="modalCaracteristicaNueva"><div class="modal-card wide-modal"><div class="modal-header"><h3>Crear Nueva Característica</h3><button class="close-btn" type="button" onclick="closeModal('modalCaracteristicaNueva')">&times;</button></div><form method="post" action="{{ url_for('biblioteca.create_caracteristica') }}" class="char-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><input type="hidden" name="equipo_codigo" value="{{ selected_equipo.codigo if selected_equipo else '' }}"><div class="two-col"><div><label>ORDEN</label><input name="orden" required></div><div><label>COLOR</label><select name="grupo_color"><option value="green">VERDE</option><option value="pink">ROSADO</option><option value="purple">MORADO</option><option value="orange">NARANJA</option><option value="blue">AZUL</option><option value="yellow">AMARILLO</option><option value="red">ROJO</option><option value="gray">GRIS</option></select></div></div><label>CARACTERÍSTICA</label><input name="nombre" required><div class="sub-header"><span>SUB CARACTERÍSTICAS</span><button type="button" class="square-add" onclick="addSubRow('new-sub-list')">{{ biblio_icon('plus') }}</button></div><div class="sub-list modal-sub-list" id="new-sub-list"></div><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalCaracteristicaNueva')">Cancelar</button><button type="submit" class="primary-btn">Crear</button></div></form></div></div>
+<div class="modal" id="modalCaracteristicaEditar"><div class="modal-card wide-modal"><div class="modal-header"><h3>Editar Característica</h3><button class="close-btn" type="button" onclick="closeModal('modalCaracteristicaEditar')">&times;</button></div><form method="post" id="formCaracteristicaEditar" class="char-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><div class="two-col"><div><label>ORDEN</label><input id="edit-char-orden" disabled></div><div><label>COLOR</label><select name="grupo_color" id="edit-char-color"><option value="green">VERDE</option><option value="pink">ROSADO</option><option value="purple">MORADO</option><option value="orange">NARANJA</option><option value="blue">AZUL</option><option value="yellow">AMARILLO</option><option value="red">ROJO</option><option value="gray">GRIS</option></select></div></div><label>CARACTERÍSTICA</label><input name="nombre" id="edit-char-nombre" required><div class="sub-header"><span>SUB CARACTERÍSTICAS</span><button type="button" class="square-add" onclick="addSubRow('edit-sub-list')">{{ biblio_icon('plus') }}</button></div><div class="sub-list modal-sub-list" id="edit-sub-list"></div><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalCaracteristicaEditar')">Cancelar</button><button type="submit" class="primary-btn">Guardar</button></div></form></div></div>
+
+<div class="modal" id="modalReferenciaNueva"><div class="modal-card"><div class="modal-header"><h3>Crear referencia</h3><button class="close-btn" type="button" onclick="closeModal('modalReferenciaNueva')">&times;</button></div><form method="post" action="{{ url_for('biblioteca.create_referencia') }}" enctype="multipart/form-data"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><input type="hidden" name="equipo_codigo" value="{{ selected_equipo.codigo if selected_equipo else '' }}"><label>REFERENCIA</label><input name="referencia_codigo" value="{{ generated_ref }}" required>{% for c in chars %}<input type="hidden" name="subchoice_{{ c.orden }}" value="{{ selected_map[c.orden] }}">{% endfor %}<label>COSTO</label><input name="costo" placeholder="150000"><label>PLANOS PDF</label><input type="file" name="planos" accept="{{ upload_accept.planos }}"><label>MODELO 3D ZIP</label><input type="file" name="modelo3d" accept="{{ upload_accept.modelo3d }}"><label>LISTA MATERIALES XLSM</label><input type="file" name="lista_materiales" accept="{{ upload_accept.lista_materiales }}"><label>FICHA TÉCNICA DOCX</label><input type="file" name="ficha_tecnica" accept="{{ upload_accept.ficha_tecnica }}"><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalReferenciaNueva')">Cancelar</button><button type="submit" class="primary-btn">Crear</button></div></form></div></div>
+<div class="modal" id="modalReferenciaEditar"><div class="modal-card"><div class="modal-header"><h3>Editar Referencia</h3><button class="close-btn" type="button" onclick="closeModal('modalReferenciaEditar')">&times;</button></div><form method="post" id="formReferenciaEditar" enctype="multipart/form-data"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><label>REFERENCIA</label><input id="edit-ref-code" disabled><label>COSTO</label><input name="costo" id="edit-ref-costo"><label>PLANOS PDF</label><input type="file" name="planos" accept="{{ upload_accept.planos }}"><label>MODELO 3D ZIP</label><input type="file" name="modelo3d" accept="{{ upload_accept.modelo3d }}"><label>LISTA MATERIALES XLSM</label><input type="file" name="lista_materiales" accept="{{ upload_accept.lista_materiales }}"><label>FICHA TÉCNICA DOCX</label><input type="file" name="ficha_tecnica" accept="{{ upload_accept.ficha_tecnica }}"><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalReferenciaEditar')">Cancelar</button><button type="submit" class="primary-btn">Guardar</button></div></form></div></div>
+<div class="modal" id="modalDescargar"><div class="modal-card"><div class="modal-header"><h3>Descargar archivos</h3><button class="close-btn" type="button" onclick="closeModal('modalDescargar')">&times;</button></div><div id="download-options" class="download-options"></div><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalDescargar')">Cerrar</button></div></div></div>
+{% endblock %}
+{% block biblioteca_scripts %}
+<script>ensureBaseRows('new-sub-list',10);</script>
+{% endblock %}

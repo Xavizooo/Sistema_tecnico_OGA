@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading split">
+  <div>
+    <h2>CARGAR LISTA</h2>
+    <p>Cargue Inventor, B1 y opcionalmente el listado superior de equipos exportado desde Inventor.</p>
+  </div>
+  <form method="post" action="{{ url_for('process_route') }}"><button class="btn process"
+      type="submit">PROCESAR</button></form>
+</div>
+
+<div class="card accent-top">
+  <div class="card-title-row">
+    <div>
+      <h3>1. LISTA DE INVENTOR</h3>
+      <p>Lista general cuando no se trabaja por equipos desde el LGE.</p>
+    </div><span class="pill">6 COLUMNAS</span>
+  </div>
+  <div class="chips"><span>ITEM</span><span>FILENAME</span><span>PART NUMBER</span><span>DESCRIPTION</span><span>STOCK
+      NUMBER</span><span>ITEM QTY</span></div>
+  <form class="upload-row" method="post" enctype="multipart/form-data" action="{{ url_for('upload_inventor') }}">
+    <input type="file" name="file" accept=".xlsx,.xls" required><button class="btn primary" type="submit">CARGAR
+      LISTA</button>
+  </form>
+  {% if inventor_loaded or meta.get('inventor_general_path') %}<div class="mini-ok">✓ Lista general cargada</div>{%
+  endif %}
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h3>2. INVENTARIO B1</h3>
+    <p>Puede cargar el reporte directo de Factory. El programa conserva solo códigos Factory 100% numéricos y filtra
+      estas columnas:</p>
+    <div class="chips"><span>CODIGO</span><span>NOMBRE</span><span>UD</span><span>EXISTENCIA</span></div>
+    <form class="upload-row" method="post" enctype="multipart/form-data" action="{{ url_for('upload_b1') }}">
+      <input type="file" name="file" accept=".xls,.xlsx" required><button class="btn primary" type="submit">CARGAR
+        B1</button>
+    </form>
+    <div class="metric"><strong>{{ b1|length }}</strong><span> referencias B1 cargadas</span></div>
+    {% if b1 %}<a class="text-link" href="{{ url_for('export_file', kind='b1') }}">Exportar B1 filtrado</a>{% endif %}
+  </div>
+
+  <div class="card">
+    <h3>3. LISTADO DE EQUIPOS DESDE INVENTOR</h3>
+    <p>Exporte desde Inventor la lista superior de equipos. El programa toma automáticamente Código, Cantidad y
+      Descripción.</p>
+    <div class="chips"><span>PART NUMBER</span><span>DESCRIPTION</span><span>STOCK NUMBER</span><span>ITEM QTY</span>
+    </div>
+    <form class="upload-row" method="post" enctype="multipart/form-data" action="{{ url_for('upload_lge') }}">
+      <input type="file" name="file" accept=".xlsx,.xls" required><button class="btn primary" type="submit">CARGAR
+        LISTADO</button>
+    </form>
+    <div class="metric"><strong>{{ lge|length }}</strong><span> equipos/componentes detectados</span></div>
+  </div>
+</div>
+
+{% if lge %}
+<div class="card">
+  <div class="card-title-row">
+    <div>
+      <h3>LISTAS DE INVENTOR POR EQUIPO</h3>
+      <p>Puede eliminar un equipo si no desea incluirlo antes de PROCESAR.</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>N.º</th>
+          <th>CÓDIGO</th>
+          <th>CANT.</th>
+          <th>DESCRIPCIÓN</th>
+          <th>LISTA INVENTOR</th>
+          <th>ACCIÓN</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in lge %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ r.CODIGO }}</strong></td>
+          <td>{{ r.CANTIDAD|num }}</td>
+          <td>{{ r.DESCRIPCION }}</td>
+          <td>
+            <form class="inline-upload" method="post" enctype="multipart/form-data"
+              action="{{ url_for('upload_equipment_inventor', code=r.CODIGO) }}">
+              <input type="hidden" name="row" value="{{ loop.index0 }}"><input type="file" name="file"
+                accept=".xlsx,.xls" required>
+              <button class="btn small {% if r.ARCHIVO %}success{% else %}primary{% endif %}" type="submit">{% if
+                r.ARCHIVO %}REEMPLAZAR{% else %}CARGAR{% endif %}</button>
+            </form>
+            {% if r.ARCHIVO %}<span class="file-ok">✓ {{ r.ARCHIVO }}</span>{% endif %}
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('remove_lge_row') }}"
+              onsubmit="return confirm('¿Eliminar este equipo del proceso?');"><input type="hidden" name="row"
+                value="{{ loop.index0 }}"><button class="btn small danger" type="submit">ELIMINAR</button></form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="process-banner">
+  <div><strong>¿LISTAS CARGADAS?</strong><span> PROCESAR consolida materiales, propone movimientos, genera RQ, repuestos
+      y costos.</span></div>
+  <form method="post" action="{{ url_for('process_route') }}"><button class="btn process"
+      type="submit">PROCESAR</button></form>
+</div>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios · OGA{% endblock %}
+
+{% block content %}
+<section class="page-heading split admin-heading">
+  <div>
+    <span class="page-eyebrow">PANEL ADMINISTRATIVO</span>
+    <h2>Usuarios y accesos</h2>
+    <p>Las credenciales se administran desde la web y se almacenan protegidas en el servidor local.</p>
+  </div>
+  <div class="admin-summary">
+    <strong>{{ users|length }}</strong>
+    <span>USUARIOS REGISTRADOS</span>
+  </div>
+</section>
+
+<section class="admin-grid">
+  <article class="card accent-top admin-create-card">
+    <span class="panel-index">NUEVO ACCESO</span>
+    <h3>Agregar colaborador</h3>
+    <p>La contraseña que asigne será permanente. Podrá restablecerla posteriormente, pero no consultarla.</p>
+    <form class="admin-create-form" method="post" action="{{ url_for('admin_user_create') }}" autocomplete="off" data-confirm-password>
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <label>Nombre completo
+        <input name="name" maxlength="100" required>
+      </label>
+      <label>Usuario
+        <input name="username" maxlength="50" placeholder="Ej. juan.perez" required>
+      </label>
+      <label>Rol
+        <select name="role" required>
+          <option value="COLABORADOR">Colaborador</option>
+          <option value="ADMINISTRADOR">Administrador</option>
+        </select>
+      </label>
+      <label class="admin-password-field">Contraseña <small>Mínimo 12 caracteres</small>
+        <span class="password-admin-wrap">
+          <input id="new_user_password" name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+          <button class="btn outline small" type="button" data-password-toggle="new_user_password">VER</button>
+        </span>
+      </label>
+      <label class="admin-password-field">Confirmar contraseña
+        <span class="password-admin-wrap">
+          <input id="password_confirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+          <button class="btn outline small" type="button" data-generate-password="new_user_password" data-confirm-target="password_confirm">GENERAR</button>
+        </span>
+      </label>
+      <button class="btn primary admin-submit" type="submit">CREAR USUARIO</button>
+    </form>
+  </article>
+
+  <article class="card admin-security-card">
+    <span class="panel-index">PROTECCIÓN ACTIVA</span>
+    <h3>Controles de acceso</h3>
+    <ul class="security-check-list">
+      <li><span>✓</span> Contraseñas protegidas con Argon2id.</li>
+      <li><span>✓</span> Bloqueo temporal después de cinco intentos.</li>
+      <li><span>✓</span> Sesiones cerradas al cambiar rol, estado o contraseña.</li>
+      <li><span>✓</span> Trabajos y planos separados por usuario.</li>
+      <li><span>✓</span> Importaciones, descargas y cambios registrados.</li>
+    </ul>
+    <div class="security-file-note">
+      <strong>USUARIOS.xlsx</strong>
+      <span>No se puede descargar desde la web y no contiene contraseñas legibles.</span>
+    </div>
+  </article>
+</section>
+
+<section class="card user-directory-card">
+  <div class="card-title-row">
+    <div>
+      <span class="panel-index">DIRECTORIO</span>
+      <h3>Usuarios registrados</h3>
+      <p>Desactive cuentas que ya no deban ingresar. Los trabajos del usuario se conservan.</p>
+    </div>
+  </div>
+  <div class="table-wrap admin-users-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Nombre</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Último ingreso</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr class="{% if not user.is_active %}user-disabled-row{% endif %}">
+          <td><strong>{{ user.username }}</strong>{% if user.id == current_user.id %}<small class="you-badge">TÚ</small>{% endif %}</td>
+          <td>{{ user.name }}</td>
+          <td>
+            {% if user.id == current_user.id %}
+              <span class="role-badge admin">{{ user.role }}</span>
+            {% else %}
+            <form class="inline-admin-form" method="post" action="{{ url_for('admin_user_role', user_id=user.id) }}">
+              <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+              <select name="role" aria-label="Rol de {{ user.username }}">
+                <option value="COLABORADOR" {% if user.role == 'COLABORADOR' %}selected{% endif %}>Colaborador</option>
+                <option value="ADMINISTRADOR" {% if user.role == 'ADMINISTRADOR' %}selected{% endif %}>Administrador</option>
+              </select>
+              <button class="btn outline small" type="submit">GUARDAR</button>
+            </form>
+            {% endif %}
+          </td>
+          <td>
+            <span class="user-status {% if user.is_active %}active{% else %}disabled{% endif %}">{{ user.status }}</span>
+            {% if user.locked_until %}<small class="lock-note">Bloqueado hasta {{ user.locked_until }}</small>{% endif %}
+          </td>
+          <td>{{ user.last_login or 'Sin ingresos' }}</td>
+          <td>
+            <div class="admin-row-actions">
+              {% if user.id != current_user.id %}
+              <form method="post" action="{{ url_for('admin_user_status', user_id=user.id) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="status" value="{{ 'DESACTIVADO' if user.is_active else 'ACTIVO' }}">
+                <button class="btn small {% if user.is_active %}danger{% else %}success{% endif %}" type="submit">{{ 'DESACTIVAR' if user.is_active else 'ACTIVAR' }}</button>
+              </form>
+              {% endif %}
+              {% if user.locked_until %}
+              <form method="post" action="{{ url_for('admin_user_unlock', user_id=user.id) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                <button class="btn small outline" type="submit">DESBLOQUEAR</button>
+              </form>
+              {% endif %}
+              <details class="password-reset-details">
+                <summary>CONTRASEÑA</summary>
+                <form method="post" action="{{ url_for('admin_user_password', user_id=user.id) }}" autocomplete="off">
+                  <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                  <label>Nueva contraseña
+                    <input id="reset_{{ user.id }}" name="password" type="password" minlength="12" maxlength="128" required>
+                  </label>
+                  <div class="button-row">
+                    <button class="btn outline small" type="button" data-password-toggle="reset_{{ user.id }}">VER</button>
+                    <button class="btn outline small" type="button" data-generate-password="reset_{{ user.id }}">GENERAR</button>
+                    <button class="btn primary small" type="submit">GUARDAR</button>
+                  </div>
+                </form>
+              </details>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td class="empty" colspan="6">No hay usuarios registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card audit-card">
+  <div class="card-title-row audit-title-row">
+    <div>
+      <span class="panel-index">TRAZABILIDAD</span>
+      <h3>Registro de actividades</h3>
+      <p>Últimos 500 movimientos de acceso, carga, procesamiento, descarga y administración.</p>
+    </div>
+    <div class="audit-toolbar">
+      <form class="search" method="get">
+        <input name="q" value="{{ audit_query }}" placeholder="Buscar usuario, módulo o acción">
+        <button class="btn outline" type="submit">BUSCAR</button>
+      </form>
+      <a class="btn primary" href="{{ url_for('admin_audit_export') }}">EXPORTAR AUDITORÍA</a>
+    </div>
+  </div>
+  <div class="table-wrap audit-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Usuario</th>
+          <th>Acción</th>
+          <th>Módulo</th>
+          <th>Detalle</th>
+          <th>Resultado</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in audit %}
+        <tr>
+          <td>{{ row.FECHA }}</td>
+          <td><strong>{{ row.USUARIO }}</strong><small class="audit-name">{{ row.NOMBRE }}</small></td>
+          <td>{{ row.ACCION }}</td>
+          <td>{{ row.MODULO }}</td>
+          <td>{{ row.DETALLE or '—' }}</td>
+          <td><span class="audit-result {% if row.RESULTADO == 'OK' %}ok{% else %}error{% endif %}">{{ row.RESULTADO }}</span></td>
+          <td>{{ row.IP }}</td>
+        </tr>
+        {% else %}
+        <tr><td class="empty" colspan="7">No hay movimientos registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

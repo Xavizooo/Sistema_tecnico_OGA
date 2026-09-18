@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading split">
+  <div><span class="page-eyebrow">CONTROL DE CALIDAD</span><h2>REVISOR DE PLANOS</h2><p>Cargue un plano PDF para detectar código, piezas, láminas y perfiles automáticamente.</p></div>
+  <div class="button-row subtabs">
+    <button class="btn small outline subtab-btn active" id="tabRevisor" type="button">REVISOR</button>
+    <button class="btn small outline subtab-btn" id="tabHistorial" type="button">HISTÓRICO</button>
+    <button class="btn small outline subtab-btn" id="tabDistribucion" type="button">DISTRIBUCIÓN DE LÁMINA</button>
+  </div>
+</div>
+
+<section id="viewRevisor" class="view">
+  <div class="card accent-top">
+    <div class="card-title-row">
+      <div><h3>IMAGEN DEL PLANO</h3><p id="fileName">(Ningún plano cargado)</p></div>
+      <div class="button-row">
+        <label class="btn primary small">+ CARGAR PLANO PDF<input id="pdfInput" type="file" accept="application/pdf" hidden></label>
+        <button class="btn outline small hidden" id="openPdfTab" type="button">ABRIR EN PESTAÑA NUEVA</button>
+        <button class="btn outline small" id="clearBtn" type="button">LIMPIAR</button>
+        <button class="btn process small" id="reviewBtn" type="button">REVISAR</button>
+      </div>
+    </div>
+    <div class="plano-viewer" id="viewer">
+      <div>Seleccione un PDF para abrirlo con el visor tradicional del navegador.</div>
+    </div>
+    <a class="btn success hidden" id="downloadCurrent" href="{{ url_for('planos.download_current') }}">DESCARGAR EXCEL ACTUAL</a>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>ENSAMBLES ENCONTRADOS (EN)</h3>
+      <input class="table-search" placeholder="Buscar en referencias..." data-filter="EN">
+      <div class="table-wrap compact"><table><thead><tr><th>CÓDIGO</th><th>TIENE PLANO</th><th>N.º HOJA</th></tr></thead><tbody id="tbodyEN"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>PERFILES ENCONTRADOS (PF)</h3>
+      <input class="table-search" placeholder="Buscar en referencias..." data-filter="PF">
+      <div class="table-wrap compact"><table><thead><tr><th>CÓDIGO</th><th>TIENE PLANO</th><th>N.º HOJA</th></tr></thead><tbody id="tbodyPF"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>PIEZAS ENCONTRADAS (PZ)</h3>
+      <input class="table-search" placeholder="Buscar en referencias..." data-filter="PZ">
+      <div class="table-wrap compact"><table><thead><tr><th>CÓDIGO</th><th>TIENE PLANO</th><th>N.º HOJA</th></tr></thead><tbody id="tbodyPZ"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>PIEZAS FRAME</h3>
+      <input class="table-search" placeholder="Buscar en referencias..." data-filter="FRAME">
+      <div class="table-wrap compact"><table><thead><tr><th>CÓDIGO</th><th>DESCRIPCIÓN</th><th>TIENE PLANO</th><th>N.º HOJA</th></tr></thead><tbody id="tbodyFRAME"></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>LÁMINA ENCONTRADA (LM)</h3>
+      <input class="table-search" placeholder="Buscar en referencias..." data-filter="LM">
+      <div class="table-wrap compact"><table><thead><tr><th>CÓDIGO</th><th>TIENE PLANO</th><th>CANT</th><th>ESPESOR</th><th>ÁREA</th></tr></thead><tbody id="tbodyLM"></tbody></table></div>
+      <h4>RESUMEN POR ESPESOR</h4>
+      <div class="table-wrap compact"><table><thead><tr><th>CALIBRE</th><th>ESPESOR</th><th>ÁREA</th></tr></thead><tbody id="tbodyLaminaGroup"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>LISTA DE ELEMENTOS ESTÁNDAR</h3>
+      <input class="table-search" placeholder="Buscar en referencias..." data-filter="ESTANDAR">
+      <div class="table-wrap compact"><table><thead><tr><th>CÓDIGO</th><th>DESCRIPCIÓN</th><th>CANT</th></tr></thead><tbody id="tbodySTD"></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<section id="viewHistorial" class="view hidden">
+  <div class="card">
+    <h3>PLANOS REVISADOS</h3>
+    <p>Cada vez que presiona <b>REVISAR</b> se guarda un Excel en el histórico de planos.</p>
+    <div class="table-wrap"><table><thead><tr><th>ARCHIVO EXCEL</th><th>FECHA</th><th>TAMAÑO</th><th>DESCARGAR</th><th>ELIMINAR</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="viewDistribucion" class="view hidden">
+  <div class="card accent-top">
+    <div class="card-title-row">
+      <div><h3>PLANO DE DISTRIBUCIÓN</h3><p id="distFileName">(Ningún plano cargado)</p></div>
+      <div class="button-row">
+        <label class="btn primary small">+ CARGAR PLANO PDF<input id="distPdfInput" type="file" accept="application/pdf" hidden></label>
+        <button class="btn outline small hidden" id="openDistPdfTab" type="button">ABRIR EN PESTAÑA NUEVA</button>
+        <button class="btn outline small" id="distClearBtn" type="button">LIMPIAR</button>
+        <button class="btn process small" id="distReviewBtn" type="button">REVISAR</button>
+      </div>
+    </div>
+    <div class="plano-viewer" id="distViewer">
+      <div>Seleccione un PDF para abrirlo con el visor tradicional del navegador.</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <label class="btn outline small file-label">CARGAR LISTA EXCEL (LM)<input id="lmExcelInput" type="file" accept=".xlsx,.xlsm" hidden></label>
+      <input class="table-search" style="margin-top:10px" placeholder="Buscar en referencias..." data-dist-filter="lmExcelBody">
+      <div class="table-wrap compact"><table><thead><tr><th>CÓDIGO</th><th>CANT</th><th>ESPESOR</th></tr></thead><tbody id="lmExcelBody"></tbody></table></div>
+    </div>
+    <div class="card">
+      <label class="btn outline small file-label">CARGAR LISTA EXCEL (DXF)<input id="dxfExcelInput" type="file" accept=".xlsx,.xlsm" hidden></label>
+      <input class="table-search" style="margin-top:10px" placeholder="Buscar en referencias..." data-dist-filter="dxfExcelBody">
+      <div class="table-wrap compact"><table><thead><tr><th>CÓDIGO</th><th>CANT</th><th>ESPESOR</th></tr></thead><tbody id="dxfExcelBody"></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>LÁMINAS ENCONTRADAS</h3>
+    <input class="table-search" placeholder="Buscar en referencias..." data-dist-filter="foundLmBody">
+    <div class="table-wrap"><table><thead><tr><th>CÓDIGO</th><th>TIENE PLANO</th><th>HOJA</th><th>CANT LM</th><th>CANT DXF</th><th>ESP LM</th><th>ESP DXF</th><th>DIFERENCIA</th></tr></thead><tbody id="foundLmBody"></tbody></table></div>
+  </div>
+</section>
+
+<div id="toast" class="toast hidden"></div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/planos.js') }}"></script>
+{% endblock %}

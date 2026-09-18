@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+{% block title %}Proyectos Diseño Mecánico · {{ app_name }}{% endblock %}
+{% block body_class %} project-design-page{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('proyectos_diseno.static', filename='style.css') }}">
+{% endblock %}
+{% block content %}
+<div id="projectDesignApp" class="project-design-app"
+     data-base-url="{{ url_for('proyectos_diseno.index') }}"
+     data-csrf-token="{{ csrf_token }}"
+     data-initial-view="{{ request.args.get('view', 'dashboard') }}">
+  <div class="project-page-heading">
+    <div>
+      <span class="project-eyebrow">GESTIÓN DE DISEÑO</span>
+      <h2>PROYECTOS DISEÑO MECÁNICO</h2>
+      <p>Control gráfico de proyectos, capacidad, avance y costos planificados.</p>
+    </div>
+    <div class="project-heading-actions">
+      <button class="btn outline small" id="syncExcelBtn" type="button">ACTUALIZAR DESDE EXCEL</button>
+      <button class="btn outline small" id="backupBtn" type="button">CREAR RESPALDO</button>
+      <button class="btn primary" id="newProjectTopBtn" type="button">+ CREAR PROYECTO</button>
+      <button class="btn outline" id="refreshBtn" type="button">ACTUALIZAR</button>
+    </div>
+  </div>
+    <section class="content-area">
+      <section class="view active" id="view-dashboard">
+        <section class="panel calendar-panel" aria-label="Calendario de proyectos">
+          <div class="calendar-toolbar">
+            <div class="toolbar-title">
+              <h2>CALENDARIO DE PROYECTOS</h2>
+              <span id="calendarRangeLabel" class="muted"></span>
+            </div>
+            <div class="toolbar-controls">
+              <label>Vista
+                <select id="calendarMode">
+                  <option value="general">Área de diseño</option>
+                  <option value="designer">Diseñador</option>
+                  <option value="project">Proyecto</option>
+                </select>
+              </label>
+              <label id="designerFilterWrap">Diseñador
+                <select id="designerFilter"><option value="">Todos</option></select>
+              </label>
+              <label id="projectFilterWrap" class="hidden">Proyecto
+                <select id="projectFilter"><option value="">Todos los proyectos</option></select>
+              </label>
+              <div class="scale-group" role="group" aria-label="Escala del calendario">
+                <button class="scale-btn" data-scale="week">Semana</button>
+                <button class="scale-btn active" data-scale="month">Mes</button>
+                <button class="scale-btn" data-scale="quarter">Trimestre</button>
+                <button class="scale-btn" data-scale="year">Año</button>
+              </div>
+              <button class="btn small outline" id="calendarFitBtn">AJUSTAR</button>
+              <button class="btn small blue" id="exportCalendarPdfBtn">EXPORTAR PDF</button>
+            </div>
+          </div>
+          <div id="timeline" class="timeline" aria-live="polite"></div>
+          <div class="calendar-legend" id="calendarLegend"></div>
+        </section>
+
+        <div class="metrics-grid">
+          <article class="metric-card"><span>Proyectos activos</span><strong id="metricActive">0</strong></article>
+          <article class="metric-card"><span>Avance promedio</span><strong id="metricProgress">0 %</strong></article>
+          <article class="metric-card"><span>Horas planificadas</span><strong id="metricHours">0 h</strong></article>
+          <article class="metric-card"><span>Costo planificado</span><strong id="metricCost">$ 0</strong></article>
+          <article class="metric-card danger"><span>Proyectos retrasados</span><strong id="metricLate">0</strong></article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel chart-card">
+            <div class="section-title"><h2>AVANCE</h2><span id="selectedContextLabel">Área completa</span></div>
+            <div class="chart-wrap"><canvas id="progressChart"></canvas></div>
+          </section>
+          <section class="panel chart-card">
+            <div class="section-title"><h2 id="stageChartTitle">AVANCE POR ETAPA</h2></div>
+            <div class="chart-wrap"><canvas id="stageChart"></canvas></div>
+          </section>
+          <section class="panel chart-card wide">
+            <div class="section-title"><h2>CARGA PLANIFICADA POR DISEÑADOR</h2></div>
+            <div class="chart-wrap workload"><canvas id="workloadChart"></canvas></div>
+          </section>
+        </div>
+
+        <div class="tables-grid single">
+          <section class="panel table-card">
+            <div class="section-title"><h2>ALERTAS</h2><span class="badge red" id="alertsCount">0</span></div>
+            <div class="table-scroll medium"><table><thead><tr><th>Proyecto</th><th>Diseñador</th><th>Etapa</th><th>Alerta</th><th>Fecha límite</th></tr></thead><tbody id="alertsBody"></tbody></table></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-projects">
+        <div class="projects-view-stack">
+          <section class="panel table-card">
+            <div class="section-title actions-title">
+              <div><h2>PROYECTOS ACTIVOS</h2><span class="muted">Seleccione un proyecto para actualizar avance, lapsos, fechas o equipos.</span></div>
+              <button class="btn blue" id="newProjectBtn">+ CREAR PROYECTO</button>
+            </div>
+            <div class="table-tools"><input id="projectSearch" class="search" placeholder="Buscar por número, cliente, diseñador, PMP o BODEGA"></div>
+            <div class="table-scroll large"><table><thead><tr><th>N°</th><th>Cliente</th><th>Tipo</th><th>Diseñador</th><th>PMP</th><th>BODEGA</th><th>Fase actual</th><th>Avance</th><th>Horas</th><th>Costo</th><th>Alerta</th><th>Acciones</th></tr></thead><tbody id="projectsBody"></tbody></table></div>
+          </section>
+
+          <section class="panel table-card upcoming-projects-panel">
+            <div class="section-title actions-title">
+              <div><h2>PROYECTOS POR EMPEZAR</h2><span class="muted">Listado únicamente informativo. No afecta calendario, horas, costos ni alertas.</span></div>
+              <button class="btn blue" id="newUpcomingBtn">+ AGREGAR</button>
+            </div>
+            <div class="table-scroll medium"><table><thead><tr><th>Proyecto</th><th>Cliente</th><th>Diseñador</th><th>Inicio</th><th>Días referencia</th><th>Acciones</th></tr></thead><tbody id="upcomingBody"></tbody></table></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-designers">
+        <div class="projects-view-stack">
+          <section class="panel table-card">
+            <div class="section-title actions-title"><div><h2>DISEÑADORES</h2><span class="muted">Costo mensual total para la empresa y horario de lunes a viernes.</span></div><button class="btn blue" id="newDesignerBtn">+ CREAR DISEÑADOR</button></div>
+            <div class="table-scroll medium"><table><thead><tr><th>Color</th><th>Nombre</th><th>Costo mensual</th><th>Horario</th><th>Almuerzo</th><th>Horas/día</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="designersBody"></tbody></table></div>
+          </section>
+          <section class="panel table-card">
+            <div class="section-title actions-title"><div><h2>PMP</h2><span class="muted">Catálogo informativo para asignar una PMP a cada proyecto.</span></div><button class="btn blue" id="newPmpBtn">+ CREAR PMP</button></div>
+            <div class="table-scroll small"><table><thead><tr><th>PMP</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="pmpsBody"></tbody></table></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-activities">
+        <section class="panel table-card full-height">
+          <div class="section-title actions-title">
+            <div><h2>ACTIVIDADES DEL PROYECTO</h2><span class="muted">Cada actividad puede aplicar a uno o varios tipos. Cada grupo T1, T2, T3 y T4 debe sumar 100 %.</span></div>
+            <div class="activity-total"><button class="btn blue" id="newActivityBtn">+ CREAR ACTIVIDAD</button></div>
+          </div>
+          <div id="activityTotalsGrid" class="type-totals"></div>
+          <div id="activityTotalWarning" class="callout warning hidden"></div>
+          <div class="table-scroll large"><table><thead><tr><th>Actividad</th><th>Etapa</th><th>Tipos de proyecto</th><th>Peso</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="activitiesBody"></tbody></table></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-equipment">
+        <section class="panel table-card full-height">
+          <div class="section-title actions-title"><div><h2>CATÁLOGO DE EQUIPOS</h2><span class="muted">La cantidad no multiplica los días cuando las unidades usan el mismo plano.</span></div><button class="btn blue" id="newEquipmentBtn">+ CREAR EQUIPO</button></div>
+          <div class="table-scroll large"><table><thead><tr><th>Código</th><th>Equipo</th><th>Días estándar</th><th>Días medio</th><th>Días no estándar</th><th>Días complejo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="equipmentBody"></tbody></table></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-additionals">
+        <section class="panel table-card full-height">
+          <div class="section-title actions-title"><div><h2>ADICIONALES</h2><span class="muted">Registro independiente. No modifica proyectos, calendario, horas, costos ni avance.</span></div><button class="btn blue" id="newAdditionalBtn">+ CREAR ADICIONAL</button></div>
+          <div class="additional-summary"><span>Total días de adicionales</span><strong id="additionalTotalDays">0 días</strong></div>
+          <div class="table-scroll large"><table><thead><tr><th>Título</th><th>Proyecto</th><th>Solicita</th><th>Descripción</th><th>Fecha inicio</th><th>Fecha finalización</th><th>Duración</th><th>Acciones</th></tr></thead><tbody id="additionalsBody"></tbody></table></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-holidays">
+        <section class="panel table-card full-height">
+          <div class="section-title actions-title"><div><h2>DÍAS FESTIVOS Y NO LABORABLES</h2><span class="muted">No se cuentan en horas, costos, fechas tentativas ni retrasos.</span></div><div class="inline-actions"><input id="holidayYear" type="number" min="2020" max="2100"><button class="btn green" id="loadColombiaBtn">CARGAR COLOMBIA</button><button class="btn blue" id="newHolidayBtn">+ AGREGAR FECHA</button></div></div>
+          <div class="table-scroll large"><table><thead><tr><th>Fecha</th><th>Nombre</th><th>Origen</th><th>Acciones</th></tr></thead><tbody id="holidaysBody"></tbody></table></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-history">
+        <section class="panel table-card full-height">
+          <div class="section-title"><div><h2>HISTÓRICO DE PROYECTOS</h2><span class="muted">Los proyectos finalizados conservan gráficas, actividades, horas y costos.</span></div></div>
+          <div class="table-tools"><input id="historySearch" class="search" placeholder="Buscar histórico"></div>
+          <div class="table-scroll large"><table class="history-table"><thead><tr><th>N° de proyecto</th><th>Cliente</th><th>Diseñador</th><th>PMP</th><th>BODEGA</th><th>Tamaño</th><th>N° revisiones</th><th>Imagen</th><th>ESTATUS</th><th>Recepción de alcance</th><th>Fecha de inicio</th><th>Fecha de finalización</th><th>Días de aprobación</th><th>Días Etapa 01</th><th>Días Etapa 02</th><th>Días Etapa 03</th><th>Total días</th><th>Horas</th><th>Costo</th><th>Acción</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+        </section>
+      </section>
+    </section>
+
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="upcomingModal" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header">
+        <div><h2 id="upcomingModalTitle">Agregar proyecto por empezar</h2><p>Se guarda por separado en Proyectos_Por_Empezar.xlsx y no modifica la planificación.</p></div>
+        <button class="icon-btn" value="cancel" aria-label="Cerrar">×</button>
+      </div>
+      <input type="hidden" id="upcomingId">
+      <div class="form-grid two modal-body">
+        <label>Número del proyecto<input id="upcomingNumber" required></label>
+        <label>Cliente<input id="upcomingClient" required></label>
+        <label>Diseñador<select id="upcomingDesigner" required></select></label>
+        <label>Fecha prevista de inicio<span class="date-wrap"><input id="upcomingStart" type="date" required></span></label>
+        <label>Días tentativos de referencia<input id="upcomingReferenceDays" type="number" min="0" step="0.5" value="0"></label>
+      </div>
+      <div class="modal-footer">
+        <button value="cancel" class="btn outline">CANCELAR</button>
+        <button type="button" class="btn green" id="saveUpcomingBtn">GUARDAR</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="projectModal" class="modal wide-modal">
+    <form method="dialog" class="modal-card" id="projectForm">
+      <div class="modal-header"><div><h2 id="projectModalTitle">Crear proyecto</h2><p>Los días de los equipos son una referencia; las fechas de las etapas se asignan manualmente.</p></div><button class="icon-btn" value="cancel" aria-label="Cerrar">×</button></div>
+      <input type="hidden" id="projectId">
+      <div class="modal-scroll">
+        <section class="form-section">
+          <h3>1. Información general</h3>
+          <div class="form-grid project-general-grid">
+            <label>Número del proyecto<input id="projectNumber" required></label>
+            <label>Cliente<input id="projectClient" required></label>
+            <label>Tipo de proyecto<select id="projectType" required>
+              <option value="T1">T1 · Proyecto</option>
+              <option value="T2">T2 · Solo Ingeniería</option>
+              <option value="T3">T3 · OT</option>
+              <option value="T4">T4 · Garantía</option>
+            </select></label>
+            <label>Diseñador<select id="projectDesigner" required></select></label>
+            <label>PMP<select id="projectPmp" required><option value="">Seleccione PMP</option></select></label>
+            <label>N° BODEGA<input id="projectWarehouse" required></label>
+            <label>Tamaño de proyecto<div class="inline-select-action"><select id="projectSize" required><option value="">Seleccione tamaño</option></select><button type="button" class="mini-btn blue" id="manageProjectSizesBtn">EDITAR</button></div></label>
+            <label>CONTRA ACTUAL<span class="date-wrap"><input id="projectContraActual" type="date" required></span></label>
+            <label>Recepción de alcance<span class="date-wrap"><input id="projectReception" type="date" required></span></label>
+            <label>Fecha de inicio Etapa 01<span class="date-wrap"><input id="projectStart" type="date" required></span></label>
+            <label class="span-two">Imagen del proyecto <span class="muted">(el nombre del archivo debe contener el N° del proyecto)</span><input id="projectImage" type="file" accept="image/png,image/jpeg,image/webp"><div id="projectImagePreview" class="project-image-preview small"></div></label>
+          </div>
+          <div id="projectTypeLockInfo" class="callout info hidden">El tipo queda bloqueado después de crear el proyecto. Para cambiarlo debe borrar el proyecto y crearlo nuevamente.</div>
+        </section>
+
+        <section class="form-section">
+          <h3>2. Carrito de equipos</h3>
+          <div class="cart-add-row">
+            <label>Equipo<select id="cartEquipment"></select></label>
+            <label>Tipo<select id="cartType"><option value="estandar">Estándar</option><option value="medio">Medio</option><option value="no_estandar">No estándar</option><option value="complejo">Complejo</option></select></label>
+            <label>Cantidad<input id="cartQuantity" type="number" min="1" value="1"></label>
+            <button type="button" class="btn blue" id="addCartBtn">AGREGAR</button>
+          </div>
+          <div class="cart-summary"><span>Días tentativos de referencia</span><strong id="cartDays">0 días</strong><span>Fecha tentativa</span><strong id="tentativeDate">—</strong></div>
+          <div class="table-scroll small"><table><thead><tr><th>Código</th><th>Equipo</th><th>Cantidad</th><th>Tipo</th><th>Días</th><th></th></tr></thead><tbody id="cartBody"></tbody></table></div>
+        </section>
+
+        <section class="form-section">
+          <h3>3. Programación manual</h3>
+          <div class="stage-grid rev11-stage-grid">
+            <article class="stage-card stage1 period-card">
+              <div class="period-card-title"><h4>Etapa 01 · Plano general</h4><button type="button" class="mini-btn blue add-period" data-stage="1">+ LAPSO</button></div>
+              <p>El primer lapso comienza en la fecha de inicio del proyecto.</p>
+              <div id="stage1Periods" class="period-list"></div>
+            </article>
+            <article class="stage-card approval period-card"><div class="period-card-title"><h4>Aprobación</h4><button type="button" class="mini-btn blue add-period" data-stage="0">+ LAPSO</button></div><p>Tiene lapsos propios. Puede alternarse con nuevos lapsos de Etapa 01, pero nunca superponerse. No genera horas ni costo.</p><div id="approvalPeriods" class="period-list"></div><div class="approval-summary">Días hábiles de aprobación: <strong id="approvalDaysPreview">0</strong></div></article>
+            <article class="stage-card stage2 period-card">
+              <div class="period-card-title"><h4>Etapa 02 · Fabricación</h4><button type="button" class="mini-btn blue add-period" data-stage="2">+ LAPSO</button></div>
+              <div id="stage2Periods" class="period-list"></div>
+            </article>
+            <article class="stage-card stage3 period-card">
+              <div class="period-card-title"><h4>Etapa 03 · Adicionales</h4><button type="button" class="mini-btn blue add-period" data-stage="3">+ LAPSO</button></div>
+              <div id="stage3Periods" class="period-list"></div>
+            </article>
+          </div>
+          <div class="callout info">Puede agregar varios lapsos por etapa y por Aprobación. Etapa 01 y Aprobación pueden alternarse, pero nunca superponerse. Las pausas no generan horas ni costos. La Etapa 02 comienza después del último lapso de Aprobación y la Etapa 03 después de la Etapa 02.</div>
+        </section>
+        <section class="form-section">
+          <div class="section-title actions-title"><div><h3>4. Revisiones durante aprobación</h3><span class="muted">Cada revisión se registra con número y fecha y se muestra con un punto verde en el tablero.</span></div><button type="button" class="mini-btn blue" id="addRevisionBtn">+ REVISIÓN</button></div>
+          <div id="projectRevisionsList" class="revision-list"></div>
+        </section>
+      </div>
+      <div class="modal-footer"><button value="cancel" class="btn outline">CANCELAR</button><button type="button" class="btn green" id="saveProjectBtn">GUARDAR PROYECTO</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="additionalModal" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header"><div><h2 id="additionalModalTitle">Crear adicional</h2><p>Este registro es independiente de los proyectos.</p></div><button class="icon-btn" value="cancel">×</button></div>
+      <input type="hidden" id="additionalId">
+      <div class="form-grid two modal-body">
+        <label>Título<input id="additionalTitle" required></label>
+        <label>Proyecto<input id="additionalProject" required placeholder="Escriba el proyecto"></label>
+        <label>Solicita<input id="additionalRequester" required></label>
+        <label>Fecha de inicio<span class="date-wrap"><input id="additionalStart" type="date" required></span></label>
+        <label>Fecha de finalización<span class="date-wrap"><input id="additionalEnd" type="date" required></span></label>
+        <label>Tiempo de duración automático<input id="additionalDuration" readonly value="0 días"></label>
+        <label class="span-two">Descripción<textarea id="additionalDescription" rows="5" required></textarea></label>
+      </div>
+      <div class="modal-footer"><button value="cancel" class="btn outline">CANCELAR</button><button type="button" class="btn green" id="saveAdditionalBtn">GUARDAR</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="designerModal" class="modal">
+    <form method="dialog" class="modal-card" id="designerForm">
+      <div class="modal-header"><h2 id="designerModalTitle">Crear diseñador</h2><button class="icon-btn" value="cancel">×</button></div>
+      <input type="hidden" id="designerId">
+      <div class="form-grid two modal-body">
+        <label>Nombre<input id="designerName" required></label>
+        <label>Color<input id="designerColor" type="color" value="#1268c9"></label>
+        <label>Costo mensual total para la empresa<input id="designerCost" type="number" min="0" step="1000" required></label>
+        <div></div>
+        <label>Hora de entrada<input id="designerStart" type="time" value="07:00" required></label>
+        <label>Hora de salida<input id="designerEnd" type="time" value="17:00" required></label>
+        <label>Inicio del almuerzo<input id="lunchStart" type="time" value="12:00" required></label>
+        <label>Fin del almuerzo<input id="lunchEnd" type="time" value="13:00" required></label>
+      </div>
+      <div class="modal-footer"><button value="cancel" class="btn outline">CANCELAR</button><button type="button" class="btn green" id="saveDesignerBtn">GUARDAR</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="pmpModal" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header"><h2 id="pmpModalTitle">Crear PMP</h2><button class="icon-btn" value="cancel">×</button></div>
+      <input type="hidden" id="pmpId">
+      <div class="form-grid modal-body"><label>Nombre de la PMP<input id="pmpName" required></label></div>
+      <div class="modal-footer"><button value="cancel" class="btn outline">CANCELAR</button><button type="button" class="btn green" id="savePmpBtn">GUARDAR</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="activityModal" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header"><h2 id="activityModalTitle">Crear actividad</h2><button class="icon-btn" value="cancel">×</button></div>
+      <input type="hidden" id="activityId">
+      <div class="form-grid modal-body">
+        <label>Nombre de la actividad<input id="activityName" required></label>
+        <label>Etapa<select id="activityStage"><option value="1">Etapa 01 · Plano general</option><option value="2">Etapa 02 · Fabricación</option><option value="3">Etapa 03 · Adicionales</option></select></label>
+        <label>Porcentaje que representa en el proyecto<input id="activityPercent" type="number" min="0.01" max="100" step="0.01" required></label>
+        <fieldset class="type-check-fieldset"><legend>Tipos de proyecto</legend>
+          <label class="check-option"><input type="checkbox" class="activity-type-check" value="T1"> T1 · Proyecto</label>
+          <label class="check-option"><input type="checkbox" class="activity-type-check" value="T2"> T2 · Solo Ingeniería</label>
+          <label class="check-option"><input type="checkbox" class="activity-type-check" value="T3"> T3 · OT</label>
+          <label class="check-option"><input type="checkbox" class="activity-type-check" value="T4"> T4 · Garantía</label>
+        </fieldset>
+      </div>
+      <div class="modal-footer"><button value="cancel" class="btn outline">CANCELAR</button><button type="button" class="btn green" id="saveActivityBtn">GUARDAR</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="projectSizesModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-header"><div><h2>Tamaños de proyectos</h2><p>Edite las opciones que aparecerán al crear o editar proyectos.</p></div><button class="icon-btn" id="closeProjectSizesBtn">×</button></div>
+      <div class="modal-body">
+        <div class="size-create-row"><input id="sizeName" placeholder="Nombre"><input id="sizeMin" type="number" min="1" placeholder="Mínimo"><input id="sizeMax" type="number" min="1" placeholder="Máximo"><button type="button" class="btn blue" id="addProjectSizeBtn">AGREGAR</button></div>
+        <div class="table-scroll medium"><table><thead><tr><th>Nombre</th><th>Mínimo</th><th>Máximo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="projectSizesBody"></tbody></table></div>
+      </div>
+      <div class="modal-footer"><button class="btn outline" id="closeProjectSizesFooterBtn">CERRAR</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="equipmentModal" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header"><h2 id="equipmentModalTitle">Crear equipo</h2><button class="icon-btn" value="cancel">×</button></div>
+      <input type="hidden" id="equipmentId">
+      <div class="form-grid two modal-body">
+        <label>Código<input id="equipmentCode" required></label>
+        <label>Nombre del equipo<input id="equipmentName" required></label>
+        <label>Días estándar<input id="equipmentStandard" type="number" min="0" step="0.5" required></label>
+        <label>Días medio<input id="equipmentMedium" type="number" min="0" step="0.5" required></label>
+        <label>Días no estándar<input id="equipmentNonStandard" type="number" min="0" step="0.5" required></label>
+        <label>Días complejo<input id="equipmentComplex" type="number" min="0" step="0.5" required></label>
+      </div>
+      <div class="modal-footer"><button value="cancel" class="btn outline">CANCELAR</button><button type="button" class="btn green" id="saveEquipmentBtn">GUARDAR</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="holidayModal" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header"><h2>Agregar fecha no laborable</h2><button class="icon-btn" value="cancel">×</button></div>
+      <div class="form-grid two modal-body"><label>Fecha<input id="holidayDate" type="date" required></label><label>Nombre<input id="holidayName" value="Fecha no laborable" required></label></div>
+      <div class="modal-footer"><button value="cancel" class="btn outline">CANCELAR</button><button type="button" class="btn green" id="saveHolidayBtn">GUARDAR</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="finishModal" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header"><div><h2>Finalizar proyecto</h2><p>Registre la fecha real de finalización y las observaciones.</p></div><button class="icon-btn" value="cancel">×</button></div>
+      <input type="hidden" id="finishProjectId">
+      <div class="form-grid modal-body">
+        <label>Fecha de finalización<span class="date-wrap"><input id="finishDate" type="date" required></span></label>
+        <label>Notas / observaciones<textarea id="finishNotes" rows="5" placeholder="Observaciones finales del proyecto"></textarea></label>
+      </div>
+      <div class="modal-footer"><button value="cancel" class="btn outline">CANCELAR</button><button type="button" class="btn green" id="confirmFinishBtn">FINALIZAR PROYECTO</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="historyMetaModal" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-header"><div><h2>Editar registro histórico</h2><p>PMP, BODEGA, días de retraso y notas pueden ajustarse después del cierre.</p></div><button class="icon-btn" value="cancel">×</button></div>
+      <input type="hidden" id="historyMetaProjectId">
+      <div class="form-grid two modal-body">
+        <label>PMP<select id="historyPmp"><option value="">Seleccione PMP</option></select></label>
+        <label>BODEGA<input id="historyWarehouse" placeholder="N.º de Bodega"></label>
+        <label>Recepción de alcance<span class="date-wrap"><input id="historyReception" type="date"></span></label>
+        <label>ESTATUS<select id="historyStatus"><option>PRODUCCION</option><option>ENSAMBLE</option><option>DESPACHADO</option><option>PUESTA EN MARCHA</option><option>FINALIZADO</option></select></label>
+        <label>Días retraso Etapa 01<input id="historyDelay1" type="number" min="0" step="1"></label>
+        <label>Días retraso Etapa 02<input id="historyDelay2" type="number" min="0" step="1"></label>
+        <label>Días retraso Etapa 03<input id="historyDelay3" type="number" min="0" step="1"></label>
+        <div></div>
+        <label class="span-two">Notas / observaciones<textarea id="historyNotes" rows="6"></textarea></label>
+      </div>
+      <div class="modal-footer"><button value="cancel" class="btn outline">CANCELAR</button><button type="button" class="btn green" id="saveHistoryMetaBtn">GUARDAR CAMBIOS</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="detailModal" class="modal detail-modal">
+    <div class="modal-card">
+      <div class="modal-header"><div><h2 id="detailTitle">Proyecto</h2><p id="detailSubtitle"></p></div><button class="icon-btn" id="closeDetailBtn">×</button></div>
+      <div id="detailContent" class="modal-scroll detail-content"></div>
+      <div class="modal-footer" id="detailFooter"></div>
+    </div>
+  </dialog>
+
+  <dialog id="alertModal" class="modal alert-modal">
+    <div class="modal-card">
+      <div class="modal-header"><div><h2>ALERTAS DE PROYECTOS</h2><p>Proyectos próximos a vencer o con retraso.</p></div><button class="icon-btn" id="closeAlertBtn">×</button></div>
+      <div id="alertModalBody" class="modal-body alert-list"></div>
+      <div class="alert-session-row">
+        <label class="alert-session-option" for="muteAlertsSession">
+          <input type="checkbox" id="muteAlertsSession">
+          <span>No volver a mostrar durante esta sesión</span>
+        </label>
+        <small>La alerta volverá a aparecer después de cerrar sesión e ingresar nuevamente.</small>
+      </div>
+      <div class="modal-footer"><button class="btn blue" id="ackAlertsBtn">ENTENDIDO</button></div>
+    </div>
+  </dialog>
+
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('proyectos_diseno.static', filename='app.js') }}"></script>
+{% endblock %}

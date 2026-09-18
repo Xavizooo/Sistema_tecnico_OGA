@@ -1,0 +1,78 @@
+{% extends 'biblioteca/base.html' %}
+{% block biblioteca_content %}
+<div class="content-grid search-grid">
+  <section class="card search-panel">
+    <div class="card-header"><h2>BUSCADOR DE REFERENCIAS</h2></div>
+    <div class="selected-title compact-title">
+      <span class="pill">{{ selected_equipo.codigo if selected_equipo else '' }}</span>
+      <select id="search-equipo" class="equip-select" onchange="changeSearchEquipo(this.value)">
+        {% for e in equipos %}
+        <option value="{{ e.codigo }}" {% if selected_equipo and e.codigo==selected_equipo.codigo %}selected{% endif %}>{{ e.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div id="search-chars" class="search-char-list main-scroll">
+      {% for c in chars %}
+      <div class="search-char-block" data-orden="{{ c.orden }}">
+        <div class="char-index">{{ c.orden }}</div>
+        <div class="char-body">
+          <div class="char-label {{ color_class(c.grupo_color) }}">{{ c.nombre }}</div>
+          <select class="subchoice search-subchoice" data-orden="{{ c.orden }}" onchange="updateSearchFilters()">
+            <option value="">Seleccione...</option>
+            {% for s in c.subcaracteristicas %}
+            <option value="{{ s.codigo }}" {% if selected_map[c.orden]==s.codigo %}selected{% endif %} {% if not s.enabled %}disabled{% endif %}>{{ s.codigo }}. {{ s.texto }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="search-actions"><button type="button" class="secondary-btn" onclick="limpiarBuscador()">Limpiar</button></div>
+  </section>
+
+  <section class="card image-card search-image">
+    <div class="card-header"><h2>VISTA PREVIA</h2></div>
+    <div class="ref-label">Referencia Encontrada</div>
+    <div class="reference-box" id="search-ref-box">{{ selected_ref.referencia_codigo if selected_ref else '' }}</div>
+    <div class="cost-line">Costo: <strong id="search-cost">{{ format_money(selected_ref.costo if selected_ref else '') }}</strong></div>
+    <div class="status {% if selected_ref %}success-text{% else %}error-text{% endif %}" id="search-status">{% if selected_ref %}Referencia existente{% else %}Referencia no existente{% endif %}</div>
+    {% if selected_ref and selected_ref.has_planos %}
+    <div class="pdf-viewer-wrap" id="search-pdf-wrap"><iframe id="search-pdf" class="pdf-viewer" title="Vista previa del plano PDF" loading="lazy" src="{{ url_for('biblioteca.uploaded_file', kind='planos', filename=selected_ref.planos) }}#toolbar=0&navpanes=0&page=1"></iframe></div>
+    {% else %}
+    <div class="pdf-viewer-wrap empty" id="search-pdf-wrap"><span class="pdf-empty-message">Seleccione una referencia con plano PDF</span><iframe id="search-pdf" class="pdf-viewer hidden-frame" title="Vista previa del plano PDF"></iframe></div>
+    {% endif %}
+  </section>
+
+  <section class="card refs-card">
+    <div class="card-header"><h2>REFERENCIAS</h2></div>
+    <div class="tiny-tab">Detalles de las referencias de {{ selected_equipo.codigo if selected_equipo else '' }}</div>
+    <div class="search-results-summary" id="search-result-count" aria-live="polite"></div>
+    <div class="refs-table" id="search-refs-table">
+      <div class="refs-head no-image"><span>CÓDIGO</span><span>COSTO</span><span>Planos</span><span>3D</span><span>Lista M.</span><span>Ficha T.</span><span></span></div>
+      {% for r in referencias %}
+      <div class="refs-row no-image search-ref-row" data-ref='{{ r|tojson|safe }}'>
+        <button type="button" class="reference-link" title="Ver referencia" onclick='selectSearchReference({{ r|tojson }})'>{{ r.referencia_codigo }}</button>
+        <span>{{ format_money(r.costo) }}</span>
+        <span>{{ biblio_icon('check' if r.has_planos else 'minus', 'available' if r.has_planos else 'unavailable') }}</span>
+        <span>{{ biblio_icon('check' if r.has_modelo3d else 'minus', 'available' if r.has_modelo3d else 'unavailable') }}</span>
+        <span>{{ biblio_icon('check' if r.has_lista_materiales else 'minus', 'available' if r.has_lista_materiales else 'unavailable') }}</span>
+        <span>{{ biblio_icon('check' if r.has_ficha_tecnica else 'minus', 'available' if r.has_ficha_tecnica else 'unavailable') }}</span>
+        <div class="row-inline">
+          <button type="button" class="icon-btn green" title="Descargar archivos" onclick='openDownloadModal({{ r|tojson|safe }})'>{{ biblio_icon('download') }}</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="modalDescargar"><div class="modal-card"><div class="modal-header"><h3>Descargar archivos</h3><button class="close-btn" type="button" onclick="closeModal('modalDescargar')">&times;</button></div><div id="download-options" class="download-options"></div><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalDescargar')">Cerrar</button></div></div></div>
+{% endblock %}
+{% block biblioteca_scripts %}
+<script>
+window.searchReferences = {{ referencias|tojson }};
+window.searchAllOptions = {{ all_options|tojson }};
+window.searchSelected = {{ selected_map|tojson|safe }};
+window.searchBaseUrl = "{{ url_for('biblioteca.buscador', equipo=selected_equipo.codigo if selected_equipo else '') }}";
+</script>
+{% endblock %}

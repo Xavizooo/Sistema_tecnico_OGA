@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading"><h2>HISTÓRICO</h2><p>Máximo 5 trabajos archivados. Al guardar el sexto, se elimina automáticamente el más antiguo.</p></div>
+<div class="card">
+  <div class="table-wrap"><table><thead><tr><th>NOMBRE / PROYECTO</th><th>FECHA</th><th>ACCIONES</th></tr></thead><tbody>
+  {% for r in rows %}<tr><td><strong>{{r.NOMBRE}}</strong></td><td>{{r.FECHA}}</td><td class="actions-cell">
+    <button class="btn small primary" type="button" onclick="recoverHistory('{{r.ID}}','{{r.NOMBRE|e}}',{{ 'true' if dirty else 'false' }})">RECUPERAR</button>
+    <form method="post" action="{{url_for('history_delete',history_id=r.ID)}}" onsubmit="return confirm('¿Eliminar este histórico?');"><button class="btn small danger" type="submit">ELIMINAR</button></form>
+  </td></tr>{% else %}<tr><td colspan="3" class="empty">Aún no hay trabajos archivados.</td></tr>{% endfor %}
+  </tbody></table></div>
+</div>
+
+<form id="recoverForm" method="post" style="display:none"><input id="recoverAction" name="current_action"><input id="recoverArchiveName" name="archive_name"></form>
+{% endblock %}
+{% block scripts %}<script>
+function recoverHistory(id,name,dirty){
+  const form=document.getElementById('recoverForm');
+  form.action='/historico/'+id+'/recover';
+  if(!dirty){document.getElementById('recoverAction').value='discard';form.submit();return;}
+  const save=confirm('Hay una lista actualmente en proceso.\n\nAceptar = ARCHIVAR antes de recuperar.\nCancelar = elegir si desea descartarla.');
+  if(save){
+    const nm=prompt('NOMBRE / N.º PROYECTO para archivar el trabajo actual:');
+    if(!nm)return;
+    document.getElementById('recoverAction').value='archive';document.getElementById('recoverArchiveName').value=nm;form.submit();
+  }else{
+    const discard=confirm('¿Desea DESCARTAR el trabajo actual sin guardarlo y recuperar '+name+'?');
+    if(!discard)return;
+    document.getElementById('recoverAction').value='discard';form.submit();
+  }
+}
+</script>{% endblock %}

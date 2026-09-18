@@ -1,0 +1,1502 @@
+[
+  {
+    "path": ".gitignore",
+    "bytes": 234,
+    "sha256": "173abac32da0e2c25a6d24553c16285938600f32d66a62ffd3da8543e968e1ef"
+  },
+  {
+    "path": ".vscode/launch.json",
+    "bytes": 313,
+    "sha256": "80b136bddf470f9c71f3a89b858b9e7df55750d41161a3c0f1960e240749e7ea"
+  },
+  {
+    "path": "INICIAR.py",
+    "bytes": 2663,
+    "sha256": "a8a38ddf36bd0048c1bc7982efea543429b73d88bbb7758083042c5cf313d09f"
+  },
+  {
+    "path": "PLANTILLAS/PLANTILLA_B1_FILTRADO.xlsx",
+    "bytes": 5116,
+    "sha256": "46b79dd1f33c50706d157e06cb68f9cae2da771a8ad139b18fee0cf88918febe"
+  },
+  {
+    "path": "PLANTILLAS/PLANTILLA_INVENTOR.xlsx",
+    "bytes": 5163,
+    "sha256": "43f3cd3ce893acf717e50a7530aebba58e5865134f8380d264eceff6af84f692"
+  },
+  {
+    "path": "PLANTILLAS/PLANTILLA_LISTADO_EQUIPOS_INVENTOR.xlsx",
+    "bytes": 6686,
+    "sha256": "4d1bca93936b18808c2d76f219c58badf9d86fbdecc099b8a94ce9dc21f88e25"
+  },
+  {
+    "path": "PLANTILLAS/PLANTILLA_LISTA_MAESTRA_FACTORY.xlsx",
+    "bytes": 7501,
+    "sha256": "d869a9433d76a0a212091c1949e40355fa46899f426faad61d64b85d9ebbb2f9"
+  },
+  {
+    "path": "PLANTILLAS/PLANTILLA_MOV_RQ.xlsx",
+    "bytes": 5080,
+    "sha256": "334c3c11ac02a867423df90bdcdf6198499b9726f83188929ca0ec956d2515bd"
+  },
+  {
+    "path": "README.txt",
+    "bytes": 5554,
+    "sha256": "373f58cde213615aaf30c33cfbb9e1f58910294d2f4c25bd11bde66f422f66c1"
+  },
+  {
+    "path": "VALIDAR_REV15.py",
+    "bytes": 10361,
+    "sha256": "b3913a57509232770514c1aab19095dcae782e6826bcab7c10064e2ae9296927"
+  },
+  {
+    "path": "app.py",
+    "bytes": 54556,
+    "sha256": "298ca12f67a162bc1ed3cd61afed655fd942514b3d6e5feb7186519ac26c2a8b"
+  },
+  {
+    "path": "auth_store.py",
+    "bytes": 18969,
+    "sha256": "fde31332b3ec043945b850331094247f550460eee977bbddbbd2f61ff31cfa19"
+  },
+  {
+    "path": "biblioteca.py",
+    "bytes": 32938,
+    "sha256": "2d827bc674ad0877ec21e73f6427e17d9bf05d975d344ccb983a59bdb87550f2"
+  },
+  {
+    "path": "data/AUTOGUARDADO/20260911_063623_430592_Autoguardado_peri_dico.zip",
+    "bytes": 356067,
+    "sha256": "b1b7b98299e990450c6153beb6868f0b20ee1d6cd13c47820c43c56e8dd83be0"
+  },
+  {
+    "path": "data/AUTOGUARDADO/20260911_064959_246317_Lista_de_Inventor_cargada.zip",
+    "bytes": 344823,
+    "sha256": "53da3b557edbb975651dbe6af52abc0ecce8e848fcc06c23938a26172ff49f6a"
+  },
+  {
+    "path": "data/AUTOGUARDADO/20260911_065007_908783_Proceso_RQ_terminado.zip",
+    "bytes": 344028,
+    "sha256": "5302b0a5113fb175215a90ac5c72aa610e80181c42650420c580ebd6fcc692e5"
+  },
+  {
+    "path": "data/AUTOGUARDADO/20260911_072747_336277_Autoguardado_al_iniciar_sin_lista.zip",
+    "bytes": 344028,
+    "sha256": "5302b0a5113fb175215a90ac5c72aa610e80181c42650420c580ebd6fcc692e5"
+  },
+  {
+    "path": "data/AUTOGUARDADO/20260911_073237_252373_Lista_de_Inventor_cargada.zip",
+    "bytes": 91923,
+    "sha256": "74c947a07df61ef48922d8eb3e7ec554f93e29dbd059f7ceca3d5d9db6e4dc88"
+  },
+  {
+    "path": "data/AUTOGUARDADO/20260911_073245_855677_Proceso_RQ_terminado.zip",
+    "bytes": 339406,
+    "sha256": "c630171df7bdf77ded9aded00699cf174b06b29c928a1868016771f3ce166c46"
+  },
+  {
+    "path": "data/AUTOGUARDADO/copias.json",
+    "bytes": 1968,
+    "sha256": "331b319a3087fc56d37468982691c17cf591ee322c0b095653445884ee43ac32"
+  },
+  {
+    "path": "data/BACKUP_MAESTRA/LISTA_MAESTRA_FACTORY_20260831_120403.xlsx",
+    "bytes": 7501,
+    "sha256": "d869a9433d76a0a212091c1949e40355fa46899f426faad61d64b85d9ebbb2f9"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1113722.pdf",
+    "bytes": 632162,
+    "sha256": "f4c36a4cfa39f5a1bf5d991ffa34333446643d43bdb5364ae50d032310f00472"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1113731.pdf",
+    "bytes": 438054,
+    "sha256": "ac56179b44e79518550d8affa68a7584f1b09a39f775002a2c8a9046d7eea173"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1113732.pdf",
+    "bytes": 646971,
+    "sha256": "e3b4803449ce62794cdd12ff1dcf7b1fe327b4e10a0ee6195df89e17b1113570"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1113831.pdf",
+    "bytes": 586118,
+    "sha256": "e75251b19eb73ca4d7016eac7798aa7aac3996b1cd37a6bcda1bed1c8f49602d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1113832.pdf",
+    "bytes": 453864,
+    "sha256": "012a63ce849e59a7c55c4a14ba6c6b22675a756210330b0adf308edf196937d2"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1113D32.pdf",
+    "bytes": 2166669,
+    "sha256": "7a2c51cc37a54ae4e8fd91931609ec3c3dba945f34674db480bec16214e48688"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1114D31.pdf",
+    "bytes": 569825,
+    "sha256": "3f8b06e6db6ad44d906fef4789211d687680f60490a484f69eeea0eb8bacbf59"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1114F31.pdf",
+    "bytes": 519703,
+    "sha256": "0f7006bf42dc1b40d423584df26e3fc083946e2860bc2e7f258daae7074b9c19"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1116831.pdf",
+    "bytes": 522152,
+    "sha256": "962d94b0f540e647b2e53bb7410fd2c513e75dd5a7cc4666738151068c0a1f16"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1118H31.pdf",
+    "bytes": 593954,
+    "sha256": "1b97d815e3849fe0a27329d641334796176d09e5504080cd0aae7ac0d5f287a0"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1118H32.pdf",
+    "bytes": 643673,
+    "sha256": "3c1bf4c3d385bb9eafc2e4ae7513013491dbe59151b18db6acd97412608cd484"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1126821.pdf",
+    "bytes": 491839,
+    "sha256": "9751ab85d8c391a945bcd972b6f9b65aac2dab14ab8d8802f61b472fb5094d42"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1127731.pdf",
+    "bytes": 731447,
+    "sha256": "b0a725971386585b9f66331057c2a35eb2f12d67db186196eccaecf279bd336f"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1127821.pdf",
+    "bytes": 530634,
+    "sha256": "d263614793b0d1268526df6ec72ebba85f975ecfba641843cc95ca1e9fa4dc03"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1127931.pdf",
+    "bytes": 643352,
+    "sha256": "7f9684c70b68c11d4d7a2e026477218da5304422b56800cd9e61a46bb3ecaa6b"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1127D31.pdf",
+    "bytes": 445197,
+    "sha256": "0cda6372a0401e32384267aaf41ff19baa36fa2bdce50ded17549438df3b58ce"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1128D31.pdf",
+    "bytes": 481606,
+    "sha256": "7e9b05bd1670fd860131e2be032585ce577211e9bb852c41e1e9a269cfe88ffb"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1129821.pdf",
+    "bytes": 488962,
+    "sha256": "78c5641fe7606e512894ce3ae54bb8d4e3d4b025eee82975f8b90b7401f712b0"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1129D31.pdf",
+    "bytes": 468259,
+    "sha256": "0b8726dd05d87d239112242505bf53ece6aebd028355d77243227ceebac69a11"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA112A721.pdf",
+    "bytes": 518418,
+    "sha256": "ce4264dbb1731b627e0bde49a62fe8dec0242e25331644c4c333b8f2a5369d73"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA112B721.pdf",
+    "bytes": 512641,
+    "sha256": "bdd95ea2e3782350664f38cfd360f0a1c52dfbde23e7019e15a71051d5403525"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1213732.pdf",
+    "bytes": 696681,
+    "sha256": "53fb7862f455c28ebe16e40367f51d1c9102810cf7f679dc4a8f26f880628166"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1213832.pdf",
+    "bytes": 424919,
+    "sha256": "c1eb48b03defa7771589dc12dcbdd4368c992243e2145e3cc40471cdfce0c02a"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1218H32.pdf",
+    "bytes": 611917,
+    "sha256": "c3e354a9285a66e59c2fffc44f34f4c7f49fa5be2d05321e87f865449556f393"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA1218J32.pdf",
+    "bytes": 648375,
+    "sha256": "ea4cc68dc1a111820f0b21ca19eed05b16598f80d7115fdde1f41887709335af"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2114B31.pdf",
+    "bytes": 2625554,
+    "sha256": "b076ec20951de8ba7db90efb343d0bf26d3890a24f252c09366005e5a578d3b7"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2115741.pdf",
+    "bytes": 495295,
+    "sha256": "4d01b1b241f438d3bb39d7c2aba72a50af5c2959c3ab3510866521e8cd897978"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2115B41.pdf",
+    "bytes": 568572,
+    "sha256": "120738daa4007c659c0b78bafbefd05a4b3bd13c90a64cc5e8ddae2789f7b305"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2116B31.pdf",
+    "bytes": 289044,
+    "sha256": "f8a87f5b39c2e10bec24311e0493d18365344209387038c8b96365682ee7dc90"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2117721.pdf",
+    "bytes": 430028,
+    "sha256": "e1aeb16aa092b400491c7da28b983eca1dc5311bd2e617ae3db5e75a22e9b63c"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2125741.pdf",
+    "bytes": 450218,
+    "sha256": "2d26303490cf0c9322ff717f6051b9570cd1608a806e1010859cc0f343ac9ede"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2127731.pdf",
+    "bytes": 445807,
+    "sha256": "dbce972cbbbb56d5cbc32c2ca0779cef6ec9374bb18cba19a106f8e83d498fe9"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2127741.pdf",
+    "bytes": 448315,
+    "sha256": "714c288c41c2a139b6cb16a50ff89a5bd99aea58753afe6018c2a61b3875b497"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2127821.pdf",
+    "bytes": 353408,
+    "sha256": "40656ee299ec4af8f12708ca874fe6005d6cac65e2d695a0af8b36adde6cbb33"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2128821.pdf",
+    "bytes": 444495,
+    "sha256": "897f97d91960a1cd833fa5afcc29de6de5cdb892d72fcee4e8840137ecdc8308"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2129B21.pdf",
+    "bytes": 447363,
+    "sha256": "fd3bfd115bfe5f2818110d37dba5f40d7e9ff85c9a45cefbb0c6bbe05e4cf4a9"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA212A721.pdf",
+    "bytes": 409502,
+    "sha256": "98a2187fef9a04382a39ab761194f3f79e86cdf60e97b23cf810234cd89b9b4a"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA212AB21.pdf",
+    "bytes": 288453,
+    "sha256": "4fa61fc4ed59347fffd18ff24b4b0e479bd9273629e338ff02cc687a1345678f"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA212AB31.pdf",
+    "bytes": 444806,
+    "sha256": "2b42b534d36340e9d3d4fe8a2feae543c22b024f03cde5c6fc284bbdaa98b343"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA212AC31.pdf",
+    "bytes": 477120,
+    "sha256": "b08171563cd238727f454daba0b5fe48fae66a817388d9d14263acd6c8c13e6b"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2212541.pdf",
+    "bytes": 2032280,
+    "sha256": "5b8afbbeb8d6695b20365a511514ab57d6113efeb4d3e8f478d9ead9e8ff2f4d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA2213B32.pdf",
+    "bytes": 476725,
+    "sha256": "b21146af4ac802ab44bde31cdc90431c3f2eb6f75d28ec8146af96674420c41a"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA222AB31.pdf",
+    "bytes": 300943,
+    "sha256": "d4315a74d3560dec6cd0f87a0e8abbc7971d7eaf37fb29404a0d16fb42f01123"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA222BB21.pdf",
+    "bytes": 297570,
+    "sha256": "c34c03efc20b2b59bf499f03524de07258b7fc3a66b9653c9f92c48cbda2d894"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/ADA3113832.pdf",
+    "bytes": 673909,
+    "sha256": "57bf5af03be674857d86a34a621d978478954f9e697e759a1f07e6e777abebab"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1113522.pdf",
+    "bytes": 914606,
+    "sha256": "dd78d20dd0375bf1605e7daafbe88e5a927c3e59e90ab397dd72e4be89193c0f"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114132.pdf",
+    "bytes": 1009343,
+    "sha256": "75593eee1019b393eaee8c8ee32cd26dbca0ca81f95fc9cb15745cddb7e16555"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114442.pdf",
+    "bytes": 5081064,
+    "sha256": "3b5c3e983613dfca05aa3fc50dfc2d3c7fb22d07cb3d88b821b76820498dd1eb"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114443.pdf",
+    "bytes": 1212363,
+    "sha256": "2035f875d93e23aae42caaec2ca8e1a0cfc5e8265f5212df286aeb4e3766940a"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114451.pdf",
+    "bytes": 1262580,
+    "sha256": "9a8226a67d48b8cf734a59be7c57a39e73d4851aead02393e747dcbcc2b4b8e8"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114452.pdf",
+    "bytes": 1605376,
+    "sha256": "d0b0985e5c7c6f2938b112ec96a32be89d1c4660153c9aa17fcf9b9b54e8eb53"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114453.pdf",
+    "bytes": 1551567,
+    "sha256": "4b9569da113f6b8037f6f9641a9cb030df58898ca7ceeb2489cb349a68ca79c0"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114542.pdf",
+    "bytes": 1646766,
+    "sha256": "56bad29b27e5ff9ecc612276ce8dc1a35ed618c3d709978e3801082ae6c4acb9"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114551.pdf",
+    "bytes": 1865600,
+    "sha256": "b098de44ecfdcca3ecd3dc8d4827848486c3bdcf064d3e3b376512c92d7bf10d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114552.pdf",
+    "bytes": 1674712,
+    "sha256": "a6d9007b845b013e2b0c1119e11058e3ed7698f317f5cdfb8bbfa3bf0ea09a54"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114553.pdf",
+    "bytes": 924749,
+    "sha256": "321f12f485c0f13c22c73fd2824d2493705180340fd0eb24d216684ad0e7501d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114554.pdf",
+    "bytes": 1893526,
+    "sha256": "8568e1ee2ff2f4b45c91e90b575feeb3cb62471a348e8deb2f0bacf7ec9cdf00"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114651.pdf",
+    "bytes": 952128,
+    "sha256": "34afd46edd59bc197489644de124bf3288c5523512cff8b1075f07989ce6c9cd"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114652.pdf",
+    "bytes": 1485993,
+    "sha256": "3108f65a14c89d21268070d0a860a522e58fd5447c0024bfdefe6b9d60eb1717"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114654.pdf",
+    "bytes": 3435619,
+    "sha256": "30b27430f75c11a07bf5f9052b99485e31882a0d067aa49128daf562c077f334"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114662.pdf",
+    "bytes": 3537172,
+    "sha256": "7dac419f51cf3a3cee95a2540051234524bb9f2d17926d827b31dcdb37c2053f"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114752.pdf",
+    "bytes": 1842108,
+    "sha256": "dc09cc6972c767ff74aefa19f562ce85bcb7aa38a49a6bf0a72c7a726d28ee6e"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114772.pdf",
+    "bytes": 1621833,
+    "sha256": "9dd365cbadba9d6b58e58a1a090a5f5967d83511652e88e2523fa5c8930ab7a8"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114773.pdf",
+    "bytes": 2260134,
+    "sha256": "4db8f34615935e82d5bd9a2e4600886a74b38dee425879dc8c8dfed596a2c52f"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114A72.pdf",
+    "bytes": 2523195,
+    "sha256": "4ea836883b17a8195683bda5bceb990dd071fbe5c3b79fa5bd724586c12f6f59"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1114A74.pdf",
+    "bytes": 3135600,
+    "sha256": "2fd16b01e4f5ace9dfeff54482cf3799ab21f7ebc55bf5069bd407a82be7ac60"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1116131.pdf",
+    "bytes": 1378855,
+    "sha256": "3b34871dca5d42bf7fe9ab592ffd37c81435981c7062bf43a421d5a801f33a50"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1117441.pdf",
+    "bytes": 980760,
+    "sha256": "602b08e96b1e70903b59b1b2c61c40be4cb1b4c2bcd54b6b14a04fb02d440a15"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1117442.pdf",
+    "bytes": 991410,
+    "sha256": "69240ff6134e4b27e5ea94040502a9686013f474d98c2913f2e9f17ca0e50e83"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1117444.pdf",
+    "bytes": 893208,
+    "sha256": "3ea35a0f581584b5aa8b4a540385ce3a463de2e29d066d79fa705cac98357149"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1117452.pdf",
+    "bytes": 1609408,
+    "sha256": "5d134dd53ee43cfb6ba3b61f442a38990f014f190505885677bf893ce625be0d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1117453.pdf",
+    "bytes": 1149295,
+    "sha256": "88f261b69dadc50cec8ca8be421ee07ea27ef035318aecdec8164a9839ac3fe8"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1117652.pdf",
+    "bytes": 1158786,
+    "sha256": "4d1112a53a73fe24dded1584a26bbb5e9b80d7d99b404da647c33a876d34a045"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1117754.pdf",
+    "bytes": 1952350,
+    "sha256": "8bce2638a18a1d258370cf1cb313ad9ff18248e77401dc5969eb8bf668dfc6b3"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1124552.pdf",
+    "bytes": 1837949,
+    "sha256": "cdef9aa77c1a6ee8cf8878633dd5cd0af44d0b27ef13d39206073be3e33be6ed"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1124554.pdf",
+    "bytes": 1289091,
+    "sha256": "0ba877c59b9cdea5c3d7db67ebc273557260023950b8faaca503609008539b51"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1124754.pdf",
+    "bytes": 1390433,
+    "sha256": "4a6c6ae677bd2cae71736bfa5a46601400ff5d16c1d2d6d366aa30d7146bca91"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1124772.pdf",
+    "bytes": 1684194,
+    "sha256": "4929d91e6f001f8de6dc8389b240c588a25126890493f2cf1596bc37213b1b96"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1134442.pdf",
+    "bytes": 1596245,
+    "sha256": "699ad47b245a3adf50c290a59ed4bbdc1356c5f9db0a0351cdd6dfb14e0bb0f2"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214442.pdf",
+    "bytes": 4289320,
+    "sha256": "116fd2ca25956d81e82b979b0ed8af40fc261226ec394c3945ee9837ce948a5e"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214452.pdf",
+    "bytes": 1405485,
+    "sha256": "6d0f3507b707bab1db44f9fc50347b450fd22d401168dcc89e62ea4e59fda29d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214554.pdf",
+    "bytes": 1983288,
+    "sha256": "813aa1929ddfdb997a091b8be4d4fd4e8baba55dc1118f4710e4b1e6d1ce680b"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214651.pdf",
+    "bytes": 1304048,
+    "sha256": "c9a261176c1911e46622eeb9365a1b1f1255de6b193ffec4afd0556e449213b3"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214652.pdf",
+    "bytes": 2063071,
+    "sha256": "4d42c348ad4bd3201efac5529cb8c827576c060a539fb7df100e3841c2bc443e"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214653.pdf",
+    "bytes": 2261628,
+    "sha256": "3c14fabe08b805832c878ccfc3353b1d204fc80dbd073ddce0e1498c7d6b5880"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214761.pdf",
+    "bytes": 1161954,
+    "sha256": "d4b14a0ff56660afdef90d6bb2cce83c045f623a9aa63edb737c082454525b74"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214772.pdf",
+    "bytes": 1793108,
+    "sha256": "a1a419036752b07a04c506bd20c3137cfd71f60903f14546493ff224c0eb36b8"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214862.pdf",
+    "bytes": 12085026,
+    "sha256": "7e7c0e7d807f0b22424825c6b5a7f5207ddff91876e77db2540c890450cda9cb"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214992.pdf",
+    "bytes": 3304258,
+    "sha256": "e17e861ae22324ef12bdef0e215c2282f29116cdbc4aec7f4639ab6d171e85b2"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214A92.pdf",
+    "bytes": 3609973,
+    "sha256": "5eb642e81e8fd95feec98f138ae2c8a39980ffd1d253a294b564fb6901dc3d69"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1214B92.pdf",
+    "bytes": 3763587,
+    "sha256": "f21bce5e1f32497d25cef8854bd418522dfb0eb4eca83467428ceff0116d5649"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1217452.pdf",
+    "bytes": 982553,
+    "sha256": "e31e27fd812cb5fd36b5a54bc2f39dfa2d8540b6b81eaf8c472d21e367c43f31"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1217542.pdf",
+    "bytes": 1515722,
+    "sha256": "7aa67ad59eb49c184d7a56fc712cc9fb52578b2d06100a03f33e7fcffa5775e8"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1218132.pdf",
+    "bytes": 2197451,
+    "sha256": "ee2def2027f458e07ad3fd26a40a966e12fa0ef9f11878ed0615c55bb1a19fa4"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1224452.pdf",
+    "bytes": 1212108,
+    "sha256": "1dc534e485354568f25e4cfa7fa3555e991e05460e6b1479a23a1e6c688d0372"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1224772.pdf",
+    "bytes": 1322391,
+    "sha256": "1c704823cabbd59e8b623459da6ead09eb8d8705123eb2193985457b43676870"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1317964.pdf",
+    "bytes": 1871020,
+    "sha256": "520d8820dae7947f8fdb121806121eaaa4e07a2a46b4719e930f79509d00db89"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP1414CA2.pdf",
+    "bytes": 2651804,
+    "sha256": "84b1fa509336f2a83362580c135cd12522294fbe7ed4c8e7b41fdfb1c197a405"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2112622.pdf",
+    "bytes": 9570183,
+    "sha256": "98c9efd90f49b881b0ed9b4635fd897c4666d21e7ae142563494e4c92e9636ad"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114442.pdf",
+    "bytes": 1089583,
+    "sha256": "94cf98feeab3d780cffd7a5f1eb83400b35e3a7607ca56f01cded30f8542de4c"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114452.pdf",
+    "bytes": 640932,
+    "sha256": "69619d5f93ba406e259f10bbb3fa64d07093773b5412863c42958325363361d7"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114552.pdf",
+    "bytes": 13213072,
+    "sha256": "4d5d310bbe152a58b1ed47115655c2ed4a7474ed0ff815409120973732593d66"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114554.pdf",
+    "bytes": 1909910,
+    "sha256": "ac81034c978c4fff4fcbb7ce09a08ff9b1b1c8440640be8ddf25c8eb1cc0e052"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114651.pdf",
+    "bytes": 2512199,
+    "sha256": "8c336908551d368231498e834f5594defa8a2d3f956ad3669e6a8bc8b742f3bc"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114652.pdf",
+    "bytes": 2182669,
+    "sha256": "475f35958eb9dd5ee299a5f9962774759362cccfcefb5b1c07c4bdd6192d7947"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114654.pdf",
+    "bytes": 1868821,
+    "sha256": "dd9b61477a60ee0af9fbf2ed681a70f219c217ad468ac9b70922121575169673"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114661.pdf",
+    "bytes": 1780017,
+    "sha256": "5c8eb44e910ca74cc0fc8877dc3f50817aef5924c63c2bf0a3ecceaf5a259347"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114662.pdf",
+    "bytes": 1871810,
+    "sha256": "469a5d9eafc20bbbc8f5adf51b1c18d8fbc5cbc98a189352302dc5000a84b338"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114663.pdf",
+    "bytes": 850318,
+    "sha256": "780938a9d606860702314447d6f374b0517c8a59d65540817ec57e8396f80e27"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2114771.pdf",
+    "bytes": 2104839,
+    "sha256": "119f2591a13993165fd083accbb3716806700bdd8d03cc276102ddb1c4e7b20d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2117451.pdf",
+    "bytes": 998882,
+    "sha256": "e8da3018811e2724d4fca1fdffb2f46e936511d8c03128af3ea3803bb9efe516"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2117452.pdf",
+    "bytes": 963313,
+    "sha256": "1a7b0f5d04a08ebc4b4e0326209ee27d751a47c1530d9b314f96842395d889d2"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2117551.pdf",
+    "bytes": 757434,
+    "sha256": "d64ceb54ec010d9c56d7de594024c3a8f7f304300e66086d4931c68f69f5215c"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2117651.pdf",
+    "bytes": 874587,
+    "sha256": "a4a83ea61d9b6ea313f0a69cd8443456bc5e764c5d52e60b8cf283bb5ecee53d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2117672.pdf",
+    "bytes": 480690,
+    "sha256": "3bc67cf7977954fe6a2d9384d4046853b5657243ab3db74530132d4d4b77843f"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2117751.pdf",
+    "bytes": 919085,
+    "sha256": "004a9923b16b0dee9fb825ef70e1fc745662da7efe4ec4527982c7b8208b8508"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2122422.pdf",
+    "bytes": 1648036,
+    "sha256": "dc226849d1a450d64ae2e9c260bb4e3a7486aa34461e00d01bc39fe3c97b778e"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2124441.pdf",
+    "bytes": 1015130,
+    "sha256": "d25ae4d71681c6f18e3204099a2e105f0ad738c5f7191fe39c93ce9a9b8ca74f"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2214442.pdf",
+    "bytes": 1733732,
+    "sha256": "c2986330fab09b8340fb772bfad63700699dbca977a76e7e6995855b373dfab1"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2214551.pdf",
+    "bytes": 1148365,
+    "sha256": "73974f785b01d3d2bfb62e5089d33ef644180d7e0e51a2b093294ede60d0322c"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2214552.pdf",
+    "bytes": 1073809,
+    "sha256": "bb6a875b87c4feb1c7ab81410c8fcfc6aeb1cae90b2af2f770296cb4b298ac1f"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2217441.pdf",
+    "bytes": 849429,
+    "sha256": "3918b6fa71fdfeeab6c11543cce4371ecad04c105516a0a2846914a49aafd66d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2217442.pdf",
+    "bytes": 518216,
+    "sha256": "2b3ebc9f748f03c1e96a03f20ffb9ae751acebbeb04c5abcdda78550be3b5afe"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2317964.pdf",
+    "bytes": 1154688,
+    "sha256": "1c0617cecb658df4e7e2e9db3921dd3153d65ad328fd7b12d21bd07416dd4495"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2317A72.pdf",
+    "bytes": 1738516,
+    "sha256": "dcf41e8764192edb01ccd26ad9f869238572a77af7bb3f0d774375b03609ea03"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP2414442.pdf",
+    "bytes": 973612,
+    "sha256": "225d4f511075f83d1f5f83a0d116877992e8235d3e900e1e5b3327fc73d7556b"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP3115442.pdf",
+    "bytes": 2484430,
+    "sha256": "874affb8c79c9915b8fd5d0b5d329f535f2d8f2daf187a916168fbab1b9b683b"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/COP3117651.pdf",
+    "bytes": 990778,
+    "sha256": "87f9ab93e538c3798487d034c995e4eaf83b61cc1de6b827f8d996d8e3349cd1"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1111116.pdf",
+    "bytes": 563761,
+    "sha256": "453a1d93c9be1e0cba87499156f3d983b12ed4a770a765014197e81e0fdd0605"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1112322.pdf",
+    "bytes": 1285140,
+    "sha256": "1a6495ed38c8153417f96ecdc7a0ce943be1d6a47069c24a82abf981d6ecce72"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1112422.pdf",
+    "bytes": 575362,
+    "sha256": "9702acc52ce069d16ef7c0043e794464e49d58d0fff48609209ea0cc395018a7"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1113622.pdf",
+    "bytes": 1359551,
+    "sha256": "6b097b01f7343e456419100cca054022bdd4e03ffaf6ec828373f36e34dedb72"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1114344.pdf",
+    "bytes": 1059931,
+    "sha256": "ff099bd687e4df5903749f702d9404b318fae2112aac002a56c8826850c3e1b1"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1114431.pdf",
+    "bytes": 852684,
+    "sha256": "48991aaec83c19368e3c6c023073b33ccb8c15be1f2e53bfacf65c466754cdb6"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1114432.pdf",
+    "bytes": 702795,
+    "sha256": "0029e65e8156bfe1338d8259f7a97aae804fb004843a041413f28b2de243981d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1114442.pdf",
+    "bytes": 1031567,
+    "sha256": "6305ca98258ada2d9e59086a86baf03531dfda68277288b46c32c4ae8289d9c3"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1114444.pdf",
+    "bytes": 1148720,
+    "sha256": "38e9290f28a66a7a49251178373f2bf1922c20286c99e37fa4107e5899ade161"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1114461.pdf",
+    "bytes": 1028329,
+    "sha256": "da0837388eb64e2c40bc7c61321a7a112cdc03ed7dcfdd2cac0d54b4453a68ed"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1114462.pdf",
+    "bytes": 491099,
+    "sha256": "f9454271ded9f6ea7e230080b2e8a9afd46b1c721e70acdd6251fc00db458957"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1114562.pdf",
+    "bytes": 998760,
+    "sha256": "99efc4f50c90fecb0bce713be8c0f354d3618fa2915d9d767d158a9249214bd5"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1114674.pdf",
+    "bytes": 981224,
+    "sha256": "7f55e36e8ef970e5dbc7d112d8724c759b4ce352935597ec9df0b91810728d68"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1114772.pdf",
+    "bytes": 1292052,
+    "sha256": "f6e080dd7a479fd6072ed0ef75bf2cd3d2da66a54ff3ecaebad226739a02c010"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV11171A2.pdf",
+    "bytes": 523803,
+    "sha256": "16dca5d46fbe2c9691fb1f0ad3196aad077161468399f8a42657d06688895171"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1117394.pdf",
+    "bytes": 695812,
+    "sha256": "e8c44b24d1fa985d1c53cc180b58358e064a8330c52cfa9b5a7c1c6cae012021"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1117962.pdf",
+    "bytes": 1133835,
+    "sha256": "d764907deeec2e4992611ecadde2dc769fcbb1c8ea248cf2cfac80e951230bb0"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1124464.pdf",
+    "bytes": 1647035,
+    "sha256": "0dc728ef913589ab14503a17f29fd7e58a02941c1738b33474458786e9163ab4"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1124662.pdf",
+    "bytes": 1387021,
+    "sha256": "c7797565969bdfef9dc148c4f8f245463d545fc879cbb9989c38c91c23aed8f7"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1124762.pdf",
+    "bytes": 1535057,
+    "sha256": "a63b188f5e9c5b8162210d3be7334b79d580e4c40375e40027d31f08656ffeb3"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1124771.pdf",
+    "bytes": 1134021,
+    "sha256": "b06c09b98a3582bfb6c146fd31d267cd6c95c512332c98f835be2a7202124c70"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1127462.pdf",
+    "bytes": 1030667,
+    "sha256": "46755b2a09dc7b1db9354f77815505a7c1d6df04f3d23bc2abb5044234b7a564"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1127682.pdf",
+    "bytes": 1129366,
+    "sha256": "07dfa52798888890089e9902c103afa04d1caafadbab5d991effda44834609d7"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1312671.pdf",
+    "bytes": 1710639,
+    "sha256": "e98775a917905f8eb5a4e012e41d37553b54bffaa694a0819094e9df8919cb9c"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1314761.pdf",
+    "bytes": 1694209,
+    "sha256": "e35d957baa2a43ee7032520f3f59d64b55abab2201c68fc4fe85751919e963a8"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1314762.pdf",
+    "bytes": 1170570,
+    "sha256": "5572c4a9d4c6160924dff09aac980b8ed3bacc42fb30ce1a9ddb0ab3fc40a978"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1314781.pdf",
+    "bytes": 1420752,
+    "sha256": "83f148164d9eec84c086932a04a3fe7f61e061b7e564d8fb90ccf6587432deb2"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1314784.pdf",
+    "bytes": 1184955,
+    "sha256": "ae4c74452c19747749dc01ceb2a00a0eaa0bedd88b2abd3262e76eb2f125e742"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1314A81.pdf",
+    "bytes": 1723321,
+    "sha256": "9486f765236fb8add536cc6dbe76c38bd4911fc9817c4dbc813ff1dd6689fa17"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1314A82.pdf",
+    "bytes": 1913113,
+    "sha256": "a2a3cb1be50dbcf4962fe162581525d41a38beb17ae3c35c6498a563fc419c5b"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV1324784.pdf",
+    "bytes": 1594442,
+    "sha256": "6022614f4a3552ba19f1c19f092ecb083dfb3f772f76f3857f9e267651dd5e07"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2111116.pdf",
+    "bytes": 656437,
+    "sha256": "043dae2401c8ca030be42d73c41a619f9f9083bdd84e50b61cfb775d5dfc5a59"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2114461.pdf",
+    "bytes": 1225838,
+    "sha256": "56534b2c754c810b5a339fe05926c8ad25ab2fd5f4a2bb7f0545a0430a84713d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2114462.pdf",
+    "bytes": 991723,
+    "sha256": "c2ecf506a55ce5fe1480b40ccef3e0597e0c385419e01ed0633bb7238ef65616"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2114761.pdf",
+    "bytes": 1337001,
+    "sha256": "286387d050332ea77757fa223d505befb6523401f29af223d07f4407958f4e51"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2114792.pdf",
+    "bytes": 1504784,
+    "sha256": "2074ea8cb12e28a85aa60c886f726a994ba33beea77ea5cd369c046e525a7b14"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2117781.pdf",
+    "bytes": 1263286,
+    "sha256": "104f63cf26e9ed95f4b93afd8a3fa0adbc7616a6e0fbcc8a2b28a122b1275572"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2124442.pdf",
+    "bytes": 1102135,
+    "sha256": "36b748ef677fe20ed9e4e10bd2df9ab886a2ee50d4ea5b5ba31e8aed60832044"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2124444.pdf",
+    "bytes": 1084395,
+    "sha256": "c3857a0be78bbc8890cc4ac2996133804ecb54c64c276aa30794f0901bc13b0d"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2124462.pdf",
+    "bytes": 892347,
+    "sha256": "4957a514ad77369192195997adca27efe640ef958d6db099df452ea8e1642489"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2124472.pdf",
+    "bytes": 1719020,
+    "sha256": "a5a56cb134dc49d8b686bd22bb5b82cc448b34f06a79e29e631db68ff96f10e3"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2124782.pdf",
+    "bytes": 1444906,
+    "sha256": "9f2696289f881bf93efd6608c9934001b4a745f2185c5fd1d7c166fed75cebde"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2124881.pdf",
+    "bytes": 8679267,
+    "sha256": "40b3be348d3d0c106fc59bf8c509979354cc9720eadbcea06eb92d2b766159e1"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2215644.pdf",
+    "bytes": 941832,
+    "sha256": "5590cfa047cf36be6a25df02d3cd2251e51ea7e4dda95ce412c70e0b00e88d55"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2224462.pdf",
+    "bytes": 1282748,
+    "sha256": "4259e4d37ccd81536056729873899254227cd28d78da21909c245204a830d9d9"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2227682.pdf",
+    "bytes": 837124,
+    "sha256": "ca03e4d94b27f6ea3b491600db8ce2e3cc626f4876ee3c3655861e9616ca7769"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2227982.pdf",
+    "bytes": 1326450,
+    "sha256": "b5e5f3cfb6b55c57a2bf8a1bec3bce4c40e0371c410b5a6d2d3ef4902f8c767c"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2312522.pdf",
+    "bytes": 700956,
+    "sha256": "726668104823b786e4b22ffab74f90428bdac35792146b3893b0e2f965e32705"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2312622.pdf",
+    "bytes": 985392,
+    "sha256": "ebf2801891a035e12eb7d11c3a10ba7395c1fc6b762bf17cb4b27e3d52a6cab4"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2312722.pdf",
+    "bytes": 2985173,
+    "sha256": "7f57d92394aa4d5ab3c011d3925ce4e57a2e5b67852b4779b0b61e5fb99b41d0"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2314761.pdf",
+    "bytes": 1361040,
+    "sha256": "077fef35bc1dd165d39ba57f1678c24cd71c240212e0d396d4f2b1f5db6224f9"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2314771.pdf",
+    "bytes": 7193698,
+    "sha256": "7405de8e3f0cce97b18a6f2f2d9ee45157139c79d2b44f9ce4f663a9e3824bc4"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2314781.pdf",
+    "bytes": 1567298,
+    "sha256": "eb449aaadbdb23e2e0d55052a4747ab8552c5585c8b04a4f03906d3f3f3d2037"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2314782.pdf",
+    "bytes": 1166802,
+    "sha256": "cfab5f2855e35afe0bb31ce7c01a8fd66910cae339fda59b9c72331abc4500fc"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2314862.pdf",
+    "bytes": 1179750,
+    "sha256": "3f2b94554cf607cc36fac6c8f8bb27905ffea487c7f14c3ae14ca014cfe8834b"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2314892.pdf",
+    "bytes": 2028655,
+    "sha256": "0a3fd34b4b7fca400f5f8f0be1d6090f28b7f8622061be50c89579859a1a6621"
+  },
+  {
+    "path": "data/BIBLIOTECA/archivos/planos_pdf/FDV2314982.pdf",
+    "bytes": 809548,
+    "sha256": "5206a0ff6547e40235c9144996044e1de31a7339b20bc181c11b876ee0cfc52d"
+  },
+  {
+    "path": "data/BIBLIOTECA/caracteristicas.xlsx",
+    "bytes": 21242,
+    "sha256": "1f99e6a8d233103843833e8aaa099d3b2f089cab65911723cd643264a77f9a76"
+  },
+  {
+    "path": "data/BIBLIOTECA/costos.xlsx",
+    "bytes": 5000,
+    "sha256": "66763e7008deccd93e3642c826a1701a4e5a94542990f034c32f3870eb741814"
+  },
+  {
+    "path": "data/BIBLIOTECA/equipos.xlsx",
+    "bytes": 6726,
+    "sha256": "e1910eaced52ccf491bf303254a70f962db6bc0a241d4d358b9938225dc5064f"
+  },
+  {
+    "path": "data/BIBLIOTECA/referencias.xlsx",
+    "bytes": 13211,
+    "sha256": "3b706cedb89936726ac8544af32ed3434721a4c695a5b3bbdc756a872874fd7f"
+  },
+  {
+    "path": "data/CONFIGURACION.xlsx",
+    "bytes": 5236,
+    "sha256": "00a92d47ea8034fbe8548606f7fb266c747b3fc963b70ac81dff926418cafbdf"
+  },
+  {
+    "path": "data/FESTIVOS.xlsx",
+    "bytes": 5102,
+    "sha256": "0e2eb2d3ad4610c782476c59fcf013f423f686396fa0d7450af3bfaad7bda945"
+  },
+  {
+    "path": "data/HISTORICO.xlsx",
+    "bytes": 5131,
+    "sha256": "a512954a172ad4b9565452d7f47b288209170df7733eff0e3cda40ea3e1eaf8d"
+  },
+  {
+    "path": "data/LISTA_MAESTRA_FACTORY.xlsx",
+    "bytes": 622184,
+    "sha256": "9cb97c06ce8f11ae563a0e96538cd7c4294cbbafd670eaff6cb298d45b5e1818"
+  },
+  {
+    "path": "data/SEGURIDAD/.app_secret",
+    "bytes": 86,
+    "sha256": "bd527494ad3577c23a47e8903e2930c717c260fd6805453234322ef02a956d35"
+  },
+  {
+    "path": "data/SEGURIDAD/AUDITORIA.xlsx",
+    "bytes": 7940,
+    "sha256": "750211bca1110898c3d64e567018ac34105ab4a89974eb5c0abe4973cd4a874d"
+  },
+  {
+    "path": "data/SEGURIDAD/USUARIOS.xlsx",
+    "bytes": 6734,
+    "sha256": "de55e3d28b69fe22fb3e9aa12694a9d42bc6e103f3ef38f335853303c5316766"
+  },
+  {
+    "path": "data/TRABAJO_ACTUAL/DETALLE_INVENTOR.xlsx",
+    "bytes": 125752,
+    "sha256": "9e61c8051ffe04c862c6876630af2c66aebe348282fd882f32ce34b26a7ee392"
+  },
+  {
+    "path": "data/TRABAJO_ACTUAL/INVENTOR_GENERAL.xlsx",
+    "bytes": 102455,
+    "sha256": "a012962f84c8681a2ac6b59c6e713a2b6584ba81b63a562ce662e8659059f3bb"
+  },
+  {
+    "path": "data/TRABAJO_ACTUAL/LM.xlsx",
+    "bytes": 24971,
+    "sha256": "660349cbdcc1f9aad6cdf6eae9e7784016ce1b8ef769c1e9b881403f11c3a500"
+  },
+  {
+    "path": "data/TRABAJO_ACTUAL/META.json",
+    "bytes": 141,
+    "sha256": "8770bc3b2cd800ae4b853956ce80bcd398cdf2c055a7e0d56f3c94f435b24b60"
+  },
+  {
+    "path": "data/TRABAJO_ACTUAL/MOV_PROPUESTO.xlsx",
+    "bytes": 5179,
+    "sha256": "2d8d8eb553885b63172b0e48f6adeeae08965048223f71742656f451b1bff960"
+  },
+  {
+    "path": "data/TRABAJO_ACTUAL/REPUESTOS.xlsx",
+    "bytes": 5578,
+    "sha256": "ba4ff4f10069c5d394b399504ec814eba2da81bf352f92b2b1658f840236c748"
+  },
+  {
+    "path": "data/TRABAJO_ACTUAL/RQ_PARA_FACTORY.xlsx",
+    "bytes": 43900,
+    "sha256": "2d1ce94e7f88e5a2ecc822fc52bf8c323af8e3e02c090b311cb4bbee85d2ec4f"
+  },
+  {
+    "path": "data/TRABAJO_ACTUAL/RQ_PROPUESTA.xlsx",
+    "bytes": 24628,
+    "sha256": "5901d9cda3668486c55cc54712c0972d4b8051fc6aba465198f9d59070c8fa68"
+  },
+  {
+    "path": "data/TRABAJO_ACTUAL/VALOR.xlsx",
+    "bytes": 22605,
+    "sha256": "d3d515f05c1c0cdb663a9e0107b5e4c51e3f5dec01014ba07143a09dcb944965"
+  },
+  {
+    "path": "data/TRABAJO_ACTUAL/VALOR_EQUIPOS.xlsx",
+    "bytes": 5250,
+    "sha256": "cafd6f90d11fdeaf1cbbb3d16a212543362f22b54006c2fb16457a5ab7c68ace"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/.legacy_v12_migrated",
+    "bytes": 19,
+    "sha256": "0695de6633e1d3de13e87daf3d60d11b5551913f0538060f22a2c817d29d88fc"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/20260911_064959_246317_Lista_de_Inventor_cargada.zip",
+    "bytes": 344823,
+    "sha256": "53da3b557edbb975651dbe6af52abc0ecce8e848fcc06c23938a26172ff49f6a"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/20260911_065007_908783_Proceso_RQ_terminado.zip",
+    "bytes": 344028,
+    "sha256": "5302b0a5113fb175215a90ac5c72aa610e80181c42650420c580ebd6fcc692e5"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/20260911_072747_336277_Autoguardado_al_iniciar_sin_lista.zip",
+    "bytes": 344028,
+    "sha256": "5302b0a5113fb175215a90ac5c72aa610e80181c42650420c580ebd6fcc692e5"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/20260911_073237_252373_Lista_de_Inventor_cargada.zip",
+    "bytes": 91923,
+    "sha256": "74c947a07df61ef48922d8eb3e7ec554f93e29dbd059f7ceca3d5d9db6e4dc88"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/20260911_073245_855677_Proceso_RQ_terminado.zip",
+    "bytes": 339406,
+    "sha256": "c630171df7bdf77ded9aded00699cf174b06b29c928a1868016771f3ce166c46"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/20260911_133534_036269_Autoguardado_peri_dico.zip",
+    "bytes": 339406,
+    "sha256": "09b23a222fb1e4d398abacf4cb9edadc3362b6b82cf0b31f4a8322fe661661a9"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/20260911_133721_292295_Antes_de_iniciar_una_nueva_lista.zip",
+    "bytes": 339406,
+    "sha256": "09b23a222fb1e4d398abacf4cb9edadc3362b6b82cf0b31f4a8322fe661661a9"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/20260911_150932_182826_Lista_de_Inventor_cargada.zip",
+    "bytes": 14576,
+    "sha256": "80f53cc8f0a1cd23497891ace1c27387fc18282e9bbea6cb9bd74e55c19736fb"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/20260911_150934_073190_Proceso_RQ_terminado.zip",
+    "bytes": 108491,
+    "sha256": "1cc190616ff956bcf355d7b385f2fa5a8f466887249bcaa61d52abd3f77b9eee"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/20260911_151357_110452_Antes_de_iniciar_una_nueva_lista.zip",
+    "bytes": 108491,
+    "sha256": "1cc190616ff956bcf355d7b385f2fa5a8f466887249bcaa61d52abd3f77b9eee"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/AUTOGUARDADO/copias.json",
+    "bytes": 3302,
+    "sha256": "0295c884d8c8a838ff47c76640ce42e137c360caf5214cd0868da3c89d20d1b0"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/HISTORICO.xlsx",
+    "bytes": 5131,
+    "sha256": "a512954a172ad4b9565452d7f47b288209170df7733eff0e3cda40ea3e1eaf8d"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/PLANOS/CARGAS/1d10dd5605494a76aa33cd712204867c_3946TUT01-rev02.pdf",
+    "bytes": 841256,
+    "sha256": "0ef986a4c117424a824fd8a19a729f40f5ec8c1fedea375cb59e2fe8f537fb1c"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/PLANOS/CARGAS/497b9481950a44bcb9ae61f40f776f91_3946TUT02-rev02.pdf",
+    "bytes": 725017,
+    "sha256": "102ac34935aebb24428e0247dd9974b3b8eb7432a5a1e4f7fa5f66f4d40cd9ff"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/PLANOS/CARGAS/4d2058ed9f944719be0cfaf8d047a757_3946TUT02-rev02.pdf",
+    "bytes": 725017,
+    "sha256": "102ac34935aebb24428e0247dd9974b3b8eb7432a5a1e4f7fa5f66f4d40cd9ff"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/PLANOS/REPORTES/lista_planos_revisados.xlsx",
+    "bytes": 5385,
+    "sha256": "0daa1e34a375ab9e20ed6ab68ce9b3647e50a5ddb15ab7179a693c1b64960a0e"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/PLANOS/REPORTES/revision_3946TUT01-rev02_20260908_142611.xlsx",
+    "bytes": 12061,
+    "sha256": "e411e54390c5784a228277ed20804bd328c6b9ebd9029a2cf4d3b84d04fea5cd"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/PLANOS/REPORTES/revision_3946TUT02-rev02_20260908_145049.xlsx",
+    "bytes": 10891,
+    "sha256": "fbc90e5743c39c49e35d439ae30dcbdc87400aa04dee7a3ee363d08fd15fd38a"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/PLANOS/REPORTES/revision_3946TUT02-rev02_20260909_070928.xlsx",
+    "bytes": 10891,
+    "sha256": "cba532dcce6d6de55a66332594d1618442cee52300d559bbf7c4281bf79b0b92"
+  },
+  {
+    "path": "data/USUARIOS/1d7e9e5ba3734a1e9cfb31aa15421740/PLANOS/estado.json",
+    "bytes": 2,
+    "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+    "path": "data/USUARIOS/e0e83fbd584f421b8919f0c07aad43de/AUTOGUARDADO/20260911_134338_427149_Lista_de_Inventor_cargada.zip",
+    "bytes": 32737,
+    "sha256": "b1ba2952317030c29c3d178094b7905433697e2014ee38599f981f477f86146a"
+  },
+  {
+    "path": "data/USUARIOS/e0e83fbd584f421b8919f0c07aad43de/AUTOGUARDADO/20260911_134342_196699_Proceso_RQ_terminado.zip",
+    "bytes": 188675,
+    "sha256": "c60828e862e48ba7e9b48c355ff3c51b778c4efb79d1814dd81af4fde88565d7"
+  },
+  {
+    "path": "data/USUARIOS/e0e83fbd584f421b8919f0c07aad43de/AUTOGUARDADO/20260911_151339_943532_Antes_de_iniciar_una_nueva_lista.zip",
+    "bytes": 188675,
+    "sha256": "c60828e862e48ba7e9b48c355ff3c51b778c4efb79d1814dd81af4fde88565d7"
+  },
+  {
+    "path": "data/USUARIOS/e0e83fbd584f421b8919f0c07aad43de/AUTOGUARDADO/copias.json",
+    "bytes": 994,
+    "sha256": "30389ba18a35df7dcdf8189b7927ee942ead3469ca821047e51b2e7528c7ccb4"
+  },
+  {
+    "path": "data/USUARIOS/e0e83fbd584f421b8919f0c07aad43de/HISTORICO.xlsx",
+    "bytes": 5125,
+    "sha256": "514d7650f957cfe96a91617c10e8d7c1befba1d95b2c7715c02dbe85a859dd60"
+  },
+  {
+    "path": "data/USUARIOS/e35db3a3ab154298b89aeb1bb7c80c28/HISTORICO.xlsx",
+    "bytes": 5125,
+    "sha256": "9647b0986bdca7d0f8f7b41ec99ceaa4ebc942b64bccaf517cd0befc2c5f2fbd"
+  },
+  {
+    "path": "documentacion/INFORME_TAMANO_BIBLIOTECA.txt",
+    "bytes": 3755,
+    "sha256": "1eded31a7d26cf1d926de6e459cc759b88be88321c403bb951969b53940c3554"
+  },
+  {
+    "path": "documentacion/PRUEBAS_REV15.txt",
+    "bytes": 3568,
+    "sha256": "83ac08aef7d54072b28b5a78d278d721d62b3819d1799b04d109f48f05f93933"
+  },
+  {
+    "path": "documentacion/README_REV14_ORIGINAL.txt",
+    "bytes": 6715,
+    "sha256": "a79113329eeeb52de2534a227c7ad06466b4797b85b58fe33ca19bd7979eab3b"
+  },
+  {
+    "path": "documentacion/inventario_verificado.json",
+    "bytes": 1286,
+    "sha256": "75a7b5d850dd7b0fb6e5b94515a87a43091fb5d0df5316409f24678467388330"
+  },
+  {
+    "path": "engine.py",
+    "bytes": 41388,
+    "sha256": "a5435f6b2ed7b9da638e3854348050ae0bbd366e3384206559193c55e5a0e918"
+  },
+  {
+    "path": "planos.py",
+    "bytes": 28686,
+    "sha256": "31ab09ac46714579df94fe6e5e9479e130550c6cce6a0a645611eafd416e8188"
+  },
+  {
+    "path": "planos_revisados/lista_planos_revisados.xlsx",
+    "bytes": 5385,
+    "sha256": "0daa1e34a375ab9e20ed6ab68ce9b3647e50a5ddb15ab7179a693c1b64960a0e"
+  },
+  {
+    "path": "planos_revisados/revision_3946TUT01-rev02_20260908_142611.xlsx",
+    "bytes": 12061,
+    "sha256": "e411e54390c5784a228277ed20804bd328c6b9ebd9029a2cf4d3b84d04fea5cd"
+  },
+  {
+    "path": "planos_revisados/revision_3946TUT02-rev02_20260908_145049.xlsx",
+    "bytes": 10891,
+    "sha256": "fbc90e5743c39c49e35d439ae30dcbdc87400aa04dee7a3ee363d08fd15fd38a"
+  },
+  {
+    "path": "planos_revisados/revision_3946TUT02-rev02_20260909_070928.xlsx",
+    "bytes": 10891,
+    "sha256": "cba532dcce6d6de55a66332594d1618442cee52300d559bbf7c4281bf79b0b92"
+  },
+  {
+    "path": "planos_state.json",
+    "bytes": 2,
+    "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+    "path": "planos_uploads/1d10dd5605494a76aa33cd712204867c_3946TUT01-rev02.pdf",
+    "bytes": 841256,
+    "sha256": "0ef986a4c117424a824fd8a19a729f40f5ec8c1fedea375cb59e2fe8f537fb1c"
+  },
+  {
+    "path": "planos_uploads/497b9481950a44bcb9ae61f40f776f91_3946TUT02-rev02.pdf",
+    "bytes": 725017,
+    "sha256": "102ac34935aebb24428e0247dd9974b3b8eb7432a5a1e4f7fa5f66f4d40cd9ff"
+  },
+  {
+    "path": "planos_uploads/4d2058ed9f944719be0cfaf8d047a757_3946TUT02-rev02.pdf",
+    "bytes": 725017,
+    "sha256": "102ac34935aebb24428e0247dd9974b3b8eb7432a5a1e4f7fa5f66f4d40cd9ff"
+  },
+  {
+    "path": "requirements.txt",
+    "bytes": 117,
+    "sha256": "c90252936c69354986727da376eb2a116a75a03daf07bf2b84680e940f1c3776"
+  },
+  {
+    "path": "static/css/biblioteca.css",
+    "bytes": 15861,
+    "sha256": "e286073a9242fed90a63dac1ebab2cb8d6a300be4c497f15c3f67c714f4d473a"
+  },
+  {
+    "path": "static/css/style.css",
+    "bytes": 88978,
+    "sha256": "0c39eeeb59a785b3fe60d668922e0509f791dcd9e096f745019df33772b40c0e"
+  },
+  {
+    "path": "static/css/typography.css",
+    "bytes": 994,
+    "sha256": "69593a9f5942bb1dcfb8acdd2f083a7a1c0fed00ac06c050b6957e65271e8916"
+  },
+  {
+    "path": "static/img/favicon.svg",
+    "bytes": 729,
+    "sha256": "ec20352180ab942d66883375f9b45c28fb13f7e3e8cef12868df5fce23f73f76"
+  },
+  {
+    "path": "static/js/app.js",
+    "bytes": 3848,
+    "sha256": "c755c44b94ec241a2525762b52b7fc9546a7332476bb696623c8a0fd0c000152"
+  },
+  {
+    "path": "static/js/auth.js",
+    "bytes": 2385,
+    "sha256": "af754275fb3b01ee9487d7872bafee2933371662e80e8b58015e46c9fab589e3"
+  },
+  {
+    "path": "static/js/biblioteca.js",
+    "bytes": 11085,
+    "sha256": "aa668690af4d5c03c184b55746a472f909218e83f926490d422725b85ffe696e"
+  },
+  {
+    "path": "static/js/pdf-viewer.js",
+    "bytes": 2822,
+    "sha256": "1934fa50317c8132d8914d90560dedfdae2cfa222e12edc218ec1dc9ded6827c"
+  },
+  {
+    "path": "static/js/planos.js",
+    "bytes": 10101,
+    "sha256": "e0b30441067224029e960ca8e2f6f7acccf4e458d592f61d5680281b9e9a282f"
+  },
+  {
+    "path": "storage.py",
+    "bytes": 20115,
+    "sha256": "839c5fa13a5aad393ffffba63394e5b8f7c7791c4c16874af4c12fc407a0778a"
+  },
+  {
+    "path": "templates/_header.html",
+    "bytes": 6438,
+    "sha256": "0d5bcb38aee70014db3429c338737ed3aa82bee09c2e66c7a301cdbf660fa004"
+  },
+  {
+    "path": "templates/admin_users.html",
+    "bytes": 9040,
+    "sha256": "9a44a33b129b011e61a919cf6c4bc7de12ee7fa5c270af6fd6d2e26afce09f24"
+  },
+  {
+    "path": "templates/backups.html",
+    "bytes": 3281,
+    "sha256": "793de38748c30ec0aea466041332ffb5f8b8e1552126ce2d7ea621f75426ed85"
+  },
+  {
+    "path": "templates/base.html",
+    "bytes": 2834,
+    "sha256": "2bd9055eab4041cd2fa602e88919a3e7404eda00d3ca17ac746512677b976f53"
+  },
+  {
+    "path": "templates/biblioteca/base.html",
+    "bytes": 1738,
+    "sha256": "3460fa70417246400eb462461177c590ca21cba2745ac781d5e58220c7cfccc1"
+  },
+  {
+    "path": "templates/biblioteca/biblioteca.html",
+    "bytes": 14764,
+    "sha256": "5fb14d355ae913205c9ebec63a439955dc7e6644f80d1e7259b87b873e4ee103"
+  },
+  {
+    "path": "templates/biblioteca/buscador.html",
+    "bytes": 5333,
+    "sha256": "71654d934d7b518f0c9c40f4f60c8d2e58eb76c9112fe2f681f3e77ebeba494f"
+  },
+  {
+    "path": "templates/biblioteca/costos.html",
+    "bytes": 1114,
+    "sha256": "bdb493353440cdfab5fce71a56ef1ed88e9bdc843a39817fce48717c8f31a2e4"
+  },
+  {
+    "path": "templates/calendario.html",
+    "bytes": 2640,
+    "sha256": "824443537b3b1db46997829a5c1a573c2dd18259be3c7db248bf0269c5270a19"
+  },
+  {
+    "path": "templates/cargar.html",
+    "bytes": 4806,
+    "sha256": "84e087fb465f3f260427d8603c549693976db57c89033cd404d96dd03d37f1e2"
+  },
+  {
+    "path": "templates/factory.html",
+    "bytes": 8637,
+    "sha256": "17ac9dfb5a035e14b497e969f2c70f65e7e79151b5f98007231d9072447936df"
+  },
+  {
+    "path": "templates/historico.html",
+    "bytes": 2030,
+    "sha256": "621ede7fe4421b1c07953ca80e242c5f9b4823eea6159f4783d8279415cde43e"
+  },
+  {
+    "path": "templates/inicio.html",
+    "bytes": 5585,
+    "sha256": "c9ceb6521c7cd7cccbd30da989edbab86e591756227e111ee30d5d0726d1795c"
+  },
+  {
+    "path": "templates/initial_setup.html",
+    "bytes": 3186,
+    "sha256": "de7ce4e564daee37856bef82ff9499ceec4389438adadb19927f5eb8c443fd33"
+  },
+  {
+    "path": "templates/lm.html",
+    "bytes": 2303,
+    "sha256": "56e0af60f3e7c1f85eead7911f2fd0ca26c9a9a9d98a1ea8cfb785cd73070aa8"
+  },
+  {
+    "path": "templates/login.html",
+    "bytes": 3610,
+    "sha256": "ade29206a8ee094d6aa8be470c695a6361d8495d2593e6611db132dc0e430b12"
+  },
+  {
+    "path": "templates/planos.html",
+    "bytes": 6735,
+    "sha256": "562d4814429c39bfc7d6adc81373ac21dcd3d4a8d8b3c492d8f2b29fa949814d"
+  },
+  {
+    "path": "templates/repuestos.html",
+    "bytes": 2709,
+    "sha256": "a53c5c0c219211c8a05861095b6ab44beb1ffd7493e8ca7d5eecee76605cb28b"
+  },
+  {
+    "path": "templates/rq.html",
+    "bytes": 7270,
+    "sha256": "1b08ae9a13ffebaa3de912b21bccfa5ea890f0280b21c7a8b40bf07e02305027"
+  },
+  {
+    "path": "templates/valor.html",
+    "bytes": 2518,
+    "sha256": "72cf3b7048b499c6065c27965c14133bbac701d71a8abb64db00dc3c2978ef92"
+  },
+  {
+    "path": "tests/test_engine_linear_rules.py",
+    "bytes": 2993,
+    "sha256": "2e438c9828ae34ba7108f0483e0f20eb8c3ef8b4f0c8b915113f2aa339042a42"
+  }
+]

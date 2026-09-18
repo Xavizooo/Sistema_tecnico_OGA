@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Capacitaciones · {{ app_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/capacitaciones.css') }}">{% endblock %}
+{% block content %}
+<div class="workspace-toolbar training-toolbar">
+  <div>
+    <span class="workspace-eyebrow">CAPACITACIONES</span>
+    <h1>Biblioteca de videos</h1>
+  </div>
+  <div class="training-kpis" aria-label="Resumen de videos">
+    <span><strong>{{ video_stats.total }}</strong><small>Videos</small></span>
+    <span><strong>{{ video_stats.listos }}</strong><small>Listos</small></span>
+    <span><strong>{{ video_stats.pendientes + video_stats.procesando }}</strong><small>En cola</small></span>
+  </div>
+</div>
+<section class="card training-library-card" id="videos">
+  <div class="card-title-row">
+    <div>
+      <span class="workspace-eyebrow">CONTENIDO DISPONIBLE</span>
+      <h3>Videos de capacitación</h3>
+    </div>
+    <input id="trainingSearch" class="table-search training-search" type="search" placeholder="Buscar por nombre o descripción…">
+  </div>
+
+  {% if videos %}
+  <div class="training-grid" id="trainingGrid">
+    {% for video in videos %}
+    <article class="training-video-card" data-search="{{ (video.nombre ~ ' ' ~ video.descripcion ~ ' ' ~ video.subido_por_nombre)|lower }}">
+      <a class="training-poster" href="{{ url_for('capacitaciones.detail', video_id=video.id) }}">
+        {% if video.estado == 'LISTO' and video.ruta_poster %}
+        <img src="{{ url_for('capacitaciones.poster', video_id=video.id) }}" alt="Vista previa de {{ video.nombre }}" loading="lazy">
+        {% else %}
+        <span class="training-placeholder-icon" aria-hidden="true">▶</span>
+        {% endif %}
+        <span class="training-status status-{{ video.estado|lower }}">{{ video.estado }}</span>
+        {% if video.estado in ['PENDIENTE','PROCESANDO'] %}
+        <span class="training-progress-label">{{ video.progreso or 0 }}%</span>
+        {% endif %}
+      </a>
+      <div class="training-video-body">
+        <a href="{{ url_for('capacitaciones.detail', video_id=video.id) }}"><h4>{{ video.nombre }}</h4></a>
+        <p>{{ video.descripcion or 'Sin descripción.' }}</p>
+        <small>Subido por {{ video.subido_por_nombre or video.subido_por_usuario or 'Usuario' }}</small>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="training-empty">
+    <strong>Aún no hay videos.</strong>
+    <p>El primer video que suban aparecerá aquí.</p>
+  </div>
+  {% endif %}
+</section>
+<section class="card training-upload-card" id="subir">
+  <div class="card-title-row">
+    <div>
+      <span class="workspace-eyebrow">NUEVO CONTENIDO</span>
+      <h3>Subir capacitación</h3>
+      <p>El archivo debe ser MP4 y puede pesar hasta {{ max_video_mb }} MB.</p>
+    </div>
+    <span class="training-worker-state">Procesamiento: {{ worker.workers }}</span>
+  </div>
+  <form class="training-upload-form" method="post" action="{{ url_for('capacitaciones.upload') }}" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <label>Nombre del video
+      <input type="text" name="nombre" maxlength="120" required placeholder="Ej. Manejo seguro del puente grúa">
+    </label>
+    <label class="wide">Descripción corta
+      <textarea name="descripcion" maxlength="600" rows="3" placeholder="Indique brevemente qué aprenderá la persona en este video."></textarea>
+    </label>
+    <label class="wide training-file-field">Archivo MP4
+      <input type="file" name="video" accept="video/mp4,.mp4" required>
+      <small>Al finalizar la carga, puede seguir usando la página.</small>
+    </label>
+    <div class="training-upload-actions wide">
+      <button class="btn primary" type="submit">SUBIR VIDEO</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/capacitaciones.js') }}"></script>{% endblock %}

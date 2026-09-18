@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading">
+  <h2>CALENDARIO DE COMPRAS</h2>
+  <p>Los días se cuentan desde la fecha de ejecución de la RQ y se pueden cambiar manualmente en RQ.</p>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <h3>DÍAS HÁBILES POR CLASIFICACIÓN</h3>
+    {% if current_user.is_admin %}
+    <form method="post" action="{{url_for('calendario_config')}}" class="calendar-form">
+      <label>Compras tempranas<input type="number" min="0" name="temprana"
+          value="{{config.get('DIAS_C.TEMPRANA',30)|int}}"></label>
+      <label>Producción<input type="number" min="0" name="produccion"
+          value="{{config.get('DIAS_PRODUCCION',8)|int}}"></label>
+      <label>Ensamble<input type="number" min="0" name="ensamble" value="{{config.get('DIAS_ENSAMBLE',8)|int}}"></label>
+      <button class="btn primary" type="submit">GUARDAR</button>
+    </form>
+    {% else %}
+    <div class="calendar-readonly-grid">
+      <span>Compras tempranas <strong>{{config.get('DIAS_C.TEMPRANA',30)|int}} días</strong></span>
+      <span>Producción <strong>{{config.get('DIAS_PRODUCCION',8)|int}} días</strong></span>
+      <span>Ensamble <strong>{{config.get('DIAS_ENSAMBLE',8)|int}} días</strong></span>
+    </div>
+    {% endif %}
+    <div class="info-strip">El programa excluye automáticamente sábados, domingos y festivos oficiales de Colombia.
+    </div>
+  </div>
+  <div class="card">
+    <h3>DÍAS NO LABORALES ADICIONALES</h3>
+    {% if current_user.is_admin %}
+    <form class="form-row" method="post" action="{{url_for('holiday_add')}}"><input type="date" name="fecha"
+        required><input name="descripcion" placeholder="Ej. Cierre planta"><button class="btn primary">AGREGAR</button>
+    </form>
+    {% endif %}
+    <div class="table-wrap compact">
+      <table>
+        <thead>
+          <tr>
+            <th>FECHA</th>
+            <th>DESCRIPCIÓN</th>
+            {% if current_user.is_admin %}<th></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>{% for r in holidays %}<tr>
+            <td>{{r.FECHA}}</td>
+            <td>{{r.DESCRIPCION}}</td>
+            {% if current_user.is_admin %}<td>
+              <form method="post" action="{{url_for('holiday_delete')}}"><input type="hidden" name="row"
+                  value="{{loop.index0}}"><button class="btn small danger">ELIMINAR</button></form>
+            </td>{% endif %}
+          </tr>{% else %}<tr>
+            <td colspan="{{ 3 if current_user.is_admin else 2 }}" class="empty">Sin días adicionales.</td>
+          </tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

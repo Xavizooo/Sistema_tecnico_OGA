@@ -1,0 +1,199 @@
+<aside class="app-sidebar" id="appSidebar" aria-label="Navegación principal">
+  <div class="sidebar-top">
+    <a class="sidebar-brand" href="{{ url_for('inicio') }}" aria-label="Ir al panel de control">
+      <span class="sidebar-brand-mark">OGA<sup>®</sup></span>
+      <span class="sidebar-brand-sub">SISTEMVAC</span>
+    </a>
+  </div>
+
+  <nav class="side-navigation">
+
+    <a class="side-nav-link {% if request.endpoint == 'inicio' %}active{% endif %}" href="{{ url_for('inicio') }}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
+      </svg>
+      <span>Bienvenido</span>
+    </a>
+
+    <span class="side-section-label">HERRAMIENTAS</span>
+
+    {% set pd_view = request.args.get('view', 'dashboard') %}
+    <details class="side-nav-group" {% if (request.endpoint and request.endpoint.startswith('proyectos_diseno.')) or
+      request.endpoint=='proyectos_diseno_page' %}open{% endif %}>
+      <summary>
+        <span class="summary-main">
+          <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Proyectos</span>
+        </span>
+        <svg class="side-chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </summary>
+      <div class="side-submenu">
+        <a class="{% if request.endpoint and request.endpoint.startswith('proyectos_diseno.') and pd_view == 'dashboard' %}active{% endif %}"
+          href="{{ url_for('proyectos_diseno.index', view='dashboard') }}">Tablero</a>
+        <a class="{% if request.endpoint and request.endpoint.startswith('proyectos_diseno.') and pd_view == 'projects' %}active{% endif %}"
+          href="{{ url_for('proyectos_diseno.index', view='projects') }}">Proyectos</a>
+        <a class="{% if request.endpoint and request.endpoint.startswith('proyectos_diseno.') and pd_view == 'designers' %}active{% endif %}"
+          href="{{ url_for('proyectos_diseno.index', view='designers') }}">Diseñadores</a>
+        <a class="{% if request.endpoint and request.endpoint.startswith('proyectos_diseno.') and pd_view == 'activities' %}active{% endif %}"
+          href="{{ url_for('proyectos_diseno.index', view='activities') }}">Actividades</a>
+        <a class="{% if request.endpoint and request.endpoint.startswith('proyectos_diseno.') and pd_view == 'equipment' %}active{% endif %}"
+          href="{{ url_for('proyectos_diseno.index', view='equipment') }}">Equipos</a>
+        <a class="{% if request.endpoint and request.endpoint.startswith('proyectos_diseno.') and pd_view == 'additionals' %}active{% endif %}"
+          href="{{ url_for('proyectos_diseno.index', view='additionals') }}">Adicionales</a>
+        <a class="{% if request.endpoint and request.endpoint.startswith('proyectos_diseno.') and pd_view == 'holidays' %}active{% endif %}"
+          href="{{ url_for('proyectos_diseno.index', view='holidays') }}">Festivos</a>
+        <a class="{% if request.endpoint and request.endpoint.startswith('proyectos_diseno.') and pd_view == 'history' %}active{% endif %}"
+          href="{{ url_for('proyectos_diseno.index', view='history') }}">Histórico</a>
+      </div>
+    </details>
+
+    <details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('capacitaciones.') %}open{%
+      endif %}>
+      <summary>
+        <span class="summary-main">
+          <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Capacitaciones</span>
+        </span>
+        <svg class="side-chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </summary>
+      <div class="side-submenu">
+        <a class="{% if request.endpoint and request.endpoint.startswith('capacitaciones.') and request.endpoint != 'capacitaciones.upload' %}active{% endif %}"
+          href="{{ url_for('capacitaciones.index') }}#videos">Videos</a>
+        <a href="{{ url_for('capacitaciones.index') }}#subir">Subir video</a>
+      </div>
+    </details>
+
+    <details class="side-nav-group" {% if request.endpoint in ['factory', 'cargar'
+      ,'lm','rq','rq_date','repuestos','valor','calendario','historico','backups','backup_create','backup_recover','backup_delete']
+      %}open{% endif %}>
+      <summary>
+        <span class="summary-main">
+          <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Generador de RQ</span>
+        </span>
+        <svg class="side-chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </summary>
+      <div class="side-submenu">
+        <a class="{% if request.endpoint == 'cargar' %}active{% endif %}" href="{{ url_for('cargar') }}">Cargar
+          listas</a>
+        <a class="{% if request.endpoint == 'factory' %}active{% endif %}" href="{{ url_for('factory') }}">Lista
+          Maestra</a>
+        <a class="{% if request.endpoint == 'lm' %}active{% endif %}" href="{{ url_for('lm') }}">LM · Lista de
+          materiales</a>
+        <a class="{% if request.endpoint in ['rq','rq_date'] %}active{% endif %}" href="{{ url_for('rq') }}">RQ ·
+          Requisiciones</a>
+        <a class="{% if request.endpoint == 'repuestos' %}active{% endif %}"
+          href="{{ url_for('repuestos') }}">Repuestos</a>
+        <a class="{% if request.endpoint == 'valor' %}active{% endif %}" href="{{ url_for('valor') }}">Valor del
+          proyecto</a>
+        <a class="{% if request.endpoint == 'calendario' %}active{% endif %}"
+          href="{{ url_for('calendario') }}">Calendario</a>
+        <a class="{% if request.endpoint == 'historico' %}active{% endif %}"
+          href="{{ url_for('historico') }}">Histórico</a>
+        <a class="{% if request.endpoint in ['backups','backup_create','backup_recover','backup_delete'] %}active{% endif %}"
+          href="{{ url_for('backups') }}">Copias de seguridad</a>
+      </div>
+    </details>
+
+    <details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('planos.') %}open{% endif %}>
+      <summary>
+        <span class="summary-main">
+          <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Revisor de Planos</span>
+        </span>
+        <svg class="side-chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </summary>
+      <div class="side-submenu">
+        <a class="{% if request.endpoint and request.endpoint.startswith('planos.') %}active{% endif %}"
+          href="{{ url_for('planos.planos_home') }}">Revisión y distribución</a>
+      </div>
+    </details>
+
+    <details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('biblioteca.') %}open{% endif
+      %}>
+      <summary>
+        <span class="summary-main">
+          <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Biblioteca</span>
+        </span>
+        <svg class="side-chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </summary>
+      <div class="side-submenu">
+        <a class="{% if request.endpoint == 'biblioteca.equipos' %}active{% endif %}"
+          href="{{ url_for('biblioteca.equipos') }}">Biblioteca de equipos</a>
+        <a class="{% if request.endpoint == 'biblioteca.buscador' %}active{% endif %}"
+          href="{{ url_for('biblioteca.buscador') }}">Buscador de referencias</a>
+        <a class="{% if request.endpoint == 'biblioteca.costos' %}active{% endif %}"
+          href="{{ url_for('biblioteca.costos') }}">Costos</a>
+      </div>
+    </details>
+
+    {% if current_user and current_user.is_admin %}
+    <span class="side-section-label">ADMINISTRACIÓN</span>
+    <a class="side-nav-link {% if request.endpoint == 'admin_users' %}active{% endif %}"
+      href="{{ url_for('admin_users') }}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM17 8v6M14 11h6" />
+      </svg>
+      <span>Usuarios</span>
+    </a>
+    {% endif %}
+  </nav>
+
+  {% if current_user %}
+  <div class="sidebar-bottom-area">
+    <form method="post" action="{{ url_for('logout') }}"
+      onsubmit="try{sessionStorage.removeItem('oga_project_alerts_muted')}catch(e){}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <button class="side-logout" type="submit">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 17l5-5-5-5M15 12H3M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" />
+        </svg>
+        <span>Salir</span>
+      </button>
+    </form>
+    <div class="sidebar-user-card">
+      <span class="sidebar-avatar">{{ (current_user.name or current_user.username)[:1]|upper }}</span>
+      <span class="sidebar-user-text">
+        <strong>{{ current_user.name }}</strong>
+        <small>{{ current_user.username }}</small>
+      </span>
+    </div>
+  </div>
+  {% endif %}
+</aside>
+
+<header class="app-topbar">
+  <div class="topbar-left">
+    <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Mostrar u ocultar menú"
+      title="Mostrar u ocultar menú">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+    <div class="topbar-title">
+      <strong>OGA</strong>
+      <span>Generador de RQ · Revisor de Planos · Biblioteca · Proyectos · Capacitaciones</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    {% if request.endpoint and request.endpoint.startswith('capacitaciones.') %}<span
+      class="topbar-state ok"><i></i>Capacitaciones</span>{% elif request.endpoint and
+    request.endpoint.startswith('proyectos_diseno.') %}<span class="topbar-state ok"><i></i>Proyectos </span>{%
+    elif biblioteca_page %}<span class="topbar-state ok"><i></i>Biblioteca compartida</span>{% elif
+    meta.get('procesado') %}<span class="topbar-state ok"><i></i>Procesado</span>{% else %}<span
+      class="topbar-state"><i></i>Sin procesar</span>{% endif %}
+    <span class="topbar-rev">{{ app_rev }}</span>
+  </div>
+</header>
+<div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>

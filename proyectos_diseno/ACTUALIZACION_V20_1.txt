@@ -1,0 +1,14 @@
+ACTUALIZACION A REV20.1 - PROTECCION DE IMAGENES
+
+1. Cierre el programa y todos los archivos Excel.
+2. Haga copia de seguridad de su carpeta actual.
+3. Copie SOLO los archivos del paquete ACTUALIZACION_V20_1 sobre Rev20.
+4. NO borre ni reemplace BASES_DE_DATOS.
+5. Desde Rev20.1 las imagenes se guardan en:
+   BASES_DE_DATOS/IMAGENES_PROYECTOS
+6. Si todavia tiene imagenes en la carpeta antigua IMAGENES_PROYECTOS, el programa las copia automaticamente a la nueva ubicacion al iniciar.
+7. Ejecute: py app.py
+
+IMPORTANTE:
+- Si creo una carpeta nueva para Rev20 y dejo las imagenes en una version anterior, copie una sola vez las imagenes antiguas a BASES_DE_DATOS/IMAGENES_PROYECTOS.
+- Las futuras actualizaciones no deben incluir ni reemplazar BASES_DE_DATOS.

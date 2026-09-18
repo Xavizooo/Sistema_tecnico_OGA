@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Proyectos Diseño Mecánico · {{ app_name }}{% endblock %}
+{% block body_class %} project-design-host{% endblock %}
+{% block head %}
+<style>
+  .project-design-host .content{width:100%;max-width:none;padding:0!important}
+  .project-design-frame-wrap{height:calc(100vh - 50px);min-height:720px;background:#eef2f6;overflow:hidden}
+  .project-design-frame{display:block;width:100%;height:100%;border:0;background:#eef2f6}
+  @media(max-width:900px){.project-design-frame-wrap{min-height:680px}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="project-design-frame-wrap">
+  <iframe class="project-design-frame" src="{{ url_for('proyectos_diseno.index') }}" title="Proyectos Diseño Mecánico"></iframe>
+</div>
+{% endblock %}
