@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -769,4 +770,257 @@ def stats() -> dict[str, int]:
     result = {"total": total, "subsistemas": subsystem_count}
     for row in rows:
         result[str(row["estado"])] = int(row["cantidad"])
+    return result
+
+# ---------------------------------------------------------------------------
+# Cargue masivo de oportunidades (Fase 2)
+# ---------------------------------------------------------------------------
+
+def _bulk_opportunity_key(radicado: Any, proyecto: Any) -> tuple[str, str]:
+    return normalize_search(radicado), normalize_search(proyecto)
+
+
+def preview_bulk_import(payload: dict[str, Any]) -> dict[str, Any]:
+    """Compara una previsualización normalizada contra la base actual.
+
+    Una oportunidad se identifica por la pareja Radicado + Proyecto. Esto es
+    intencional: la plantilla histórica contiene al menos dos radicados que se
+    reutilizaron para proyectos diferentes.
+    """
+    opportunities = list(payload.get("opportunities") or [])
+    with connection() as conn:
+        existing_rows = conn.execute(
+            "SELECT id,radicado,proyecto FROM opportunities WHERE eliminado_en IS NULL"
+        ).fetchall()
+        existing_map = {
+            _bulk_opportunity_key(row["radicado"], row["proyecto"]): int(row["id"])
+            for row in existing_rows
+        }
+        rows: list[dict[str, Any]] = []
+        new_opportunities = existing_opportunities = 0
+        new_subsystems = existing_subsystems = 0
+        for item in opportunities:
+            data = dict(item.get("data") or {})
+            key = _bulk_opportunity_key(data.get("radicado"), data.get("proyecto"))
+            existing_id = existing_map.get(key)
+            staged_subsystems = list(item.get("subsystems") or [])
+            if existing_id is None:
+                action = "CREAR"
+                new_opportunities += 1
+                new_count = len(staged_subsystems)
+                existing_count = 0
+            else:
+                action = "COMBINAR"
+                existing_opportunities += 1
+                names = {
+                    normalize_search(row["nombre"])
+                    for row in conn.execute(
+                        "SELECT nombre FROM subsystems WHERE opportunity_id=? AND eliminado_en IS NULL",
+                        (existing_id,),
+                    ).fetchall()
+                }
+                existing_count = sum(
+                    1 for subsystem in staged_subsystems
+                    if normalize_search((subsystem.get("data") or {}).get("nombre")) in names
+                )
+                new_count = len(staged_subsystems) - existing_count
+            new_subsystems += new_count
+            existing_subsystems += existing_count
+            rows.append({
+                "radicado": str(data.get("radicado") or ""),
+                "proyecto": str(data.get("proyecto") or ""),
+                "cliente": str(data.get("cliente") or ""),
+                "nombre": str(data.get("nombre") or ""),
+                "estado": str(data.get("estado") or "Nueva"),
+                "subsistemas": len(staged_subsystems),
+                "subsistemas_nuevos": new_count,
+                "subsistemas_existentes": existing_count,
+                "action": action,
+                "existing_id": existing_id,
+            })
+    return {
+        "rows": rows,
+        "new_opportunities": new_opportunities,
+        "existing_opportunities": existing_opportunities,
+        "new_subsystems": new_subsystems,
+        "existing_subsystems": existing_subsystems,
+    }
+
+
+def _normalized_tuple(values: Iterable[Any]) -> tuple[str, ...]:
+    return tuple(normalize_search(value) for value in values)
+
+
+def _insert_missing_multiset(
+    conn: sqlite3.Connection,
+    table: str,
+    subsystem_id: int,
+    fields: tuple[str, ...],
+    staged_rows: Iterable[dict[str, Any]],
+) -> tuple[int, int]:
+    """Inserta solo la multiplicidad que todavía no existe.
+
+    Si la fuente contiene dos renglones idénticos, conserva ambos en la primera
+    importación y evita crear otros dos al cargar nuevamente el mismo Excel.
+    """
+    staged_counter: Counter[tuple[str, ...]] = Counter()
+    staged_example: dict[tuple[str, ...], dict[str, str]] = {}
+    for source in staged_rows:
+        cleaned = {field: str(source.get(field) or "").strip() for field in fields}
+        if not any(cleaned.values()):
+            continue
+        key = _normalized_tuple(cleaned[field] for field in fields)
+        staged_counter[key] += 1
+        staged_example[key] = cleaned
+
+    existing_counter: Counter[tuple[str, ...]] = Counter()
+    sql = f"SELECT {','.join(fields)} FROM {table} WHERE subsystem_id=?"
+    for row in conn.execute(sql, (subsystem_id,)).fetchall():
+        existing_counter[_normalized_tuple(row[field] for field in fields)] += 1
+
+    added = skipped = 0
+    for key, staged_count in staged_counter.items():
+        existing_count = existing_counter.get(key, 0)
+        to_add = max(0, staged_count - existing_count)
+        skipped += min(staged_count, existing_count)
+        sample = staged_example[key]
+        for _ in range(to_add):
+            values: dict[str, Any] = {"subsystem_id": subsystem_id, **sample, "creado_en": utcnow()}
+            _insert(conn, table, values)
+            added += 1
+    return added, skipped
+
+
+def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[str, int]:
+    """Importa la previsualización en una sola transacción segura.
+
+    Reglas de combinación:
+    - Radicado + Proyecto identifica la OD.
+    - Una OD existente nunca se sobrescribe.
+    - Un subsistema existente (por nombre normalizado) nunca sobrescribe sus
+      criterios actuales; solo recibe entradas/salidas/equipos que falten.
+    - Las ODs nuevas se crean sin responsables internos, porque la plantilla
+      histórica no contiene esa información.
+    """
+    opportunities = list(payload.get("opportunities") or [])
+    result = {
+        "oportunidades_creadas": 0,
+        "oportunidades_combinadas": 0,
+        "subsistemas_creados": 0,
+        "subsistemas_existentes": 0,
+        "entradas_agregadas": 0,
+        "entradas_omitidas": 0,
+        "salidas_agregadas": 0,
+        "salidas_omitidas": 0,
+        "equipos_agregados": 0,
+        "equipos_omitidos": 0,
+    }
+    now = utcnow()
+    with connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            existing_map = {
+                _bulk_opportunity_key(row["radicado"], row["proyecto"]): int(row["id"])
+                for row in conn.execute(
+                    "SELECT id,radicado,proyecto FROM opportunities WHERE eliminado_en IS NULL"
+                ).fetchall()
+            }
+            touched: set[int] = set()
+            for item in opportunities:
+                source_data = dict(item.get("data") or {})
+                data = _clean_dict(source_data, OPPORTUNITY_FIELDS)
+                if data["estado"] not in STATUSES:
+                    data["estado"] = STATUSES[0]
+                if not data["radicado"] or not data["proyecto"]:
+                    continue
+                key = _bulk_opportunity_key(data["radicado"], data["proyecto"])
+                opportunity_id = existing_map.get(key)
+                created_opportunity = opportunity_id is None
+                if opportunity_id is None:
+                    values: dict[str, Any] = dict(data)
+                    values.update(_user_fields("creado", user))
+                    values.update({
+                        "creado_en": now,
+                        "actualizado_por_id": user.get("id"),
+                        "actualizado_por_usuario": user.get("username"),
+                        "actualizado_por_nombre": user.get("name"),
+                        "actualizado_en": now,
+                    })
+                    opportunity_id = _insert(conn, "opportunities", values)
+                    existing_map[key] = opportunity_id
+                    result["oportunidades_creadas"] += 1
+                else:
+                    result["oportunidades_combinadas"] += 1
+
+                existing_subsystems = {
+                    normalize_search(row["nombre"]): int(row["id"])
+                    for row in conn.execute(
+                        "SELECT id,nombre FROM subsystems WHERE opportunity_id=? AND eliminado_en IS NULL ORDER BY id",
+                        (opportunity_id,),
+                    ).fetchall()
+                }
+
+                opportunity_changed = created_opportunity
+                for staged_subsystem in item.get("subsystems") or []:
+                    sub_data = _clean_dict(dict(staged_subsystem.get("data") or {}), SUBSYSTEM_FIELDS)
+                    sub_data["nombre"] = sub_data["nombre"] or "Principal"
+                    sub_key = normalize_search(sub_data["nombre"])
+                    subsystem_id = existing_subsystems.get(sub_key)
+                    if subsystem_id is None:
+                        sub_values: dict[str, Any] = dict(sub_data)
+                        sub_values.update({
+                            "opportunity_id": opportunity_id,
+                            "creado_por_id": user.get("id"),
+                            "creado_por_usuario": user.get("username"),
+                            "creado_por_nombre": user.get("name"),
+                            "creado_en": now,
+                            "actualizado_en": now,
+                        })
+                        subsystem_id = _insert(conn, "subsystems", sub_values)
+                        existing_subsystems[sub_key] = subsystem_id
+                        result["subsistemas_creados"] += 1
+                        opportunity_changed = True
+                    else:
+                        result["subsistemas_existentes"] += 1
+
+                    added, skipped = _insert_missing_multiset(
+                        conn, "entry_points", subsystem_id,
+                        ("tipo", "cantidad", "restriccion_altura"),
+                        staged_subsystem.get("entry_points") or [],
+                    )
+                    result["entradas_agregadas"] += added
+                    result["entradas_omitidas"] += skipped
+                    opportunity_changed = opportunity_changed or bool(added)
+
+                    added, skipped = _insert_missing_multiset(
+                        conn, "exit_points", subsystem_id,
+                        ("tipo", "cantidad", "restriccion_altura"),
+                        staged_subsystem.get("exit_points") or [],
+                    )
+                    result["salidas_agregadas"] += added
+                    result["salidas_omitidas"] += skipped
+                    opportunity_changed = opportunity_changed or bool(added)
+
+                    added, skipped = _insert_missing_multiset(
+                        conn, "equipment", subsystem_id,
+                        ("tipo_equipo", "referencia", "cantidad"),
+                        staged_subsystem.get("equipment") or [],
+                    )
+                    result["equipos_agregados"] += added
+                    result["equipos_omitidos"] += skipped
+                    opportunity_changed = opportunity_changed or bool(added)
+
+                if opportunity_changed:
+                    conn.execute(
+                        "UPDATE opportunities SET actualizado_por_id=?, actualizado_por_usuario=?, actualizado_por_nombre=?, actualizado_en=? WHERE id=?",
+                        (user.get("id"), user.get("username"), user.get("name"), utcnow(), opportunity_id),
+                    )
+                    touched.add(opportunity_id)
+
+            for opportunity_id in touched:
+                _rebuild_search_index_conn(conn, opportunity_id)
+            conn.execute("COMMIT")
+        except Exception:
+            conn.execute("ROLLBACK")
+            raise
     return result

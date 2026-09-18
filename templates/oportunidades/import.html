@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Subida masiva OD · {{ app_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/oportunidades.css') }}">{% endblock %}
+
+{% block content %}
+<div class="od-page od-import-page">
+  <div class="od-page-head">
+    <div>
+      <span class="page-eyebrow">OPORTUNIDADES DE PROYECTO · FASE 2</span>
+      <h2>Subida masiva</h2>
+      <p>Analice el Excel antes de modificar la base. La importación es acumulativa y no sobrescribe información existente.</p>
+    </div>
+    <div class="od-head-actions">
+      <a class="btn outline" href="{{ url_for('oportunidades.index') }}">← Volver a oportunidades</a>
+    </div>
+  </div>
+
+  {% if not import_payload %}
+  <section class="od-import-card">
+    <div class="od-import-intro">
+      <div class="od-import-icon">XL</div>
+      <div>
+        <h3>Plantilla histórica de proyectos</h3>
+        <p>Se esperan las hojas <b>SISTEMAS</b>, <b>PUNTOS DE ENTRADA</b>, <b>PUNTOS DE SALIDA</b> y <b>Equipos</b>.</p>
+      </div>
+    </div>
+    <form method="post" action="{{ url_for('oportunidades.import_analyze') }}" enctype="multipart/form-data" class="od-import-form">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <label class="od-dropzone">
+        <input type="file" name="archivo_excel" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+        <span class="od-drop-main">Seleccione el archivo <b>.xlsx</b></span>
+        <small>Máximo 25 MB. Todavía no se guardará nada en SQLite.</small>
+      </label>
+      <div class="od-import-rules">
+        <div><strong>1</strong><span>Se analiza la estructura y se relacionan los subsistemas.</span></div>
+        <div><strong>2</strong><span>Se muestran cantidades, advertencias y duplicados.</span></div>
+        <div><strong>3</strong><span>Solo al confirmar se modifica la base de datos.</span></div>
+      </div>
+      <div class="od-modal-actions"><button class="btn primary" type="submit">Analizar Excel</button></div>
+    </form>
+  </section>
+  {% else %}
+  {% set s = import_payload.summary %}
+  <section class="od-import-filebar">
+    <div><span>ARCHIVO ANALIZADO</span><strong>{{ import_payload.source_filename }}</strong></div>
+    <div><span>RESULTADO</span><strong>{{ s.oportunidades }} oportunidades detectadas</strong></div>
+  </section>
+
+  <div class="od-import-kpis">
+    <div><strong>{{ s.oportunidades }}</strong><span>Oportunidades</span><small>{{ s.radicados_unicos }} radicados únicos</small></div>
+    <div><strong>{{ s.subsistemas }}</strong><span>Subsistemas</span><small>desde SISTEMAS</small></div>
+    <div><strong>{{ s.entradas }}</strong><span>Puntos de entrada</span><small>{{ s.filas_entradas }} filas leídas</small></div>
+    <div><strong>{{ s.salidas }}</strong><span>Puntos de salida</span><small>{{ s.filas_salidas }} filas leídas</small></div>
+    <div><strong>{{ s.equipos }}</strong><span>Equipos</span><small>{{ s.filas_equipos }} filas leídas</small></div>
+    <div class="{% if s.no_asociados %}warn{% else %}ok{% endif %}"><strong>{{ s.no_asociados }}</strong><span>No asociados</span><small>{% if s.no_asociados %}revise advertencias{% else %}relaciones completas{% endif %}</small></div>
+  </div>
+
+  <section class="od-import-safety">
+    <div class="od-import-shield">✓</div>
+    <div>
+      <strong>Modo seguro de combinación</strong>
+      <p><b>Radicado + Proyecto</b> identifica la oportunidad. Si ya existe, no se sobrescriben sus datos ni criterios técnicos. Solo se agregan subsistemas, entradas, salidas o equipos que todavía falten. Cargar el mismo Excel otra vez no duplica los registros.</p>
+    </div>
+  </section>
+
+  <section class="od-import-dbcheck">
+    <div class="od-form-section-head"><div><strong>Comparación con la base actual</strong><small>Lo que ocurrirá si confirma ahora.</small></div></div>
+    <div class="od-import-compare-grid">
+      <div class="create"><strong>{{ comparison.new_opportunities }}</strong><span>OD nuevas</span></div>
+      <div class="merge"><strong>{{ comparison.existing_opportunities }}</strong><span>OD a combinar</span></div>
+      <div class="create"><strong>{{ comparison.new_subsystems }}</strong><span>Subsistemas nuevos</span></div>
+      <div class="merge"><strong>{{ comparison.existing_subsystems }}</strong><span>Subsistemas existentes</span></div>
+    </div>
+  </section>
+
+  {% if import_payload.warnings %}
+  <details class="od-import-warnings" {% if s.no_asociados %}open{% endif %}>
+    <summary>Advertencias del análisis · {{ import_payload.warnings|length }} mostradas</summary>
+    <div class="od-warning-list">
+      {% for warning in import_payload.warnings %}<p>{{ warning }}</p>{% endfor %}
+    </div>
+  </details>
+  {% else %}
+  <div class="od-import-clean">✓ La estructura del archivo fue reconocida sin advertencias.</div>
+  {% endif %}
+
+  <section class="od-import-preview">
+    <div class="od-form-section-head">
+      <div><strong>Previsualización de oportunidades</strong><small>{{ comparison.rows|length }} registros. Los datos técnicos completos se importan dentro de sus subsistemas.</small></div>
+    </div>
+    <div class="od-import-table-wrap">
+      <table class="od-import-table">
+        <thead><tr><th>Radicado</th><th>Proyecto</th><th>Cliente</th><th>Descripción</th><th>Estado</th><th>Subsistemas</th><th>Acción</th></tr></thead>
+        <tbody>
+        {% for row in comparison.rows %}
+          <tr>
+            <td><b>{{ row.radicado }}</b></td>
+            <td>{{ row.proyecto }}</td>
+            <td>{{ row.cliente }}</td>
+            <td title="{{ row.nombre }}">{{ row.nombre }}</td>
+            <td><span class="od-import-status">{{ row.estado }}</span></td>
+            <td>{{ row.subsistemas }}{% if row.subsistemas_existentes %}<small>{{ row.subsistemas_nuevos }} nuevos · {{ row.subsistemas_existentes }} existentes</small>{% endif %}</td>
+            <td><span class="od-import-action {{ row.action|lower }}">{{ row.action }}</span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="od-import-confirmbar">
+    <div>
+      <strong>¿Confirmar importación?</strong>
+      <span>La operación se ejecuta en una sola transacción SQLite. Si ocurre un error, no se aplican cambios parciales.</span>
+    </div>
+    <div class="od-import-confirm-actions">
+      <form method="post" action="{{ url_for('oportunidades.import_cancel', token=import_token) }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+        <button class="btn outline" type="submit">Descartar</button>
+      </form>
+      <form method="post" action="{{ url_for('oportunidades.import_confirm', token=import_token) }}" onsubmit="return confirm('¿Importar las oportunidades previsualizadas a la base de datos?');">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+        <button class="btn primary" type="submit">Confirmar carga masiva</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

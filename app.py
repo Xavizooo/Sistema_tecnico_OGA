@@ -45,7 +45,7 @@ from capacitaciones import bp as capacitaciones_bp, ensure_database as ensure_ca
 from oportunidades_proyecto import bp as oportunidades_bp, ensure_database as ensure_oportunidades_database
 
 APP_NAME = "SISTEMA TECNICO"
-APP_REV = "0.17.2"
+APP_REV = "0.17.3.1"
 
 ensure_security_storage()
 app = Flask(__name__)

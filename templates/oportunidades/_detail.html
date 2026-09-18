@@ -29,6 +29,7 @@
         <div><dt>Tipo</dt><dd>{{ opportunity.tipo_oportunidad or '—' }}</dd></div>
         <div><dt>Industria</dt><dd>{{ opportunity.industria or '—' }}</dd></div>
         <div><dt>Valor estimado</dt><dd>{{ opportunity.valor_estimado or '—' }}</dd></div>
+        {% if opportunity.observaciones %}<div><dt>Observaciones</dt><dd>{{ opportunity.observaciones }}</dd></div>{% endif %}
       </dl>
     </article>
     <article class="od-info-card">

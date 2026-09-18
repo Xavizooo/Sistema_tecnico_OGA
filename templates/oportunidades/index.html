@@ -25,8 +25,10 @@
     <div class="od-head-actions">
       <div class="od-kpi"><strong>{{ od_stats.total }}</strong><span>Oportunidades</span></div>
       <div class="od-kpi"><strong>{{ od_stats.subsistemas }}</strong><span>Subsistemas</span></div>
-      <button class="btn outline od-phase2" type="button" title="Se habilitará en la Fase 2" disabled>Subida masiva · Fase 2</button>
-      {% if current_user and current_user.is_admin %}<button class="btn primary" id="odNewButton" type="button">+ Nueva OD</button>{% endif %}
+      {% if current_user and current_user.is_admin %}
+      <a class="btn outline od-phase2" href="/oportunidades-proyecto/importar">Subida masiva</a>
+      <button class="btn primary" id="odNewButton" type="button">+ Nueva OD</button>
+      {% endif %}
     </div>
   </div>
 

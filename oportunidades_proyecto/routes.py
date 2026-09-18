@@ -12,17 +12,19 @@ from werkzeug.utils import secure_filename
 from auth_store import STATUS_ACTIVE, audit_event, list_users
 from .db import (
     ATTACHMENT_IMAGE, ATTACHMENT_OFFER, DATA_DIR, FILES_DIR, STATUSES, SUBSYSTEM_FIELDS,
-    add_equipment, add_point, create_attachment, create_opportunity, create_subsystem,
+    add_equipment, add_point, bulk_import_payload, create_attachment, create_opportunity, create_subsystem,
     delete_child, ensure_database, get_attachment, get_opportunity, get_opportunity_detail,
-    get_subsystem, search_opportunities, soft_delete_attachment, soft_delete_opportunity,
+    get_subsystem, preview_bulk_import, search_opportunities, soft_delete_attachment, soft_delete_opportunity,
     soft_delete_subsystem, stats, update_opportunity, update_subsystem,
 )
+from .import_excel import delete_stage, load_stage, parse_workbook, save_stage
 from .search import parse_query, query_help_fields
 
 bp = Blueprint("oportunidades", __name__, url_prefix="/oportunidades-proyecto")
 
 MAX_PDF_BYTES = 50 * 1024 * 1024
 MAX_IMAGE_BYTES = 20 * 1024 * 1024
+MAX_IMPORT_BYTES = 25 * 1024 * 1024
 ALLOWED_IMAGES = {".jpg", ".jpeg", ".png", ".webp"}
 
 CRITERIA_LABELS = (
@@ -234,6 +236,113 @@ def index():
         search_fields=list(query_help_fields()),
         opportunities_page=True,
     )
+
+
+
+@bp.get("/importar", endpoint="import_page")
+@_admin_required
+def import_page():
+    ensure_database()
+    return render_template(
+        "oportunidades/import.html",
+        opportunities_page=True,
+        import_payload=None,
+        comparison=None,
+        import_token=None,
+    )
+
+
+@bp.post("/importar/analizar")
+@_admin_required
+def import_analyze():
+    upload = request.files.get("archivo_excel")
+    if not upload or not upload.filename:
+        flash("Seleccione el archivo Excel de cargue masivo.", "error")
+        return redirect(url_for("oportunidades.import_page"))
+    filename = secure_filename(Path(upload.filename).name)
+    if Path(filename).suffix.lower() != ".xlsx":
+        flash("La subida masiva acepta únicamente archivos .xlsx.", "error")
+        return redirect(url_for("oportunidades.import_page"))
+    try:
+        stream = upload.stream
+        position = stream.tell()
+        stream.seek(0, 2)
+        size = stream.tell()
+        stream.seek(position)
+        if size <= 0 or size > MAX_IMPORT_BYTES:
+            raise ValueError("El Excel está vacío o supera el límite de 25 MB.")
+        payload = parse_workbook(stream, filename)
+        token = save_stage(payload, _user().get("id"))
+        return redirect(url_for("oportunidades.import_preview", token=token))
+    except Exception as exc:
+        audit_event("ANALIZAR CARGUE MASIVO", "OPORTUNIDADES DE PROYECTO", str(exc), "ERROR", _user(), _client_ip())
+        g.audit_logged = True
+        flash(str(exc), "error")
+        return redirect(url_for("oportunidades.import_page"))
+
+
+@bp.get("/importar/<token>")
+@_admin_required
+def import_preview(token: str):
+    try:
+        payload = load_stage(token, _user().get("id"))
+    except PermissionError:
+        abort(403)
+    except Exception as exc:
+        flash(str(exc), "error")
+        return redirect(url_for("oportunidades.import_page"))
+    comparison = preview_bulk_import(payload)
+    return render_template(
+        "oportunidades/import.html",
+        opportunities_page=True,
+        import_payload=payload,
+        comparison=comparison,
+        import_token=token,
+    )
+
+
+@bp.post("/importar/<token>/confirmar")
+@_admin_required
+def import_confirm(token: str):
+    try:
+        payload = load_stage(token, _user().get("id"))
+        result = bulk_import_payload(payload, _user())
+        source = str(payload.get("source_filename") or "Excel")
+        detail = (
+            f"{source} · {result['oportunidades_creadas']} OD nuevas · "
+            f"{result['oportunidades_combinadas']} existentes combinadas · "
+            f"{result['subsistemas_creados']} subsistemas nuevos · "
+            f"{result['equipos_agregados']} equipos agregados"
+        )
+        audit_event("CARGUE MASIVO", "OPORTUNIDADES DE PROYECTO", detail, "OK", _user(), _client_ip())
+        g.audit_logged = True
+        delete_stage(token, _user().get("id"))
+        flash(
+            "Carga masiva completada: "
+            f"{result['oportunidades_creadas']} oportunidades nuevas, "
+            f"{result['oportunidades_combinadas']} existentes revisadas, "
+            f"{result['subsistemas_creados']} subsistemas, "
+            f"{result['entradas_agregadas']} entradas, "
+            f"{result['salidas_agregadas']} salidas y "
+            f"{result['equipos_agregados']} equipos agregados.",
+            "ok",
+        )
+        return redirect(url_for("oportunidades.index"))
+    except PermissionError:
+        abort(403)
+    except Exception as exc:
+        audit_event("CARGUE MASIVO", "OPORTUNIDADES DE PROYECTO", str(exc), "ERROR", _user(), _client_ip())
+        g.audit_logged = True
+        flash(f"No se realizó la importación: {exc}", "error")
+        return redirect(url_for("oportunidades.import_preview", token=token))
+
+
+@bp.post("/importar/<token>/cancelar")
+@_admin_required
+def import_cancel(token: str):
+    delete_stage(token, _user().get("id"))
+    flash("Previsualización descartada. No se modificó la base de datos.", "ok")
+    return redirect(url_for("oportunidades.import_page"))
 
 
 @bp.get("/api/buscar")

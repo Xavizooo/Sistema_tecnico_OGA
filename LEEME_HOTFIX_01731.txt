@@ -1,0 +1,19 @@
+HOTFIX OGA 0.17.3.1 - OPORTUNIDADES / ERROR 500
+================================================
+
+Corrige el error:
+BuildError: Could not build url for endpoint 'oportunidades.import_page'
+
+INSTALACION
+1. Cierre completamente Sistema OGA y la consola de Python.
+2. Copie TODO el contenido de este ZIP en la carpeta raiz Sistema_OGA.
+3. Seleccione Reemplazar los archivos en el destino.
+4. Si existe la carpeta oportunidades_proyecto\__pycache__, puede eliminarla antes de iniciar (opcional).
+5. Ejecute Python INICIAR.py normalmente.
+
+COMPROBACION
+La consola debe mostrar: OGA 0.17.3.1 disponible en http://127.0.0.1:5005
+Luego /inicio debe abrir normalmente y Subida masiva debe llevar a:
+/oportunidades-proyecto/importar
+
+El hotfix NO modifica ni elimina bases SQLite, Excel, adjuntos, usuarios ni datos existentes.

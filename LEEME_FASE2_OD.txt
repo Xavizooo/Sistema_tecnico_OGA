@@ -1,0 +1,50 @@
+OGA SISTEMVAC - V0.17.3
+OPORTUNIDADES DE PROYECTO - FASE 2
+
+INSTALACION
+1. Cierre Sistema OGA.
+2. Haga una copia de seguridad de su carpeta actual.
+3. Copie TODO el contenido de este ZIP dentro de la carpeta raiz Sistema_OGA.
+4. En Windows seleccione "Reemplazar los archivos en el destino".
+5. Ejecute INICIAR.py normalmente.
+
+Este paquete es ACUMULATIVO: puede aplicarse sobre V17.1 o sobre V17.2/Fase 1.
+No contiene bases SQLite ni datos de prueba y no reemplaza sus archivos de usuario.
+
+FASE 2 - SUBIDA MASIVA
+- Solo administradores pueden acceder a Subida masiva.
+- Acepta archivos .xlsx de hasta 25 MB.
+- Reconoce las hojas: SISTEMAS, PUNTOS DE ENTRADA, PUNTOS DE SALIDA y Equipos.
+- Primero ANALIZA y PREVISUALIZA. No modifica SQLite hasta pulsar Confirmar carga masiva.
+- Radicado + Proyecto identifica una oportunidad.
+- Si una oportunidad ya existe, NO sobrescribe sus datos generales ni criterios.
+- Importa solo subsistemas, entradas, salidas y equipos faltantes.
+- Repetir la carga del mismo Excel no duplica registros.
+- La confirmacion completa se ejecuta dentro de una sola transaccion SQLite.
+- La accion queda registrada en la auditoria general.
+
+MAPEO DE ESTADOS HISTORICOS
+- Cerrada-Satisfactoria -> Ganada
+- Cerrada-No satisfactoria / Insatisfactoria -> Perdida
+- Oferta enviada/presentada -> Oferta enviada
+- Cotizando -> Cotizando
+- En analisis -> En analisis
+- Abierta/Nueva -> Nueva
+Los estados no reconocidos se muestran como advertencia y se importan como Nueva.
+
+VALIDACION CON EL ARCHIVO ENTREGADO
+Archivo: 1-Plantilla Base Cargue Proyecto.xlsx
+- 332 oportunidades (Radicado + Proyecto)
+- 330 radicados unicos
+- 588 filas de SISTEMAS
+- 589 subsistemas resultantes (incluye 1 subsistema tecnico creado para conservar equipos historicos sin correspondencia)
+- 606 puntos de entrada
+- 601 puntos de salida
+- 9.545 registros de equipos
+- 0 registros descartados/no asociados
+
+Se detectaron y conservaron dos inconsistencias historicas:
+- Radicado 698: equipos llamados "Principal A" se asocian al unico subsistema disponible "Principal".
+- Radicado 1230: existen equipos de "Principal" sin un sistema equivalente; se crea un subsistema "Principal" claramente marcado como generado durante la importacion para no perder esos equipos.
+
+Los responsables internos quedan vacios en las oportunidades historicas porque la plantilla no contiene usuarios del sistema. Se pueden asignar despues desde Editar OD.
