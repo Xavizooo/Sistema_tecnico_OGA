@@ -11,7 +11,7 @@ from urllib.request import Request, urlopen
 from .tools import ToolResult, readonly_tool_names, tool_definitions
 
 API_URL = os.environ.get("OGA_OPENAI_RESPONSES_URL", "https://api.openai.com/v1/responses")
-DEFAULT_MODEL = os.environ.get("OGA_AI_MODEL", "gpt-5.6-sol")
+DEFAULT_MODEL = os.environ.get("OGA_AI_MODEL")
 REQUEST_TIMEOUT = max(10, min(int(os.environ.get("OGA_AI_TIMEOUT_SECONDS", "60")), 180))
 MAX_TOOL_ROUNDS = max(1, min(int(os.environ.get("OGA_AI_MAX_TOOL_ROUNDS", "5")), 8))
 MAX_CONCURRENT = max(1, min(int(os.environ.get("OGA_AI_MAX_CONCURRENT", "4")), 12))
@@ -51,7 +51,7 @@ def _post(payload: dict[str, Any]) -> dict[str, Any]:
             "Authorization": f"Bearer {key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "OGA-Asistente/0.17.5",
+            "User-Agent": "OGA-Asistente/0.18.1",
         },
     )
     try:
