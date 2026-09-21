@@ -1,15 +1,16 @@
 .venv/
 venv/
-__pycache__/
 *.pyc
 build/
 dist/
 _internal/
 *.exe
 *.zip
+*.xlsx
 *.zip.*
 .DS_Store
 desktop.ini
+__pycache__/
 # Work data and account information are local and should not be public.
 data/
 work/
