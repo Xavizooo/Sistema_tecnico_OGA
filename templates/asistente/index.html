@@ -36,10 +36,6 @@
         <strong>Arquitectura estrictamente de consulta</strong>
         <p>El asistente puede localizar, cruzar y explicar información existente. No dispone de herramientas para crear, editar, reemplazar, subir ni eliminar datos o archivos.</p>
       </div>
-      <div class="oga-ai-provider-status {{ 'connected' if assistant_provider.configured else 'local' }}">
-        <span>{{ 'API CONFIGURADA' if assistant_provider.configured else 'MOTOR LOCAL' }}</span>
-        <strong>{{ assistant_provider.model if assistant_provider.configured else 'Disponible sin Internet' }}</strong>
-      </div>
     </section>
 
     {% if not assistant_provider.configured %}
