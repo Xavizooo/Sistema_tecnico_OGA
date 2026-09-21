@@ -14,16 +14,17 @@
       </svg>
       <span>Bienvenido</span>
     </a>
-
-    <span class="side-section-label">HERRAMIENTAS</span>
-
     <a class="side-nav-link {% if request.endpoint and request.endpoint.startswith('asistente_oga.') %}active{% endif %}"
       href="{{ url_for('asistente_oga.index') }}">
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 3a7 7 0 0 0-4.9 12l-.9 3.2 3.3-.9A7 7 0 1 0 12 3Zm-3 8h.01M12 11h.01M15 11h.01M9.5 14.2c1.6 1.1 3.4 1.1 5 0" />
+        <path
+          d="M12 3a7 7 0 0 0-4.9 12l-.9 3.2 3.3-.9A7 7 0 1 0 12 3Zm-3 8h.01M12 11h.01M15 11h.01M9.5 14.2c1.6 1.1 3.4 1.1 5 0" />
       </svg>
       <span>Asistente OGA</span>
     </a>
+
+    <span class="side-section-label">HERRAMIENTAS</span>
+
 
     {% set pd_view = request.args.get('view', 'dashboard') %}
     <details class="side-nav-group" {% if (request.endpoint and request.endpoint.startswith('proyectos_diseno.')) or
@@ -57,7 +58,8 @@
       </div>
     </details>
 
-    <details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('oportunidades.') %}open{% endif %}>
+    <details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('oportunidades.') %}open{%
+      endif %}>
       <summary>
         <span class="summary-main">
           <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -217,8 +219,9 @@
   </div>
   <div class="topbar-right">
     {% if request.endpoint and request.endpoint.startswith('oportunidades.') %}<span
-      class="topbar-state ok"><i></i>Oportunidades</span>{% elif request.endpoint and request.endpoint.startswith('capacitaciones.') %}<span
-      class="topbar-state ok"><i></i>Capacitaciones</span>{% elif request.endpoint and
+      class="topbar-state ok"><i></i>Oportunidades</span>{% elif request.endpoint and
+    request.endpoint.startswith('capacitaciones.') %}<span class="topbar-state ok"><i></i>Capacitaciones</span>{% elif
+    request.endpoint and
     request.endpoint.startswith('proyectos_diseno.') %}<span class="topbar-state ok"><i></i>Proyectos </span>{%
     elif biblioteca_page %}<span class="topbar-state ok"><i></i>Biblioteca compartida</span>{% elif
     meta.get('procesado') %}<span class="topbar-state ok"><i></i>Procesado</span>{% else %}<span
