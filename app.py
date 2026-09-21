@@ -46,7 +46,7 @@ from oportunidades_proyecto import bp as oportunidades_bp, ensure_database as en
 from asistente_oga import bp as asistente_oga_bp
 
 APP_NAME = "SISTEMA TECNICO"
-APP_REV = "0.17.5.4"
+APP_REV = "0.18.1"
 
 ensure_security_storage()
 app = Flask(__name__)
