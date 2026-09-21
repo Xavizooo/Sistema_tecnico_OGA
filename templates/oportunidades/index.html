@@ -35,14 +35,13 @@
   <div class="od-search-card">
     <div class="od-search-box">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-      <input id="odSearch" value="{{ query }}" autocomplete="off" placeholder='Buscar: azucar cliente:"Manuelita" estado:"En análisis" responsable:Juan'>
+      <input id="odSearch" value="{{ query }}" autocomplete="off" placeholder='Buscar '>
       <button id="odClearSearch" type="button" title="Limpiar búsqueda">×</button>
     </div>
     <details class="od-search-help">
       <summary>Filtro avanzado</summary>
       <p>El texto libre busca también dentro de subsistemas, criterios, equipos, entradas, salidas, ofertas e imágenes. Combine condiciones con <code>campo:valor</code>.</p>
       <div>{% for field in search_fields %}<button type="button" class="od-search-token" data-token="{{ field }}:">{{ field }}:</button>{% endfor %}</div>
-      <small>Ejemplo: <b>azucar cliente:"Ingenio Manuelita" material:inox estado:"En análisis"</b></small>
     </details>
   </div>
 
