@@ -68,7 +68,7 @@ def _filtered_clientes(rows: list[dict], query: str) -> list[dict]:
     if not query:
         return rows
 
-    fields = ("nombre", "pais", "ciudad", "nit")
+    fields = ("nombre", "pais", "ciudad", "nota","nit")
     return [
         row
         for row in rows
@@ -114,12 +114,14 @@ def create():
     nombre = request.form.get("nombre", "").strip()
     pais = request.form.get("pais", "").strip()
     ciudad = request.form.get("ciudad", "").strip()
+    nota = request.form.get("nota", "").strip()
     nit = request.form.get("nit", "").strip()
 
     form_data = {
         "nombre": nombre,
         "pais": pais,
         "ciudad": ciudad,
+        "nota": nota,
         "nit": nit,
     }
 
@@ -135,6 +137,11 @@ def create():
         errors.append("Seleccione un país válido.")
     elif ciudad not in paises[pais]:
         errors.append("Seleccione una ciudad válida para el país indicado.")
+
+    if not nota:
+        errors.append("Tienes que poner una nota")
+    elif len(nombre) > 160:
+            errors.append("El nombre del cliente no puede superar 160 caracteres.")
 
     if not nit:
         errors.append("El NIT es obligatorio.")
@@ -172,6 +179,7 @@ def create():
             "nombre": nombre,
             "pais": pais,
             "ciudad": ciudad,
+            "nota": nota,
             "nit": nit,
             "creado": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
