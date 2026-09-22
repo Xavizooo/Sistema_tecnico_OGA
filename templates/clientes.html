@@ -20,9 +20,9 @@
 
 <nav class="clientes-tabs" aria-label="Secciones de clientes">
   <a class="clientes-tab {% if clientes_view == 'nuevo' %}active{% endif %}"
-     href="{{ url_for('clientes.index', view='nuevo') }}">Nuevo cliente</a>
+    href="{{ url_for('clientes.index', view='nuevo') }}">Nuevo cliente</a>
   <a class="clientes-tab {% if clientes_view == 'lista' %}active{% endif %}"
-     href="{{ url_for('clientes.index', view='lista') }}">Lista de clientes</a>
+    href="{{ url_for('clientes.index', view='lista') }}">Lista de clientes</a>
 </nav>
 
 {% if clientes_view == 'nuevo' %}
@@ -40,8 +40,8 @@
 
     <label>
       <span>Nombre</span>
-      <input name="nombre" maxlength="160" value="{{ form_data.get('nombre', '') }}"
-             placeholder="Nombre del cliente" required>
+      <input name="nombre" maxlength="160" value="{{ form_data.get('nombre', '') }}" placeholder="Nombre del cliente"
+        required>
     </label>
 
     <label>
@@ -49,7 +49,7 @@
       <select name="pais" id="clientePais" required>
         <option value="">Seleccione un país</option>
         {% for nombre_pais in paises.keys()|sort %}
-        <option value="{{ nombre_pais }}" {% if form_data.get('pais') == nombre_pais %}selected{% endif %}>
+        <option value="{{ nombre_pais }}" {% if form_data.get('pais')==nombre_pais %}selected{% endif %}>
           {{ nombre_pais }}
         </option>
         {% endfor %}
@@ -62,11 +62,15 @@
         <option value="">Seleccione primero un país</option>
       </select>
     </label>
+    <label>
+      <span>Nota</span>
+      <input type="text" name="nota" value="{{form_data.get('nota', '')}}" placeholder="Nota corta">
+    </label>
 
     <label>
       <span>NIT</span>
       <input name="nit" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="30"
-             value="{{ form_data.get('nit', '') }}" placeholder="NIT del cliente" required>
+        value="{{ form_data.get('nit', '') }}" placeholder="NIT del cliente" required>
     </label>
 
     <div class="cliente-form-action">
@@ -83,13 +87,15 @@
     <div>
       <span class="cliente-kicker">DIRECTORIO</span>
       <h3>Lista de clientes</h3>
-      <p>{{ clientes|length }} registro{% if clientes|length != 1 %}s{% endif %}{% if query %} encontrados{% endif %}.</p>
+      <p>{{ clientes|length }} registro{% if clientes|length != 1 %}s{% endif %}{% if query %} encontrados{% endif %}.
+      </p>
     </div>
 
     <div class="cliente-list-actions">
       <form class="cliente-search" method="get" action="{{ url_for('clientes.index') }}">
         <input type="hidden" name="view" value="lista">
-        <input name="q" value="{{ query }}" placeholder="Buscar nombre, país, ciudad o NIT" aria-label="Buscar clientes">
+        <input name="q" value="{{ query }}" placeholder="Buscar nombre, país, ciudad o NIT"
+          aria-label="Buscar clientes">
         <button class="btn outline" type="submit">BUSCAR</button>
         {% if query %}<a class="btn outline" href="{{ url_for('clientes.index', view='lista') }}">LIMPIAR</a>{% endif %}
       </form>
@@ -104,6 +110,7 @@
           <th>Nombre</th>
           <th>País</th>
           <th>Ciudad</th>
+          <th>Nota</th>
           <th>NIT</th>
         </tr>
       </thead>
@@ -113,15 +120,16 @@
           <td><strong>{{ cliente.nombre }}</strong></td>
           <td>{{ cliente.pais }}</td>
           <td>{{ cliente.ciudad }}</td>
+          <td>{{ cliente.nota }}</td>
           <td class="cliente-nit">{{ cliente.nit }}</td>
         </tr>
         {% else %}
         <tr>
           <td class="empty" colspan="4">
             {% if query %}
-              No se encontraron clientes con ese criterio.
+            No se encontraron clientes con ese criterio.
             {% else %}
-              Aún no hay clientes registrados.
+            Aún no hay clientes registrados.
             {% endif %}
           </td>
         </tr>
@@ -131,6 +139,7 @@
   </div>
 </section>
 {% endif %}
+
 
 <script id="clientesPaisesData" type="application/json">{{ paises | tojson }}</script>
 {% endblock %}

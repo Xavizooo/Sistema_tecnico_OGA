@@ -71,7 +71,7 @@
       </summary>
       <div class="side-submenu">
         <a class="{% if request.endpoint == 'oportunidades.index' %}active{% endif %}"
-          href="{{ url_for('oportunidades.index') }}">Oportunidades de proyecto</a>
+          href="{{ url_for('oportunidades.index') }}">Proyectos</a>
         {% if current_user and current_user.is_admin %}
         <a href="{{ url_for('oportunidades.index') }}#nueva-od" data-od-sidebar-new>Nueva OD</a>
         <a class="{% if request.endpoint and request.endpoint.startswith('oportunidades.import_') %}active{% endif %}"
