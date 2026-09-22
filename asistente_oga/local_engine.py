@@ -454,7 +454,7 @@ def answer(message: str, context: dict[str, Any] | None = None) -> dict[str, Any
     if MUTATION_PATTERN.search(normalize(text)):
         return _read_only_denial()
 
-    # REV 17.5.2: antes de asumir que toda pregunta pertenece a Oportunidades,
+    # V 17.5.2: antes de asumir que toda pregunta pertenece a Oportunidades,
     # el motor local enruta consultas de solo lectura a los demas modulos OGA.
     universal = answer_universal(text, context or {})
     if universal is not None:

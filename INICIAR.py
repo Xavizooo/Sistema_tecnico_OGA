@@ -76,7 +76,7 @@ def prepare_local_environment() -> Path:
 
 def main() -> int:
     py = find_ready_python() or prepare_local_environment()
-    print("Iniciando OGA - REV 17 - RQ / PLANOS / BIBLIOTECA / PROYECTOS DISENO / CAPACITACIONES...", flush=True)
+    print("Iniciando OGA - V 0.18.5 - RQ / PLANOS / BIBLIOTECA / PROYECTOS DISENO / CAPACITACIONES...", flush=True)
     return subprocess.call([str(py), str(APP)], cwd=str(BASE))
 
 
