@@ -32,7 +32,7 @@
       <summary>
         <span class="summary-main">
           <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span>Proyectos</span>
+          <span>Seguimiento de Proyectos</span>
         </span>
         <svg class="side-chevron" viewBox="0 0 24 24" aria-hidden="true">
           <path d="m9 6 6 6-6 6" />
@@ -63,7 +63,7 @@
       <summary>
         <span class="summary-main">
           <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span>Oportunidades</span>
+          <span>Proyectos</span>
         </span>
         <svg class="side-chevron" viewBox="0 0 24 24" aria-hidden="true">
           <path d="m9 6 6 6-6 6" />
@@ -80,7 +80,27 @@
       </div>
     </details>
 
-    <details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('capacitaciones.') %}open{%
+    <!-- CLIENTES OGA V2 -->
+<details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('clientes.') %}open{% endif %}>
+  <summary>
+    <span class="summary-main">
+      <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>Clientes</span>
+    </span>
+    <svg class="side-chevron" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  </summary>
+  <div class="side-submenu">
+    <a class="{% if request.endpoint == 'clientes.create' or (request.endpoint == 'clientes.index' and request.args.get('view', 'lista') == 'nuevo') %}active{% endif %}"
+       href="{{ url_for('clientes.index', view='nuevo') }}">Nuevo cliente</a>
+    <a class="{% if request.endpoint == 'clientes.index' and request.args.get('view', 'lista') != 'nuevo' %}active{% endif %}"
+       href="{{ url_for('clientes.index', view='lista') }}">Lista de clientes</a>
+  </div>
+</details>
+<!-- /CLIENTES OGA V2 -->
+
+<details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('capacitaciones.') %}open{%
       endif %}>
       <summary>
         <span class="summary-main">

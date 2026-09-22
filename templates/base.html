@@ -18,7 +18,7 @@
   {% include '_header.html' %}
 
   <main class="main-area{% if admin_page %} admin-main{% endif %}">
-      {% if not admin_page and not biblioteca_page and not project_design_page and not capacitaciones_page and not opportunities_page and not assistant_page %}
+      {% if not admin_page and not biblioteca_page and not project_design_page and not capacitaciones_page and not opportunities_page and not assistant_page and not clientes_page %}
       <div class="top-actions">
         {% if meta.get('procesado') %}<span class="status-chip ok">● PROCESADO</span>{% else %}<span class="status-chip idle">○ SIN PROCESAR</span>{% endif %}
         <form method="post" action="{{ url_for('new_list') }}"
@@ -42,7 +42,7 @@
     </section>
   </main>
 
-  {% if not biblioteca_page and not project_design_page and not capacitaciones_page and not opportunities_page and not assistant_page %}
+  {% if not biblioteca_page and not project_design_page and not capacitaciones_page and not opportunities_page and not assistant_page and not clientes_page %}
   <div id="archiveModal" class="modal-backdrop hidden">
     <div class="modal-card">
       <span class="workspace-eyebrow">RESPALDO DEL PROYECTO</span>
