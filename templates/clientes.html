@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Clientes · OGA{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/clientes.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="page-heading split clientes-heading">
+  <div>
+    <span class="page-eyebrow">GESTIÓN COMERCIAL</span>
+    <h2>Clientes</h2>
+    <p>Administra la información básica de los clientes de OGA.</p>
+  </div>
+  <div class="clientes-summary" aria-label="Total de clientes">
+    <strong>{{ total_clientes }}</strong>
+    <span>CLIENTES REGISTRADOS</span>
+  </div>
+</section>
+
+<nav class="clientes-tabs" aria-label="Secciones de clientes">
+  <a class="clientes-tab {% if clientes_view == 'nuevo' %}active{% endif %}"
+     href="{{ url_for('clientes.index', view='nuevo') }}">Nuevo cliente</a>
+  <a class="clientes-tab {% if clientes_view == 'lista' %}active{% endif %}"
+     href="{{ url_for('clientes.index', view='lista') }}">Lista de clientes</a>
+</nav>
+
+{% if clientes_view == 'nuevo' %}
+<section class="card accent-top cliente-form-card">
+  <div class="cliente-card-heading">
+    <div>
+      <span class="cliente-kicker">NUEVO CLIENTE</span>
+      <h3>Datos del cliente</h3>
+      <p>Completa los cuatro campos. La ciudad se actualiza según el país seleccionado.</p>
+    </div>
+  </div>
+
+  <form class="cliente-form" method="post" action="{{ url_for('clientes.create') }}" autocomplete="off">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+
+    <label>
+      <span>Nombre</span>
+      <input name="nombre" maxlength="160" value="{{ form_data.get('nombre', '') }}"
+             placeholder="Nombre del cliente" required>
+    </label>
+
+    <label>
+      <span>País</span>
+      <select name="pais" id="clientePais" required>
+        <option value="">Seleccione un país</option>
+        {% for nombre_pais in paises.keys()|sort %}
+        <option value="{{ nombre_pais }}" {% if form_data.get('pais') == nombre_pais %}selected{% endif %}>
+          {{ nombre_pais }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      <span>Ciudad</span>
+      <select name="ciudad" id="clienteCiudad" data-selected="{{ form_data.get('ciudad', '') }}" required disabled>
+        <option value="">Seleccione primero un país</option>
+      </select>
+    </label>
+
+    <label>
+      <span>NIT</span>
+      <input name="nit" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="30"
+             value="{{ form_data.get('nit', '') }}" placeholder="NIT del cliente" required>
+    </label>
+
+    <div class="cliente-form-action">
+      <button class="btn primary" type="submit">GUARDAR CLIENTE</button>
+      <a class="btn outline" href="{{ url_for('clientes.index', view='lista') }}">VER LISTA</a>
+    </div>
+  </form>
+</section>
+
+
+{% else %}
+<section class="card cliente-directory-card">
+  <div class="cliente-list-heading">
+    <div>
+      <span class="cliente-kicker">DIRECTORIO</span>
+      <h3>Lista de clientes</h3>
+      <p>{{ clientes|length }} registro{% if clientes|length != 1 %}s{% endif %}{% if query %} encontrados{% endif %}.</p>
+    </div>
+
+    <div class="cliente-list-actions">
+      <form class="cliente-search" method="get" action="{{ url_for('clientes.index') }}">
+        <input type="hidden" name="view" value="lista">
+        <input name="q" value="{{ query }}" placeholder="Buscar nombre, país, ciudad o NIT" aria-label="Buscar clientes">
+        <button class="btn outline" type="submit">BUSCAR</button>
+        {% if query %}<a class="btn outline" href="{{ url_for('clientes.index', view='lista') }}">LIMPIAR</a>{% endif %}
+      </form>
+      <a class="btn primary" href="{{ url_for('clientes.index', view='nuevo') }}">NUEVO CLIENTE</a>
+    </div>
+  </div>
+
+  <div class="table-wrap clientes-table-wrap">
+    <table class="clientes-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>País</th>
+          <th>Ciudad</th>
+          <th>NIT</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cliente in clientes %}
+        <tr>
+          <td><strong>{{ cliente.nombre }}</strong></td>
+          <td>{{ cliente.pais }}</td>
+          <td>{{ cliente.ciudad }}</td>
+          <td class="cliente-nit">{{ cliente.nit }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td class="empty" colspan="4">
+            {% if query %}
+              No se encontraron clientes con ese criterio.
+            {% else %}
+              Aún no hay clientes registrados.
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+<script id="clientesPaisesData" type="application/json">{{ paises | tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/clientes.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,245 @@
+.clientes-heading {
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.clientes-summary {
+  min-width: 172px;
+  padding: 12px 15px;
+  background: #edf5fc;
+  border: 1px solid #d1e2f2;
+  border-radius: 8px;
+  text-align: right;
+}
+
+.clientes-summary strong,
+.clientes-summary span {
+  display: block;
+}
+
+.clientes-summary strong {
+  color: var(--blue2, #0b64b4);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.clientes-summary span {
+  margin-top: 6px;
+  color: #68809a;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+}
+
+.clientes-tabs {
+  display: inline-flex;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 4px;
+  background: #edf3f8;
+  border: 1px solid #d8e3ec;
+  border-radius: 9px;
+}
+
+.clientes-tab {
+  padding: 9px 14px;
+  border-radius: 7px;
+  color: #52687c;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.clientes-tab:hover {
+  background: #f8fbfd;
+  color: #0b64b4;
+}
+
+.clientes-tab.active {
+  background: #ffffff;
+  color: #0b64b4;
+  box-shadow: 0 1px 4px rgba(16, 47, 73, .10);
+}
+
+.cliente-card-heading,
+.cliente-list-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.cliente-kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--blue2, #0b64b4);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+
+.cliente-form {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.5fr) repeat(3, minmax(175px, 1fr));
+  gap: 13px;
+  align-items: end;
+  margin-top: 16px;
+}
+
+.cliente-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #536b81;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.cliente-form input,
+.cliente-form select,
+.cliente-search input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 39px;
+  padding: 8px 10px;
+  border: 1px solid #cbd7e2;
+  border-radius: 6px;
+  background: #fff;
+  color: #26384a;
+  font-size: 12px;
+  text-transform: none;
+}
+
+.cliente-form input:focus,
+.cliente-form select:focus,
+.cliente-search input:focus {
+  outline: none;
+  border-color: var(--blue2, #0b64b4);
+  box-shadow: 0 0 0 3px rgba(11, 100, 180, .12);
+}
+
+.cliente-form select:disabled {
+  background: #f3f6f9;
+  color: #9aa6b2;
+  cursor: not-allowed;
+}
+
+.cliente-form-action {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 3px;
+}
+
+.cliente-help-card {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: -3px;
+  padding: 10px 12px;
+  border: 1px solid #dbe7f0;
+  border-radius: 8px;
+  background: #f7fafc;
+  color: #6a7f91;
+  font-size: 11px;
+}
+
+.cliente-help-card strong {
+  color: #245a86;
+}
+
+.cliente-list-heading {
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.cliente-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.cliente-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cliente-search input {
+  min-width: 285px;
+}
+
+.clientes-table-wrap {
+  max-height: 560px;
+}
+
+.clientes-table td {
+  vertical-align: middle;
+}
+
+.cliente-nit {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+@media (max-width: 1180px) {
+  .cliente-form {
+    grid-template-columns: repeat(2, minmax(210px, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .clientes-heading,
+  .cliente-list-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .clientes-summary {
+    text-align: left;
+  }
+
+  .cliente-list-actions,
+  .cliente-search {
+    width: 100%;
+  }
+
+  .cliente-search {
+    flex-wrap: wrap;
+  }
+
+  .cliente-search input {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .cliente-form {
+    grid-template-columns: 1fr;
+  }
+
+  .cliente-form-action {
+    justify-content: stretch;
+    flex-direction: column;
+  }
+
+  .cliente-form-action .btn,
+  .cliente-list-actions .btn {
+    width: 100%;
+  }
+
+  .clientes-tabs {
+    display: flex;
+    width: 100%;
+  }
+
+  .clientes-tab {
+    flex: 1;
+    text-align: center;
+  }
+}
