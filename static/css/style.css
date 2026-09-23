@@ -1531,7 +1531,7 @@ select {
 .btn.primary:hover,
 .btn.process:hover {
     background: linear-gradient(180deg, #3c7cff, #2863e0);
-    box-shadow: 0 10px 26px rgba(37, 99, 235, .28)
+    
 }
 
 .btn.process {
@@ -2734,10 +2734,7 @@ body.app-body {
     box-shadow: 0 7px 18px rgba(29, 93, 163, .16)
 }
 
-.btn.primary:hover,
-.btn.process:hover {
-    background: #2d70b8
-}
+
 
 .btn.outline {
     color: var(--oga-blue);

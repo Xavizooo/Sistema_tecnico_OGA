@@ -243,3 +243,12 @@
     text-align: center;
   }
 }
+
+.cliente-bulk-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.cliente-bulk-input {
+  display: none;
+}

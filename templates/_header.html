@@ -100,6 +100,36 @@
 </details>
 <!-- /CLIENTES OGA V2 -->
 
+    <!-- INDUSTRIA OGA -->
+    <details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('industria.') %}open{% endif %}>
+      <summary>
+        <span class="summary-main">
+          <span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Industria</span>
+        </span>
+        <svg class="side-chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </summary>
+      <div class="side-submenu">
+        <a class="{% if request.endpoint == 'industria.industria_index' %}active{% endif %}"
+          href="{{ url_for('industria.industria_index') }}">Resumen</a>
+        <a class="{% if request.endpoint == 'industria.industria_section' and request.view_args and request.view_args.get('slug') == 'puntos-origen' %}active{% endif %}"
+          href="{{ url_for('industria.industria_section', slug='puntos-origen') }}">Tipos de punto de origen</a>
+        <a class="{% if request.endpoint == 'industria.industria_section' and request.view_args and request.view_args.get('slug') == 'ciudades' %}active{% endif %}"
+          href="{{ url_for('industria.industria_section', slug='ciudades') }}">Ciudades</a>
+        <a class="{% if request.endpoint == 'industria.industria_section' and request.view_args and request.view_args.get('slug') == 'materiales' %}active{% endif %}"
+          href="{{ url_for('industria.industria_section', slug='materiales') }}">Tipos de material</a>
+        <a class="{% if request.endpoint == 'industria.industria_section' and request.view_args and request.view_args.get('slug') == 'cb-matriz' %}active{% endif %}"
+          href="{{ url_for('industria.industria_section', slug='cb-matriz') }}">CB_MATRIZ</a>
+        <a class="{% if request.endpoint == 'industria.industria_section' and request.view_args and request.view_args.get('slug') == 'codigo-equipos' %}active{% endif %}"
+          href="{{ url_for('industria.industria_section', slug='codigo-equipos') }}">Código de equipos</a>
+        <a class="{% if request.endpoint == 'industria.industria_section' and request.view_args and request.view_args.get('slug') == 'cs' %}active{% endif %}"
+          href="{{ url_for('industria.industria_section', slug='cs') }}">CS criterios de salida</a>
+      </div>
+    </details>
+    <!-- /INDUSTRIA OGA -->
+
 <details class="side-nav-group" {% if request.endpoint and request.endpoint.startswith('capacitaciones.') %}open{%
       endif %}>
       <summary>
@@ -234,11 +264,13 @@
     </button>
     <div class="topbar-title">
       <strong>OGA</strong>
-      <span>Generador de RQ · Revisor de Planos · Biblioteca · Proyectos · Oportunidades · Capacitaciones</span>
+      <span>Generador de RQ · Revisor de Planos · Biblioteca · Proyectos · Clientes · Industria · Capacitaciones</span>
     </div>
   </div>
   <div class="topbar-right">
-    {% if request.endpoint and request.endpoint.startswith('oportunidades.') %}<span
+    {% if request.endpoint and request.endpoint.startswith('industria.') %}<span
+      class="topbar-state ok"><i></i>Industria</span>{% elif request.endpoint and request.endpoint.startswith('clientes.') %}<span
+      class="topbar-state ok"><i></i>Clientes</span>{% elif request.endpoint and request.endpoint.startswith('oportunidades.') %}<span
       class="topbar-state ok"><i></i>Oportunidades</span>{% elif request.endpoint and
     request.endpoint.startswith('capacitaciones.') %}<span class="topbar-state ok"><i></i>Capacitaciones</span>{% elif
     request.endpoint and
