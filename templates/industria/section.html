@@ -1,21 +1,22 @@
 {% extends "base.html" %}
-{% block title %}{{ section.title }} · Industria · OGA{% endblock %}
+{% block title %}{{ section.title }} · Datos · OGA{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}">
 {% endblock %}
 {% block content %}
 <div class="industry-shell">
-  <div class="industry-breadcrumb"><a href="{{ url_for('industria.industria_index') }}">Industria</a><span>›</span><strong>{{ section.title }}</strong></div>
+  <div class="industry-breadcrumb"><a href="{{ url_for('industria.industria_index') }}">Datos</a><span>›</span><strong>{{ section.title }}</strong></div>
   <div class="industry-hero compact">
-    <div><span class="workspace-eyebrow">INDUSTRIA</span><h1>{{ section.title }}</h1><p>{{ section.description }}</p></div>
+    <div><span class="workspace-eyebrow">PROYECTOS · DATOS</span><h1>{{ section.title }}</h1><p>{{ section.description }}</p></div>
     <div class="industry-actions">
+      <a class="btn outline" href="{{ url_for('industria.industria_export_excel', slug=section.slug) }}">Exportar Excel</a>
       <button class="btn outline" type="button" data-open-modal="bulkModal">Subida masiva</button>
       <button class="btn primary" type="button" data-open-modal="createModal">Agregar registro</button>
     </div>
   </div>
 
   <div class="industry-toolbar">
-    <form method="get" class="industry-search">
+    <form method="get" class="industry-search" autocomplete="off">
       <input type="search" name="q" value="{{ q }}" placeholder="Buscar en {{ section.title|lower }}...">
       <button class="btn outline" type="submit">Buscar</button>
       {% if q %}<a class="btn outline" href="{{ url_for('industria.industria_section', slug=section.slug) }}">Limpiar</a>{% endif %}
@@ -25,6 +26,38 @@
 
   <div class="industry-table-card">
     <div class="industry-table-scroll">
+      {% if section.slug == 'puntos-origen' %}
+      <table class="industry-table points-origin-table">
+        <thead>
+          <tr>
+            <th>Puntos de origen<small>PO_01</small></th>
+            <th class="point-actions-col">Acciones origen</th>
+            <th>Puntos de destino<small>PO_02</small></th>
+            <th class="point-actions-col">Acciones destino</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ row.get('tipo_origen') or '—' }}</td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-action edit" type="button" data-field-edit data-field-label="Punto de origen" data-field-value="{{ row.get('tipo_origen') or '' }}" data-edit-url="{{ url_for('industria.industria_field_edit', slug=section.slug, row_id=row.id, field_key='tipo_origen') }}">Editar</button>
+                <form method="post" action="{{ url_for('industria.industria_field_delete', slug=section.slug, row_id=row.id, field_key='tipo_origen') }}" onsubmit="return confirm('¿Eliminar este punto de origen?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="icon-action delete" type="submit">Eliminar</button></form>
+              </div>
+            </td>
+            <td>{{ row.get('tipo_destino') or '—' }}</td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-action edit" type="button" data-field-edit data-field-label="Punto de destino" data-field-value="{{ row.get('tipo_destino') or '' }}" data-edit-url="{{ url_for('industria.industria_field_edit', slug=section.slug, row_id=row.id, field_key='tipo_destino') }}">Editar</button>
+                <form method="post" action="{{ url_for('industria.industria_field_delete', slug=section.slug, row_id=row.id, field_key='tipo_destino') }}" onsubmit="return confirm('¿Eliminar este punto de destino?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="icon-action delete" type="submit">Eliminar</button></form>
+              </div>
+            </td>
+          </tr>
+        {% else %}<tr><td colspan="4" class="empty-state">Aún no hay registros. Puedes agregarlos manualmente o usar Subida masiva.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      {% else %}
       <table class="industry-table wide-table">
         <thead><tr>{% for f in section.fields %}<th title="{{ f.code }}">{{ f.label }}{% if f.code %}<small>{{ f.code }}</small>{% endif %}</th>{% endfor %}<th class="actions-col">Acciones</th></tr></thead>
         <tbody>
@@ -39,6 +72,7 @@
         {% else %}<tr><td colspan="{{ section.fields|length + 1 }}" class="empty-state">Aún no hay registros. Puedes agregarlos manualmente o usar Subida masiva.</td></tr>{% endfor %}
         </tbody>
       </table>
+      {% endif %}
     </div>
   </div>
 
@@ -63,9 +97,13 @@
 
 <div class="oga-modal hidden" id="createModal" aria-hidden="true"><div class="oga-modal-card xwide"><div class="oga-modal-head"><div><span class="workspace-eyebrow">{{ section.title|upper }}</span><h3>Agregar registro</h3></div><button type="button" class="modal-x" data-close-modal>×</button></div><form method="post" action="{{ url_for('industria.industria_save', slug=section.slug) }}" class="industry-form-grid dynamic"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{{ render_fields() }}<div class="form-actions span-all"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar registro</button></div></form></div></div>
 
+{% if section.slug == 'puntos-origen' %}
+<div class="oga-modal hidden" id="fieldEditModal" aria-hidden="true"><div class="oga-modal-card"><div class="oga-modal-head"><div><span class="workspace-eyebrow">{{ section.title|upper }}</span><h3 id="fieldEditTitle">Editar punto</h3></div><button type="button" class="modal-x" data-close-modal>×</button></div><form method="post" id="pointFieldEditForm" class="industry-form-grid"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><label class="span-2" id="pointFieldEditLabel">Valor<input name="value" id="pointFieldEditValue" autocomplete="off"></label><div class="form-actions span-all"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar cambios</button></div></form></div></div>
+{% else %}
 <div class="oga-modal hidden" id="editModal" aria-hidden="true"><div class="oga-modal-card xwide"><div class="oga-modal-head"><div><span class="workspace-eyebrow">{{ section.title|upper }}</span><h3>Editar registro</h3></div><button type="button" class="modal-x" data-close-modal>×</button></div><form method="post" id="industryEditForm" class="industry-form-grid dynamic"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{{ render_fields() }}<div class="form-actions span-all"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar cambios</button></div></form></div></div>
+{% endif %}
 
-<div class="oga-modal hidden" id="bulkModal" aria-hidden="true"><div class="oga-modal-card"><div class="oga-modal-head"><div><span class="workspace-eyebrow">EXCEL</span><h3>Subida masiva</h3></div><button type="button" class="modal-x" data-close-modal>×</button></div><p class="modal-copy">El sistema buscará la hoja <strong>{{ section.sheet }}</strong> dentro del Excel. También acepta una plantilla independiente con los mismos encabezados.</p><form method="post" enctype="multipart/form-data" action="{{ url_for('industria.industria_bulk', slug=section.slug) }}" class="bulk-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><label class="file-drop">Archivo Excel<input type="file" name="archivo" accept=".xlsx,.xlsm" required></label><label>Modo de carga<select name="mode"><option value="replace">Reemplazar catálogo actual</option><option value="merge">Agregar / actualizar sin borrar</option></select></label>{% if section.slug == 'codigo-equipos' %}<p class="form-note">Puedes cargar directamente <strong>CODIGO_DE_EQUIPOS.xlsx</strong>; se leerá la hoja EQUIPOS.</p>{% else %}<p class="form-note">Para el libro PROYECTOS.xlsx usa directamente la hoja {{ section.sheet }}.</p>{% endif %}<div class="form-actions"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Procesar Excel</button></div></form></div></div>
+<div class="oga-modal hidden" id="bulkModal" aria-hidden="true"><div class="oga-modal-card"><div class="oga-modal-head"><div><span class="workspace-eyebrow">EXCEL</span><h3>Subida masiva</h3></div><button type="button" class="modal-x" data-close-modal>×</button></div><p class="modal-copy">El sistema buscará la hoja <strong>{{ section.sheet }}</strong> dentro del Excel. También acepta una plantilla independiente con los mismos encabezados.</p><form method="post" enctype="multipart/form-data" action="{{ url_for('industria.industria_bulk', slug=section.slug) }}" class="bulk-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><label class="file-drop">Archivo Excel<input type="file" name="archivo" accept=".xlsx,.xlsm" required></label><label>Modo de carga<select name="mode"><option value="replace">Reemplazar catálogo actual</option><option value="merge">Agregar / actualizar sin borrar</option></select></label>{% if section.slug == 'codigo-equipos' %}<p class="form-note">Puedes cargar directamente <strong>CODIGO_DE_EQUIPOS.xlsx</strong>; se leerá la hoja EQUIPOS.</p>{% elif section.slug == 'puntos-origen' %}<p class="form-note">Acepta el formato nuevo de dos columnas (<strong>Puntos de origen</strong> y <strong>Puntos de destino</strong>) y también el archivo histórico de seis columnas.</p>{% else %}<p class="form-note">Para el libro PROYECTOS.xlsx usa directamente la hoja {{ section.sheet }}.</p>{% endif %}<div class="form-actions"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Procesar Excel</button></div></form></div></div>
 {% endblock %}
 
 {% block scripts %}
@@ -77,12 +115,33 @@
   document.querySelectorAll('[data-open-modal]').forEach(b=>b.addEventListener('click',()=>open(b.dataset.openModal)));
   document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',()=>close(b)));
   document.querySelectorAll('.oga-modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m){m.classList.add('hidden');m.setAttribute('aria-hidden','true')}}));
-  document.querySelectorAll('[data-row-edit]').forEach(b=>b.addEventListener('click',()=>{
+  document.addEventListener('click',e=>{
+    const fieldButton=e.target.closest('[data-field-edit]');
+    if(fieldButton){
+      const f=document.getElementById('pointFieldEditForm');
+      const input=document.getElementById('pointFieldEditValue');
+      const label=document.getElementById('pointFieldEditLabel');
+      const title=document.getElementById('fieldEditTitle');
+      if(!f||!input)return;
+      f.action=fieldButton.dataset.editUrl;
+      input.value=fieldButton.dataset.fieldValue||'';
+      if(label)label.childNodes[0].nodeValue=(fieldButton.dataset.fieldLabel||'Valor')+' ';
+      if(title)title.textContent='Editar '+(fieldButton.dataset.fieldLabel||'punto').toLowerCase();
+      open('fieldEditModal');
+      input.focus();
+      input.select();
+      return;
+    }
+
+    const b=e.target.closest('[data-row-edit]');
+    if(!b)return;
     const row=JSON.parse(b.dataset.row), f=document.getElementById('industryEditForm');
+    if(!f)return;
     f.action={{ url_for('industria.industria_edit', slug=section.slug, row_id='__ROW_ID__')|tojson }}.replace('__ROW_ID__', encodeURIComponent(row.id));
     fields.forEach(k=>{if(f.elements[k])f.elements[k].value=row[k]||''});
     open('editModal');
-  }));
+  });
 })();
 </script>
+<script src="{{ url_for('static', filename='js/industria.js') }}"></script>
 {% endblock %}

@@ -786,3 +786,232 @@
         justify-content: flex-end
     }
 }
+/* Busqueda reactiva: feedback visual sutil mientras llega el filtro mas reciente. */
+.industry-shell .industry-table-card {
+  transition: opacity .12s ease;
+}
+.industry-shell.industry-searching .industry-table-card {
+  opacity: .58;
+}
+
+/* Puntos de origen/destino: dos listas simples con acciones independientes. */
+.industry-table.points-origin-table {
+    min-width: 760px;
+}
+
+.points-origin-table th:nth-child(1),
+.points-origin-table th:nth-child(3),
+.points-origin-table td:nth-child(1),
+.points-origin-table td:nth-child(3) {
+    width: 34%;
+    max-width: none;
+}
+
+.point-actions-col {
+    min-width: 150px;
+    width: 150px;
+}
+
+/* DATOS DE ENTRADA: tres catálogos independientes dentro de CB_MATRIZ */
+.data-entry-shell {
+    gap: 16px
+}
+
+.data-entry-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start
+}
+
+.data-entry-card {
+    min-width: 0;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 7px 20px rgba(14, 54, 84, .055);
+    overflow: visible
+}
+
+.data-entry-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid #edf2f5
+}
+
+.data-entry-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0
+}
+
+.data-entry-title-wrap h2 {
+    margin: 3px 0 0;
+    color: #173b58;
+    font-size: 15px;
+    line-height: 1.25
+}
+
+.data-entry-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #edf6ff;
+    color: #176cae;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap
+}
+
+.data-entry-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0
+}
+
+.data-entry-add {
+    padding: 8px 10px;
+    font-size: 10px
+}
+
+.data-entry-menu {
+    position: relative
+}
+
+.data-entry-menu-button {
+    width: 35px;
+    height: 35px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #cddce8;
+    border-radius: 8px;
+    background: #fff;
+    color: #173b58;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer
+}
+
+.data-entry-menu-button:hover,
+.data-entry-menu.open .data-entry-menu-button {
+    background: #f3f8fc;
+    border-color: #93b9d7
+}
+
+.data-entry-menu-panel {
+    position: absolute;
+    top: calc(100% + 7px);
+    right: 0;
+    z-index: 40;
+    display: none;
+    min-width: 170px;
+    padding: 6px;
+    border: 1px solid #dbe5ed;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(18, 52, 79, .16)
+}
+
+.data-entry-menu.open .data-entry-menu-panel {
+    display: grid;
+    gap: 3px
+}
+
+.data-entry-menu-panel button,
+.data-entry-menu-panel a {
+    width: 100%;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    padding: 9px 10px;
+    color: #27465d;
+    text-align: left;
+    text-decoration: none;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer
+}
+
+.data-entry-menu-panel button:hover,
+.data-entry-menu-panel a:hover {
+    background: #f1f7fb;
+    color: #0f67aa
+}
+
+.data-entry-search-wrap {
+    padding: 10px 12px;
+    background: #fbfdff;
+    border-bottom: 1px solid #edf2f5
+}
+
+.data-entry-search {
+    width: 100%;
+    min-width: 0
+}
+
+.data-entry-table-scroll {
+    max-height: 58vh;
+    overflow: auto;
+    border-radius: 0 0 13px 13px
+}
+
+.data-entry-table {
+    min-width: 420px;
+    white-space: normal
+}
+
+.data-entry-table th:first-child,
+.data-entry-table td:first-child {
+    width: 100%
+}
+
+.data-entry-table td:first-child {
+    word-break: break-word
+}
+
+.data-entry-actions-col {
+    min-width: 145px;
+    width: 145px
+}
+
+.data-entry-table .row-actions {
+    flex-wrap: nowrap
+}
+
+.data-entry-no-results.hidden {
+    display: none
+}
+
+@media (max-width: 1280px) {
+    .data-entry-grid {
+        grid-template-columns: 1fr
+    }
+    .data-entry-table-scroll {
+        max-height: 42vh
+    }
+}
+
+@media (max-width: 680px) {
+    .data-entry-card-head {
+        align-items: flex-start;
+        flex-direction: column
+    }
+    .data-entry-head-actions {
+        width: 100%;
+        justify-content: flex-end
+    }
+    .data-entry-add {
+        flex: 1
+    }
+}

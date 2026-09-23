@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}DATOS DE ENTRADA · Datos · OGA{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}">
+{% endblock %}
+{% block content %}
+<div class="industry-shell data-entry-shell">
+  <div class="industry-breadcrumb"><a href="{{ url_for('industria.industria_index') }}">Datos</a><span>›</span><strong>DATOS DE ENTRADA</strong></div>
+
+  <div class="industry-hero compact">
+    <div>
+      <span class="workspace-eyebrow">PROYECTOS · DATOS</span>
+      <h1>DATOS DE ENTRADA</h1>
+      <p>{{ section.description }}</p>
+    </div>
+    <div class="industry-counter"><strong>{{ total_rows }}</strong><span>registros totales</span></div>
+  </div>
+
+  <div class="data-entry-grid">
+    {% for table in input_tables %}
+    {% set field = table.field %}
+    <section class="data-entry-card" data-entry-table="{{ field.key }}">
+      <div class="data-entry-card-head">
+        <div class="data-entry-title-wrap">
+          <div>
+            <span class="industry-module-kicker">CATÁLOGO</span>
+            <h2>{{ field.label }}</h2>
+          </div>
+          <span class="data-entry-count" data-count-for="{{ field.key }}">{{ table.rows|length }}</span>
+        </div>
+        <div class="data-entry-head-actions">
+          <button class="btn primary data-entry-add" type="button" data-open-modal="cbCreate_{{ field.key }}">Agregar registro</button>
+          <div class="data-entry-menu">
+            <button class="data-entry-menu-button" type="button" aria-label="Opciones de {{ field.label }}" aria-expanded="false" data-entry-menu-button>☰</button>
+            <div class="data-entry-menu-panel" role="menu">
+              <button type="button" role="menuitem" data-open-modal="cbBulk_{{ field.key }}">Subida masiva</button>
+              <a role="menuitem" href="{{ url_for('industria.industria_cb_export', field_key=field.key) }}">Exportar Excel</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-entry-search-wrap">
+        <input class="data-entry-search" type="search" autocomplete="off" placeholder="Buscar en {{ field.label|lower }}..." data-search-table="{{ field.key }}">
+      </div>
+
+      <div class="data-entry-table-scroll">
+        <table class="industry-table data-entry-table">
+          <thead>
+            <tr>
+              <th>{{ field.label }}{% if field.code %}<small>{{ field.code }}</small>{% endif %}</th>
+              <th class="data-entry-actions-col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for row in table.rows %}
+            <tr data-entry-row data-search-value="{{ (row.get(field.key) or '')|e }}">
+              <td>{{ row.get(field.key) or '—' }}</td>
+              <td>
+                <div class="row-actions">
+                  <button
+                    class="icon-action edit"
+                    type="button"
+                    data-cb-edit
+                    data-field-label="{{ field.label|e }}"
+                    data-field-value="{{ (row.get(field.key) or '')|e }}"
+                    data-edit-url="{{ url_for('industria.industria_cb_edit', field_key=field.key, row_id=row.id) }}"
+                  >Editar</button>
+                  <form method="post" action="{{ url_for('industria.industria_cb_delete', field_key=field.key, row_id=row.id) }}" onsubmit="return confirm('¿Eliminar este registro de {{ field.label|e }}?');">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <button class="icon-action delete" type="submit">Eliminar</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr class="data-entry-empty"><td colspan="2" class="empty-state">Aún no hay registros.</td></tr>
+          {% endfor %}
+            <tr class="data-entry-no-results hidden"><td colspan="2" class="empty-state">No hay coincidencias para esta búsqueda.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+</div>
+
+{% for table in input_tables %}
+{% set field = table.field %}
+<div class="oga-modal hidden" id="cbCreate_{{ field.key }}" aria-hidden="true">
+  <div class="oga-modal-card">
+    <div class="oga-modal-head">
+      <div><span class="workspace-eyebrow">DATOS DE ENTRADA</span><h3>Agregar registro</h3><p class="modal-copy">{{ field.label }}</p></div>
+      <button type="button" class="modal-x" data-close-modal>×</button>
+    </div>
+    <form method="post" action="{{ url_for('industria.industria_cb_save', field_key=field.key) }}" class="industry-form-grid">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <label class="span-2">{{ field.label }}
+        <input name="value" autocomplete="off" {% if field.kind == 'number' %}inputmode="decimal"{% endif %} required>
+      </label>
+      <div class="form-actions span-all">
+        <button class="btn outline" type="button" data-close-modal>Cancelar</button>
+        <button class="btn primary" type="submit">Guardar registro</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="oga-modal hidden" id="cbBulk_{{ field.key }}" aria-hidden="true">
+  <div class="oga-modal-card">
+    <div class="oga-modal-head">
+      <div><span class="workspace-eyebrow">EXCEL</span><h3>Subida masiva</h3><p class="modal-copy">{{ field.label }}</p></div>
+      <button type="button" class="modal-x" data-close-modal>×</button>
+    </div>
+    <p class="modal-copy">Acepta un Excel de una sola columna con el encabezado <strong>{{ field.label }}</strong> y también reconoce la columna correspondiente del <strong>CB_MATRIZ.xlsx</strong> histórico.</p>
+    <form method="post" enctype="multipart/form-data" action="{{ url_for('industria.industria_cb_bulk', field_key=field.key) }}" class="bulk-form">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <label class="file-drop">Archivo Excel<input type="file" name="archivo" accept=".xlsx,.xlsm" required></label>
+      <label>Modo de carga
+        <select name="mode">
+          <option value="replace">Reemplazar solo esta tabla</option>
+          <option value="merge">Agregar sin borrar registros actuales</option>
+        </select>
+      </label>
+      <div class="form-actions">
+        <button class="btn outline" type="button" data-close-modal>Cancelar</button>
+        <button class="btn primary" type="submit">Procesar Excel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+
+<div class="oga-modal hidden" id="cbEditModal" aria-hidden="true">
+  <div class="oga-modal-card">
+    <div class="oga-modal-head">
+      <div><span class="workspace-eyebrow">DATOS DE ENTRADA</span><h3 id="cbEditTitle">Editar registro</h3></div>
+      <button type="button" class="modal-x" data-close-modal>×</button>
+    </div>
+    <form method="post" id="cbEditForm" class="industry-form-grid">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <label class="span-2" id="cbEditLabel">Valor
+        <input name="value" id="cbEditValue" autocomplete="off" required>
+      </label>
+      <div class="form-actions span-all">
+        <button class="btn outline" type="button" data-close-modal>Cancelar</button>
+        <button class="btn primary" type="submit">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const normalize = value => (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+  const openModal = id => {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    const input = modal.querySelector('input:not([type="hidden"]), select');
+    if (input) setTimeout(() => input.focus(), 0);
+  };
+
+  const closeModal = modal => {
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  };
+
+  document.querySelectorAll('[data-open-modal]').forEach(button => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.data-entry-menu.open').forEach(menu => menu.classList.remove('open'));
+      openModal(button.dataset.openModal);
+    });
+  });
+  document.querySelectorAll('[data-close-modal]').forEach(button => {
+    button.addEventListener('click', () => closeModal(button.closest('.oga-modal')));
+  });
+  document.querySelectorAll('.oga-modal').forEach(modal => {
+    modal.addEventListener('click', event => {
+      if (event.target === modal) closeModal(modal);
+    });
+  });
+
+  document.querySelectorAll('[data-entry-menu-button]').forEach(button => {
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      const menu = button.closest('.data-entry-menu');
+      const willOpen = !menu.classList.contains('open');
+      document.querySelectorAll('.data-entry-menu.open').forEach(item => {
+        item.classList.remove('open');
+        const itemButton = item.querySelector('[data-entry-menu-button]');
+        if (itemButton) itemButton.setAttribute('aria-expanded', 'false');
+      });
+      if (willOpen) {
+        menu.classList.add('open');
+        button.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.data-entry-menu.open').forEach(menu => {
+      menu.classList.remove('open');
+      const button = menu.querySelector('[data-entry-menu-button]');
+      if (button) button.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  document.querySelectorAll('[data-search-table]').forEach(input => {
+    const key = input.dataset.searchTable;
+    const card = document.querySelector(`[data-entry-table="${key}"]`);
+    if (!card) return;
+    const rows = [...card.querySelectorAll('[data-entry-row]')];
+    const noResults = card.querySelector('.data-entry-no-results');
+    const counter = card.querySelector(`[data-count-for="${key}"]`);
+    input.addEventListener('input', () => {
+      const query = normalize(input.value);
+      let visible = 0;
+      rows.forEach(row => {
+        const show = !query || normalize(row.dataset.searchValue).includes(query);
+        row.hidden = !show;
+        if (show) visible += 1;
+      });
+      if (noResults) noResults.classList.toggle('hidden', visible !== 0 || rows.length === 0);
+      if (counter) counter.textContent = query ? `${visible}/${rows.length}` : String(rows.length);
+    });
+  });
+
+  document.querySelectorAll('[data-cb-edit]').forEach(button => {
+    button.addEventListener('click', () => {
+      const form = document.getElementById('cbEditForm');
+      const input = document.getElementById('cbEditValue');
+      const label = document.getElementById('cbEditLabel');
+      const title = document.getElementById('cbEditTitle');
+      if (!form || !input) return;
+      form.action = button.dataset.editUrl;
+      input.value = button.dataset.fieldValue || '';
+      const fieldLabel = button.dataset.fieldLabel || 'Valor';
+      if (label) label.childNodes[0].nodeValue = fieldLabel + ' ';
+      if (title) title.textContent = 'Editar registro';
+      openModal('cbEditModal');
+      input.select();
+    });
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    document.querySelectorAll('.oga-modal:not(.hidden)').forEach(closeModal);
+    document.querySelectorAll('.data-entry-menu.open').forEach(menu => menu.classList.remove('open'));
+  });
+})();
+</script>
+{% endblock %}

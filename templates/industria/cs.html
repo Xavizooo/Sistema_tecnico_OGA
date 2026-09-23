@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block title %}CS criterios de salida · Industria · OGA{% endblock %}
+{% block title %}CS criterios de salida · Datos · OGA{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}">
 {% endblock %}
 {% block content %}
 <div class="industry-shell">
-  <div class="industry-breadcrumb"><a href="{{ url_for('industria.industria_index') }}">Industria</a><span>›</span><strong>{{ section.title }}</strong></div>
+  <div class="industry-breadcrumb"><a href="{{ url_for('industria.industria_index') }}">Datos</a><span>›</span><strong>{{ section.title }}</strong></div>
   <div class="industry-hero compact">
-    <div><span class="workspace-eyebrow">INDUSTRIA · COMPARATIVO</span><h1>{{ section.title }}</h1><p>{{ section.description }}</p></div>
-    <div class="industry-actions"><button class="btn outline" type="button" data-open-modal="bulkModal">Subida masiva</button><button class="btn primary" type="button" data-open-modal="createModal">Agregar registro</button></div>
+    <div><span class="workspace-eyebrow">PROYECTOS · DATOS · COMPARATIVO</span><h1>{{ section.title }}</h1><p>{{ section.description }}</p></div>
+    <div class="industry-actions"><a class="btn outline" href="{{ url_for('industria.industria_export_excel', slug='cs') }}">Exportar Excel</a><button class="btn outline" type="button" data-open-modal="bulkModal">Subida masiva</button><button class="btn primary" type="button" data-open-modal="createModal">Agregar registro</button></div>
   </div>
 
 
   <div class="industry-toolbar proximity-table-toolbar">
-    <form method="get" class="industry-search proximity-inline-search">
+    <form method="get" class="industry-search proximity-inline-search" autocomplete="off">
       <span class="proximity-inline-label">SEARCH DE PROXIMIDAD</span>
       <select name="prox_criterio" required {% if not numeric_fields %}disabled{% endif %}>
         {% for key,label in numeric_fields.items() %}<option value="{{ key }}" {% if proximity_field == key %}selected{% endif %}>{{ label }}</option>{% else %}<option value="">Sin datos numericos disponibles</option>{% endfor %}
@@ -26,7 +26,7 @@
   </div>
 
   <div class="industry-toolbar secondary-search-toolbar">
-    <form method="get" class="industry-search">
+    <form method="get" class="industry-search" autocomplete="off">
       {% if proximity_active %}<input type="hidden" name="prox_criterio" value="{{ proximity_field }}"><input type="hidden" name="prox_valor" value="{{ proximity_value }}">{% endif %}
       <input type="search" name="q" value="{{ q }}" placeholder="Buscar criterio, equipo, TAG o referencia...">
       <button class="btn outline" type="submit">Buscar</button>
@@ -52,8 +52,9 @@
  document.querySelectorAll('[data-open-modal]').forEach(b=>b.addEventListener('click',()=>open(b.dataset.openModal)));
  document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',()=>close(b)));
  document.querySelectorAll('.oga-modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m){m.classList.add('hidden');m.setAttribute('aria-hidden','true')}}));
- document.querySelectorAll('[data-row-edit]').forEach(b=>b.addEventListener('click',()=>{const row=JSON.parse(b.dataset.row),f=document.getElementById('industryEditForm');f.action={{ url_for('industria.industria_edit', slug='cs', row_id='__ROW_ID__')|tojson }}.replace('__ROW_ID__', encodeURIComponent(row.id));fields.forEach(k=>{if(f.elements[k])f.elements[k].value=row[k]||''});open('editModal')}));
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-row-edit]');if(!b)return;const row=JSON.parse(b.dataset.row),f=document.getElementById('industryEditForm');f.action={{ url_for('industria.industria_edit', slug='cs', row_id='__ROW_ID__')|tojson }}.replace('__ROW_ID__', encodeURIComponent(row.id));fields.forEach(k=>{if(f.elements[k])f.elements[k].value=row[k]||''});open('editModal')});
 
 })();
 </script>
+<script src="{{ url_for('static', filename='js/industria.js') }}"></script>
 {% endblock %}

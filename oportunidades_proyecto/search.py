@@ -36,7 +36,7 @@ def parse_query(query: str) -> list[tuple[str | None, str]]:
 
 def query_help_fields() -> Iterable[str]:
     return (
-        "cliente", "proyecto", "radicado", "estado", "responsable", "pais", "ciudad",
+        "cliente", "proyecto", "responsable", "pais", "ciudad",
         "industria", "tipo", "subsistema", "proceso", "material", "flujo", "voltaje",
         "atex", "nec", "equipo", "entrada", "salida", "oferta", "imagen",
     )

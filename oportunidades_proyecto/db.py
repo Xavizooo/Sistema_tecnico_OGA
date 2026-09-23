@@ -35,6 +35,19 @@ SUBSYSTEM_FIELDS = (
     "presion_alimentacion_psi", "es_multiequipos", "observaciones",
 )
 
+# Campos técnicos que permanecen visibles/editables en la nueva vista de OD.
+# El resto de la información histórica del subsistema se conserva en la BD y
+# no se sobrescribe al editar desde esta interfaz simplificada.
+VISIBLE_TECH_FIELDS = (
+    "voltaje_potencia",
+    "material_transportado",
+    "flujo_kg_h",
+    "potencia_hp",
+    "diferencial_presion_psi",
+    "caudal_cfm",
+    "area_filtracion_m2",
+)
+
 SEARCH_FIELD_MAP = {
     "radicado": "radicado",
     "proyecto": "proyecto",
@@ -348,6 +361,98 @@ def update_opportunity(opportunity_id: int, data: dict[str, Any], responsibles: 
             _replace_responsibles(conn, opportunity_id, responsibles)
             _rebuild_search_index_conn(conn, opportunity_id)
             conn.execute("COMMIT")
+        except Exception:
+            conn.execute("ROLLBACK")
+            raise
+
+
+def update_opportunity_with_visible_technical(
+    opportunity_id: int,
+    data: dict[str, Any],
+    responsibles: Iterable[dict[str, Any]],
+    technical_updates: dict[int, dict[str, Any]],
+    user: dict[str, Any],
+) -> None:
+    """Actualiza en una sola transacción la OD y los datos técnicos visibles.
+
+    Solo modifica los siete campos definidos en ``VISIBLE_TECH_FIELDS``. De
+    esta manera los campos históricos que ya no aparecen en la interfaz se
+    conservan sin cambios.
+    """
+    values: dict[str, Any] = _clean_dict(data, OPPORTUNITY_FIELDS)
+    if values["estado"] not in STATUSES:
+        values["estado"] = STATUSES[0]
+    now = utcnow()
+    values.update({
+        "actualizado_por_id": user.get("id"),
+        "actualizado_por_usuario": user.get("username"),
+        "actualizado_por_nombre": user.get("name"),
+        "actualizado_en": now,
+    })
+
+    with connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            row = conn.execute(
+                "SELECT id FROM opportunities WHERE id=? AND eliminado_en IS NULL",
+                (opportunity_id,),
+            ).fetchone()
+            if not row:
+                raise ValueError("La oportunidad no existe.")
+
+            _update(conn, "opportunities", opportunity_id, values)
+            _replace_responsibles(conn, opportunity_id, responsibles)
+
+            active_ids = {
+                int(item["id"])
+                for item in conn.execute(
+                    "SELECT id FROM subsystems WHERE opportunity_id=? AND eliminado_en IS NULL",
+                    (opportunity_id,),
+                ).fetchall()
+            }
+            for raw_id, payload in technical_updates.items():
+                try:
+                    subsystem_id = int(raw_id)
+                except (TypeError, ValueError):
+                    continue
+                if subsystem_id not in active_ids:
+                    continue
+                tech_values = {
+                    field: str(payload.get(field) or "").strip()
+                    for field in VISIBLE_TECH_FIELDS
+                }
+                tech_values["actualizado_en"] = now
+                _update(conn, "subsystems", subsystem_id, tech_values)
+
+            _rebuild_search_index_conn(conn, opportunity_id)
+            conn.execute("COMMIT")
+        except Exception:
+            conn.execute("ROLLBACK")
+            raise
+
+
+def update_visible_subsystem(subsystem_id: int, data: dict[str, Any]) -> int:
+    """Edita únicamente los siete campos técnicos visibles de un subsistema."""
+    values = {
+        field: str(data.get(field) or "").strip()
+        for field in VISIBLE_TECH_FIELDS
+    }
+    values["actualizado_en"] = utcnow()
+    with connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            row = conn.execute(
+                "SELECT opportunity_id FROM subsystems WHERE id=? AND eliminado_en IS NULL",
+                (subsystem_id,),
+            ).fetchone()
+            if not row:
+                raise ValueError("El subsistema no existe.")
+            opportunity_id = int(row["opportunity_id"])
+            _update(conn, "subsystems", subsystem_id, values)
+            conn.execute("UPDATE opportunities SET actualizado_en=? WHERE id=?", (utcnow(), opportunity_id))
+            _rebuild_search_index_conn(conn, opportunity_id)
+            conn.execute("COMMIT")
+            return opportunity_id
         except Exception:
             conn.execute("ROLLBACK")
             raise

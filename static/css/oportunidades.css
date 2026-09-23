@@ -250,3 +250,286 @@
 .od-import-confirm-actions form { margin:0; }
 @media (max-width:1100px) { .od-import-kpis { grid-template-columns:repeat(3,1fr); } .od-import-rules { grid-template-columns:1fr; } }
 @media (max-width:700px) { .od-import-kpis, .od-import-compare-grid { grid-template-columns:repeat(2,1fr); } .od-import-filebar, .od-import-confirmbar { align-items:flex-start; flex-direction:column; } }
+
+/* =====================================================================
+   OD · VISTA TABLA COMPLETA + PANEL DE DETALLE (2026-09-23)
+   ===================================================================== */
+.od-project-table-shell {
+  overflow:hidden;
+  border:1px solid #dfe5ed;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 5px 18px rgba(31,51,84,.045);
+}
+.od-project-table { min-width:0; }
+.od-project-table .od-list-head { height:42px; }
+.od-project-table .od-list {
+  min-height:460px;
+  max-height:calc(100vh - 315px);
+  overflow:auto;
+  background:#fff;
+}
+.od-table-head,
+.od-project-table .od-list-row {
+  display:grid;
+  grid-template-columns:120px minmax(180px,1fr) minmax(260px,1.45fr) minmax(180px,1fr);
+  align-items:center;
+  column-gap:12px;
+}
+.od-table-head {
+  position:sticky;
+  top:0;
+  z-index:3;
+  min-height:37px;
+  padding:0 13px;
+  border-bottom:1px solid #dfe5ed;
+  background:#f3f6fa;
+  color:#738196;
+  font-size:8.2px;
+  font-weight:800;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+}
+.od-project-table .od-list-row {
+  width:100%;
+  min-height:52px;
+  padding:7px 13px;
+  border:0;
+  border-bottom:1px solid #ebeff4;
+  background:#fff;
+  color:#4c5d75;
+  text-align:left;
+  cursor:pointer;
+  transition:background .14s ease, box-shadow .14s ease;
+}
+.od-project-table .od-list-row:hover { background:#f7faff; }
+.od-project-table .od-list-row.active { background:#eef5ff; box-shadow:inset 3px 0 #3b78e7; }
+.od-project-table .od-list-row > span { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.od-project-table .od-list-row b { color:#2e6dd0; font-size:9.5px; }
+.od-project-table .od-list-row strong { color:#4665a2; font-size:9.5px; }
+.od-cell-cliente, .od-cell-nombre, .od-cell-responsable { white-space:nowrap; font-size:9.2px; }
+.od-cell-nombre { color:#34465f; font-weight:600; }
+.od-cell-nombre small { display:block; margin-top:3px; color:#8c99aa; font-size:9.5px; font-weight:500; }
+.od-cell-estado { display:flex; align-items:center; gap:5px; flex-wrap:wrap; color:#5f6f85; font-size:8.8px; font-weight:700; }
+.od-cell-estado small { flex-basis:100%; margin-left:11px; color:#9aa4b2; font-size:7.4px; font-weight:500; }
+
+.od-detail-backdrop {
+  position:fixed;
+  inset:0;
+  z-index:1490;
+  background:rgba(26,39,57,.34);
+  backdrop-filter:blur(1.5px);
+}
+.od-detail-backdrop.hidden,
+.od-detail-drawer.hidden { display:none !important; }
+.od-detail-drawer {
+  position:fixed;
+  top:64px;
+  right:14px;
+  bottom:14px;
+  z-index:1500;
+  width:min(1120px, calc(100vw - 44px));
+  max-height:none;
+  overflow:auto;
+  border:1px solid #d6dee9;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 24px 70px rgba(21,39,65,.28);
+}
+.od-detail-drawer .od-detail-shell { min-height:100%; padding:16px 16px 86px; }
+.od-detail-head-new { position:relative; align-items:flex-start; }
+.od-detail-title-block { min-width:0; flex:1; }
+.od-detail-actions-top { justify-content:flex-end; max-width:620px; }
+.od-detail-close {
+  width:31px;
+  height:31px;
+  flex:none;
+  display:grid;
+  place-items:center;
+  border:1px solid #dce3ec;
+  border-radius:7px;
+  background:#f7f9fc;
+  color:#66758b;
+  font-size:20px;
+  line-height:1;
+  cursor:pointer;
+}
+.od-detail-close:hover { background:#eef3f9; color:#334963; }
+.od-top-resource-button b {
+  display:inline-grid;
+  place-items:center;
+  min-width:17px;
+  height:17px;
+  margin-left:3px;
+  padding:0 4px;
+  border-radius:999px;
+  background:#edf3fb;
+  color:#4d6e9e;
+  font-size:7.5px;
+}
+.od-top-resource-button.active { border-color:#7fa8e3; background:#edf5ff; color:#315f9f; }
+.od-top-resource-panel { margin:12px 0 0; }
+.od-resource-group { padding:9px 0; border-top:1px solid #e5ebf2; }
+.od-resource-group:first-of-type { border-top:0; }
+.od-resource-group-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px; }
+.od-resource-group-head > strong { color:#3d526f; font-size:9.5px; }
+
+.od-detail-table-card {
+  margin-top:13px;
+  padding:12px;
+  border:1px solid #e1e7ee;
+  border-radius:9px;
+  background:#fff;
+}
+.od-detail-table-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.od-detail-table-title h3 { margin:3px 0 0; color:#31445f; font-size:13px; }
+.od-general-table-wrap, .od-tech-table-wrap, .od-linked-table-wrap { overflow:auto; border:1px solid #e4e9ef; border-radius:7px; }
+.od-general-detail-table, .od-tech-detail-table, .od-linked-table { width:100%; border-collapse:collapse; }
+.od-general-detail-table th, .od-general-detail-table td,
+.od-tech-detail-table th, .od-tech-detail-table td,
+.od-linked-table th, .od-linked-table td { border-bottom:1px solid #edf1f5; }
+.od-general-detail-table tr:last-child > * { border-bottom:0; }
+.od-general-detail-table th {
+  width:125px;
+  padding:8px 9px;
+  background:#f7f9fc;
+  color:#7d8999;
+  font-size:8.3px;
+  font-weight:700;
+  text-align:left;
+  white-space:nowrap;
+}
+.od-general-detail-table td { padding:8px 10px; color:#405d8d; font-size:9.2px; font-weight:600; }
+.od-tech-table-headline { display:flex; align-items:baseline; gap:8px; margin:13px 0 7px; }
+.od-tech-table-headline strong { color:#344a67; font-size:10px; }
+.od-tech-table-headline span { color:#929dab; font-size:8px; }
+.od-tech-detail-table { min-width:880px; table-layout:fixed; }
+.od-tech-detail-table th, .od-linked-table th {
+  padding:7px 8px;
+  background:#f3f6fa;
+  color:#68778b;
+  font-size:7.6px;
+  font-weight:800;
+  text-align:left;
+  letter-spacing:.02em;
+}
+.od-tech-detail-table td, .od-linked-table td { padding:8px; color:#485d79; font-size:8.8px; vertical-align:middle; }
+.od-tech-group-row td, .od-linked-group-row td { padding:6px 8px; background:#f9fbfd; color:#3f5f8e; font-weight:700; }
+.od-tech-group-row td { display:table-cell; }
+.od-tech-group-row td > span { margin-right:8px; }
+.od-tech-edit {
+  border:0;
+  border-radius:5px;
+  padding:4px 7px;
+  background:#edf4ff;
+  color:#4770ac;
+  font-size:7.7px;
+  font-weight:700;
+  cursor:pointer;
+}
+.od-tech-edit:hover { background:#e2edfc; }
+.od-table-empty-cell { padding:15px !important; color:#99a3b0 !important; text-align:center; font-style:italic; }
+
+.od-floating-table-card {
+  position:fixed;
+  right:28px;
+  bottom:82px;
+  z-index:1518;
+  width:min(820px, calc(100vw - 70px));
+  max-height:54vh;
+  overflow:hidden;
+  border:1px solid #ccd8e7;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 15px 45px rgba(25,45,72,.24);
+}
+.od-floating-table-card.hidden { display:none; }
+.od-floating-table-head { height:38px; display:flex; align-items:center; justify-content:space-between; padding:0 10px 0 12px; border-bottom:1px solid #e1e7ef; background:#f5f8fc; }
+.od-floating-table-head strong { color:#3a506f; font-size:10px; }
+.od-floating-table-head button { width:26px; height:26px; border:0; border-radius:5px; background:transparent; color:#7b8797; font-size:18px; cursor:pointer; }
+.od-floating-table-panel { max-height:calc(54vh - 38px); overflow:auto; padding:10px; }
+.od-floating-table-panel.hidden { display:none; }
+.od-linked-table { min-width:590px; }
+.od-linked-group-row td { position:relative; }
+.od-linked-group-row td span { display:inline-block; margin-right:8px; }
+.od-linked-group-row .od-mini-add { float:right; width:auto; min-width:62px; height:23px; padding:0 7px; border-radius:5px; font-size:7.5px; }
+.od-linked-table form { margin:0; }
+.od-table-delete { border:0; border-radius:5px; padding:4px 7px; background:#fff0f1; color:#a04f58; font-size:7.4px; font-weight:700; cursor:pointer; }
+.od-table-delete:hover { background:#fde4e7; }
+
+.od-detail-fab {
+  position:fixed;
+  right:28px;
+  bottom:24px;
+  z-index:1520;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  pointer-events:none;
+}
+.od-detail-fab-main, .od-detail-fab-options button { pointer-events:auto; }
+.od-detail-fab-main {
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:12px;
+  background:#315f9f;
+  color:#fff;
+  box-shadow:0 8px 20px rgba(45,83,139,.28);
+  cursor:pointer;
+}
+.od-detail-fab-main span { font-size:20px; line-height:1; }
+.od-detail-fab-main:hover { background:#274f88; }
+.od-detail-fab-options {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transform:translateX(12px);
+  opacity:0;
+  visibility:hidden;
+  transition:all .16s ease;
+}
+.od-detail-fab.open .od-detail-fab-options { transform:translateX(0); opacity:1; visibility:visible; }
+.od-detail-fab-options button {
+  min-height:33px;
+  border:1px solid #d4deeb;
+  border-radius:8px;
+  padding:0 11px;
+  background:#fff;
+  color:#536b8d;
+  box-shadow:0 5px 15px rgba(27,47,74,.12);
+  font-size:8.5px;
+  font-weight:700;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.od-detail-fab-options button:hover, .od-detail-fab-options button.active { border-color:#8eb0df; background:#edf5ff; color:#315f9f; }
+
+@media (max-width:1050px) {
+  .od-table-head,
+  .od-project-table .od-list-row,
+  .od-table-head { grid-template-columns:110px minmax(160px,1fr) minmax(220px,1.4fr); }
+  .od-table-head span:last-child, .od-cell-responsable { display:none; }
+  .od-detail-drawer { width:calc(100vw - 28px); right:14px; }
+}
+@media (max-width:760px) {
+  .od-table-head { display:none; }
+  .od-project-table .od-list { max-height:none; min-height:320px; }
+  .od-project-table .od-list-row { grid-template-columns:1fr 1fr; gap:8px 12px; padding:10px 12px; }
+  .od-project-table .od-list-row > span { white-space:normal; }
+  .od-project-table .od-list-row > span::before { content:attr(data-label); display:block; margin-bottom:2px; color:#9aa4b2; font-size:6.8px; font-weight:800; text-transform:uppercase; }
+  .od-cell-responsable { display:block; }
+  .od-detail-drawer { top:52px; right:6px; bottom:6px; width:calc(100vw - 12px); border-radius:9px; }
+  .od-detail-drawer .od-detail-shell { padding:12px 10px 84px; }
+  .od-detail-head-new { flex-direction:column; }
+  .od-detail-actions-top { width:100%; justify-content:flex-start; }
+  .od-general-detail-table th { width:95px; }
+  .od-general-detail-table tr { display:grid; grid-template-columns:95px 1fr; }
+  .od-general-detail-table th, .od-general-detail-table td { display:block; width:auto; }
+  .od-general-detail-table tr > :nth-child(3), .od-general-detail-table tr > :nth-child(4) { border-top:1px solid #edf1f5; }
+  .od-floating-table-card { right:12px; bottom:74px; width:calc(100vw - 24px); }
+  .od-detail-fab { right:14px; bottom:16px; }
+  .od-detail-fab-options { max-width:calc(100vw - 80px); overflow-x:auto; }
+}\n\n/* =====================================================================\n   OD · EDICIÓN INTEGRAL + TIPOGRAFÍA LEGIBLE (2026-09-23)\n   ===================================================================== */\n.od-edit-modal-help { margin:5px 0 0; color:#7b899c; font-size:12px; line-height:1.45; }\n.od-edit-tech-sections { display:grid; gap:12px; }\n.od-edit-tech-card { padding:13px; border:1px solid #dce4ee; border-radius:9px; background:#fafcff; }\n.od-edit-tech-card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:11px; padding-bottom:9px; border-bottom:1px solid #e6ebf2; }\n.od-edit-tech-card-head span { display:block; color:#6d85aa; font-size:10px; font-weight:800; letter-spacing:.06em; }\n.od-edit-tech-card-head strong { display:block; margin-top:2px; color:#344b6c; font-size:14px; }\n.od-edit-tech-empty { padding:18px; border:1px dashed #d6dfe9; border-radius:8px; color:#78879a; background:#fafbfd; font-size:12px; text-align:center; }\n\n/* Aumento general de tamaño de letra del módulo Oportunidades. */\n.od-page { font-size:13px; }\n.od-page-head h2 { font-size:25px; }\n.od-page-head p { font-size:13px; }\n.od-soft-tag { font-size:11.5px; }\n.od-kpi strong { font-size:19px; }\n.od-kpi span { font-size:10.5px; }\n.od-search-box input { font-size:14px; }\n.od-search-help { font-size:11.5px; }\n.od-search-token { font-size:10.5px; padding:5px 9px; }\n.od-list-head { font-size:11.5px; }\n.od-list-head strong { font-size:12.5px; }\n.od-table-head { min-height:42px; font-size:11px; }\n.od-project-table .od-list-row { min-height:60px; }\n.od-project-table .od-list-row b,\n.od-project-table .od-list-row strong { font-size:12.5px; }\n.od-cell-cliente, .od-cell-nombre, .od-cell-responsable { font-size:12px; }\n.od-cell-estado { font-size:11.5px; }\n.od-cell-estado small { font-size:9.5px; }\n.od-list-empty strong, .od-empty-detail strong { font-size:16px; }\n.od-list-empty p, .od-empty-detail p { font-size:12px; }\n.od-kicker { font-size:10.5px; }\n.od-detail-head h2 { font-size:22px; }\n.od-detail-head p { font-size:13px; line-height:1.55; }\n.od-status { min-height:32px; padding:6px 10px; font-size:11.5px; }\n.od-page .btn, .od-modal .btn { font-size:12px; }\n.od-resource-button { min-height:35px; font-size:11.5px; }\n.od-resource-button b { font-size:10px; }\n.od-resource-group-head > strong { font-size:12px; }\n.od-resource-panel-head strong { font-size:12.5px; }\n.od-resource-panel-head span { font-size:10.5px; }\n.od-file-row strong { font-size:12px; }\n.od-file-row small { font-size:10px; }\n.od-empty-mini { font-size:11px; }\n.od-detail-table-title h3 { font-size:16px; }\n.od-general-detail-table th { padding:10px; font-size:11.5px; }\n.od-general-detail-table td { padding:10px 11px; font-size:12.5px; }\n.od-tech-table-headline strong { font-size:13px; }\n.od-tech-table-headline span { font-size:10.5px; }\n.od-tech-detail-table th, .od-linked-table th { padding:9px; font-size:10.5px; }\n.od-tech-detail-table td, .od-linked-table td { padding:10px 9px; font-size:12px; }\n.od-tech-edit { padding:5px 9px; font-size:10.5px; }\n.od-floating-table-head { height:44px; }\n.od-floating-table-head strong { font-size:13px; }\n.od-linked-group-row .od-mini-add { height:28px; font-size:10px; }\n.od-table-delete { padding:5px 8px; font-size:10px; }\n.od-detail-fab-options button { min-height:38px; font-size:11px; }\n.od-modal-head h3 { font-size:18px; }\n.od-form-section-head strong { font-size:13px; }\n.od-form-section-head small { font-size:10.5px; }\n.od-form-grid label { gap:6px; font-size:11.5px; }\n.od-form-grid input, .od-form-grid textarea, .od-form-grid select { padding:10px 11px; font-size:13px; }\n.od-form-grid label > small { font-size:10px; }\n.od-modal-actions { gap:9px; }\n.od-loading { font-size:12.5px; }\n\n/* La vista de importación pertenece al mismo módulo y también debe ser legible. */\n.od-import-intro h3 { font-size:17px; }\n.od-import-intro p, .od-dropzone input { font-size:12px; }\n.od-drop-main { font-size:13px; }\n.od-dropzone small { font-size:10.5px; }\n.od-import-rules span { font-size:11px; }\n.od-import-filebar span { font-size:9.5px; }\n.od-import-filebar strong { font-size:12px; }\n.od-import-kpis span { font-size:10.5px; }\n.od-import-kpis small { font-size:9.5px; }\n.od-import-safety strong { font-size:12px; }\n.od-import-safety p { font-size:10.5px; }\n.od-import-table th { font-size:9.5px; }\n.od-import-table td { font-size:10.5px; }\n.od-import-table td small { font-size:9px; }\n.od-import-status, .od-import-action { font-size:9.5px; }\n\n@media (max-width:760px) {\n  .od-project-table .od-list-row > span::before { font-size:9px; }\n  .od-form-grid label { font-size:11px; }\n}\n
