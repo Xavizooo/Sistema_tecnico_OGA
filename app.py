@@ -45,6 +45,7 @@ from capacitaciones import bp as capacitaciones_bp, ensure_database as ensure_ca
 from oportunidades_proyecto import bp as oportunidades_bp, ensure_database as ensure_oportunidades_database
 from asistente_oga import bp as asistente_oga_bp
 from clientes import bp as clientes_bp
+from industria import bp as industria_bp
 
 APP_NAME = "SISTEMA TECNICO"
 APP_REV = "0.18.1"
@@ -69,6 +70,7 @@ app.register_blueprint(capacitaciones_bp)
 app.register_blueprint(oportunidades_bp)
 app.register_blueprint(asistente_oga_bp)
 app.register_blueprint(clientes_bp)
+app.register_blueprint(industria_bp)
 
 LOGIN_WINDOW_SECONDS = 15 * 60
 LOGIN_IP_LIMIT = 25
@@ -224,6 +226,10 @@ AUDIT_ENDPOINTS = {
     "planos.dist_upload_dxf": ("IMPORTAR EXCEL DXF", "PLANOS"),
     "planos.dist_review": ("REVISAR DISTRIBUCIÓN", "PLANOS"),
     "planos.dist_clear": ("LIMPIAR DISTRIBUCIÓN", "PLANOS"),
+    "industria.industria_save": ("CREAR REGISTRO", "INDUSTRIA"),
+    "industria.industria_edit": ("EDITAR REGISTRO", "INDUSTRIA"),
+    "industria.industria_delete": ("ELIMINAR REGISTRO", "INDUSTRIA"),
+    "industria.industria_bulk": ("CARGAR EXCEL", "INDUSTRIA"),
 }
 
 

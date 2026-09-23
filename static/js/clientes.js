@@ -40,3 +40,23 @@
   paisSelect.addEventListener('change', cargarCiudades);
   cargarCiudades();
 })();
+
+(function () {
+  const bulkForm = document.querySelector('.cliente-bulk-form');
+  if (!bulkForm) return;
+
+  const fileInput = bulkForm.querySelector('.cliente-bulk-input');
+  const button = bulkForm.querySelector('.cliente-bulk-button');
+  if (!fileInput || !button) return;
+
+  button.addEventListener('click', function () {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', function () {
+    if (!fileInput.files || !fileInput.files.length) return;
+    button.disabled = true;
+    button.textContent = 'SUBIENDO...';
+    bulkForm.submit();
+  });
+})();
