@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}CS criterios de salida · Industria · OGA{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}">
+{% endblock %}
+{% block content %}
+<div class="industry-shell">
+  <div class="industry-breadcrumb"><a href="{{ url_for('industria.industria_index') }}">Industria</a><span>›</span><strong>{{ section.title }}</strong></div>
+  <div class="industry-hero compact">
+    <div><span class="workspace-eyebrow">INDUSTRIA · COMPARATIVO</span><h1>{{ section.title }}</h1><p>{{ section.description }}</p></div>
+    <div class="industry-actions"><button class="btn outline" type="button" data-open-modal="bulkModal">Subida masiva</button><button class="btn primary" type="button" data-open-modal="createModal">Agregar registro</button></div>
+  </div>
+
+
+  <div class="industry-toolbar proximity-table-toolbar">
+    <form method="get" class="industry-search proximity-inline-search">
+      <span class="proximity-inline-label">SEARCH DE PROXIMIDAD</span>
+      <select name="prox_criterio" required {% if not numeric_fields %}disabled{% endif %}>
+        {% for key,label in numeric_fields.items() %}<option value="{{ key }}" {% if proximity_field == key %}selected{% endif %}>{{ label }}</option>{% else %}<option value="">Sin datos numericos disponibles</option>{% endfor %}
+      </select>
+      <input type="search" name="prox_valor" value="{{ proximity_value }}" inputmode="decimal" placeholder="Valor, ej. 20" required {% if not numeric_fields %}disabled{% endif %}>
+      <button class="btn outline" type="submit" {% if not numeric_fields %}disabled{% endif %}>Buscar</button>
+      {% if proximity_active %}<a class="btn outline" href="{{ url_for('industria.industria_section', slug='cs') }}">Limpiar</a>{% endif %}
+    </form>
+    <div class="industry-counter"><strong>{{ rows|length }}</strong><span>registros mostrados</span></div>
+  </div>
+
+  <div class="industry-toolbar secondary-search-toolbar">
+    <form method="get" class="industry-search">
+      {% if proximity_active %}<input type="hidden" name="prox_criterio" value="{{ proximity_field }}"><input type="hidden" name="prox_valor" value="{{ proximity_value }}">{% endif %}
+      <input type="search" name="q" value="{{ q }}" placeholder="Buscar criterio, equipo, TAG o referencia...">
+      <button class="btn outline" type="submit">Buscar</button>
+      {% if q %}<a class="btn outline" href="{{ url_for('industria.industria_section', slug='cs', prox_criterio=proximity_field, prox_valor=proximity_value) if proximity_active else url_for('industria.industria_section', slug='cs') }}">Limpiar texto</a>{% endif %}
+    </form>
+  </div>
+
+  <div class="industry-table-card"><div class="industry-table-scroll"><table class="industry-table wide-table"><thead><tr>{% for f in section.fields %}<th class="{% if proximity_exact and f.key == proximity_field %}proximity-column-highlight{% endif %}">{{ f.label }}</th>{% endfor %}<th class="actions-col">Acciones</th></tr></thead><tbody>{% for row in rows %}<tr>{% for f in section.fields %}<td class="{% if proximity_exact and f.key == proximity_field %}proximity-column-highlight{% endif %}{% if f.key == proximity_field and row.get('id') in proximity_exact_ids %} proximity-exact-cell{% endif %}">{{ row.get(f.key) or '—' }}</td>{% endfor %}<td class="row-actions sticky-actions"><button class="icon-action edit" type="button" data-row-edit data-row='{{ row|tojson|forceescape }}'>Editar</button><form method="post" action="{{ url_for('industria.industria_delete', slug='cs', row_id=row.id) }}" onsubmit="return confirm('¿Eliminar este registro?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="icon-action delete" type="submit">Eliminar</button></form></td></tr>{% else %}<tr><td colspan="{{ section.fields|length + 1 }}" class="empty-state">No hay registros que coincidan con la busqueda.</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+
+{% macro fields() %}{% for f in section.fields %}<label>{{ f.label }}{% if f.code %}<small>{{ f.code }}</small>{% endif %}<input name="{{ f.key }}" {% if f.kind == 'number' %}inputmode="decimal"{% endif %}></label>{% endfor %}{% endmacro %}
+<div class="oga-modal hidden" id="createModal" aria-hidden="true"><div class="oga-modal-card xwide"><div class="oga-modal-head"><div><span class="workspace-eyebrow">CS</span><h3>Agregar criterio / opción</h3></div><button type="button" class="modal-x" data-close-modal>×</button></div><form method="post" action="{{ url_for('industria.industria_save', slug='cs') }}" class="industry-form-grid dynamic"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{{ fields() }}<div class="form-actions span-all"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar</button></div></form></div></div>
+<div class="oga-modal hidden" id="editModal" aria-hidden="true"><div class="oga-modal-card xwide"><div class="oga-modal-head"><div><span class="workspace-eyebrow">CS</span><h3>Editar criterio / opción</h3></div><button type="button" class="modal-x" data-close-modal>×</button></div><form method="post" id="industryEditForm" class="industry-form-grid dynamic"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{{ fields() }}<div class="form-actions span-all"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar cambios</button></div></form></div></div>
+<div class="oga-modal hidden" id="bulkModal" aria-hidden="true"><div class="oga-modal-card"><div class="oga-modal-head"><div><span class="workspace-eyebrow">EXCEL</span><h3>Subida masiva CS</h3></div><button type="button" class="modal-x" data-close-modal>×</button></div><p class="modal-copy">Selecciona PROYECTOS.xlsx o una plantilla independiente. Se leerá la hoja <strong>CS-CRITERIOS DE SALIDA</strong>.</p><form method="post" enctype="multipart/form-data" action="{{ url_for('industria.industria_bulk', slug='cs') }}" class="bulk-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><label class="file-drop">Archivo Excel<input type="file" name="archivo" accept=".xlsx,.xlsm" required></label><label>Modo de carga<select name="mode"><option value="replace">Reemplazar catálogo actual</option><option value="merge">Agregar / actualizar sin borrar</option></select></label><div class="form-actions"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Procesar Excel</button></div></form></div></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+ const fields={{ section.fields|map(attribute='key')|list|tojson }};
+ const open=id=>{const m=document.getElementById(id);if(m){m.classList.remove('hidden');m.setAttribute('aria-hidden','false')}};
+ const close=b=>{const m=b.closest('.oga-modal');if(m){m.classList.add('hidden');m.setAttribute('aria-hidden','true')}};
+ document.querySelectorAll('[data-open-modal]').forEach(b=>b.addEventListener('click',()=>open(b.dataset.openModal)));
+ document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',()=>close(b)));
+ document.querySelectorAll('.oga-modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m){m.classList.add('hidden');m.setAttribute('aria-hidden','true')}}));
+ document.querySelectorAll('[data-row-edit]').forEach(b=>b.addEventListener('click',()=>{const row=JSON.parse(b.dataset.row),f=document.getElementById('industryEditForm');f.action={{ url_for('industria.industria_edit', slug='cs', row_id='__ROW_ID__')|tojson }}.replace('__ROW_ID__', encodeURIComponent(row.id));fields.forEach(k=>{if(f.elements[k])f.elements[k].value=row[k]||''});open('editModal')}));
+
+})();
+</script>
+{% endblock %}

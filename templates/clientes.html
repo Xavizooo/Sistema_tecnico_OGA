@@ -31,7 +31,7 @@
     <div>
       <span class="cliente-kicker">NUEVO CLIENTE</span>
       <h3>Datos del cliente</h3>
-      <p>Completa los cuatro campos. La ciudad se actualiza según el país seleccionado.</p>
+      <p>Completa los datos del cliente. La ciudad se actualiza según el país seleccionado.</p>
     </div>
   </div>
 
@@ -42,6 +42,12 @@
       <span>Nombre</span>
       <input name="nombre" maxlength="160" value="{{ form_data.get('nombre', '') }}" placeholder="Nombre del cliente"
         required>
+    </label>
+
+    <label>
+      <span>Tipo de industria</span>
+      <input name="tipo_industria" maxlength="120" value="{{ form_data.get('tipo_industria', '') }}"
+        placeholder="Ej. Alimentos, farmacéutica, química">
     </label>
 
     <label>
@@ -69,7 +75,7 @@
 
     <label>
       <span>NIT</span>
-      <input name="nit" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="30"
+      <input name="nit" type="text" maxlength="30"
         value="{{ form_data.get('nit', '') }}" placeholder="NIT del cliente" required>
     </label>
 
@@ -98,6 +104,12 @@
           aria-label="Buscar clientes">
         <button class="btn outline" type="submit">BUSCAR</button>
         {% if query %}<a class="btn outline" href="{{ url_for('clientes.index', view='lista') }}">LIMPIAR</a>{% endif %}
+      </form>
+      <form class="cliente-bulk-form" method="post" action="{{ url_for('clientes.bulk_upload') }}" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+        <input class="cliente-bulk-input" type="file" name="archivo" accept=".xlsx,.xls"
+          aria-label="Seleccionar Excel para subida masiva">
+        <button class="btn outline cliente-bulk-button" type="button" title="Importar clientes desde Excel">SUBIDA MASIVA</button>
       </form>
       <a class="btn primary" href="{{ url_for('clientes.index', view='nuevo') }}">NUEVO CLIENTE</a>
     </div>

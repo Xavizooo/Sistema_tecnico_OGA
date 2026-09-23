@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Industria · OGA{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}">
+{% endblock %}
+{% block content %}
+<div class="industry-shell">
+  <div class="industry-hero">
+    <div>
+      <span class="workspace-eyebrow">MAESTROS DE INGENIERÍA</span>
+      <h1>Industria</h1>
+      <p>Catálogos técnicos para alimentar criterios de entrada, matrices de comparación y criterios de salida del sistema.</p>
+    </div>
+    <a class="btn outline" href="{{ url_for('clientes.index') }}">Ir a Clientes</a>
+  </div>
+
+  <div class="industry-module-grid">
+    {% for slug, section in sections.items() %}
+    <a class="industry-module-card" href="{{ url_for('industria.industria_section', slug=slug) }}">
+      <div class="industry-module-number">0{{ loop.index }}</div>
+      <div class="industry-module-content">
+        <span class="industry-module-kicker">CATÁLOGO</span>
+        <h2>{{ section.title }}</h2>
+        <p>{{ section.description }}</p>
+      </div>
+      <div class="industry-module-meta"><strong>{{ counts.get(slug, 0) }}</strong><span>registros</span></div>
+      <span class="industry-module-arrow">→</span>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
