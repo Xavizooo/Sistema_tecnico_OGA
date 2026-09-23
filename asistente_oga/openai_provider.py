@@ -51,7 +51,7 @@ def _post(payload: dict[str, Any]) -> dict[str, Any]:
             "Authorization": f"Bearer {key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "OGA-Asistente/0.18.1",
+            "User-Agent": "OGA-Asistente/0.19.1",
         },
     )
     try:
