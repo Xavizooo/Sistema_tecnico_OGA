@@ -75,10 +75,19 @@
     }
     list.innerHTML = rows.map(row => `
       <button class="od-list-row ${Number(row.id) === currentId ? 'active' : ''}" type="button" data-id="${Number(row.id)}" role="row">
-        <span class="od-cell-proyecto" data-label="Proyecto"><strong>${escapeHtml(row.proyecto)}</strong></span>
-        <span class="od-cell-cliente" data-label="Cliente">${escapeHtml(row.cliente)}</span>
-        <span class="od-cell-nombre" data-label="Oportunidad">${escapeHtml(row.nombre)}<small>${Number(row.subsystem_count || 0)} grupo${Number(row.subsystem_count || 0) === 1 ? '' : 's'} técnico${Number(row.subsystem_count || 0) === 1 ? '' : 's'}</small></span>
-        <span class="od-cell-responsable" data-label="Responsable">${escapeHtml(row.responsible_names || '—')}</span>
+        <span class="od-cell-proyecto" data-label="Proyecto"><strong>${escapeHtml(row.proyecto || '—')}</strong></span>
+        <span class="od-cell-cliente" data-label="Cliente">${escapeHtml(row.cliente || '—')}</span>
+        <span class="od-cell-inicio" data-label="Inicio">${escapeHtml(row.fecha_inicio || '—')}</span>
+        <span class="od-cell-material" data-label="Material a Transportar">${escapeHtml(row.material_transportado || '—')}</span>
+        <span data-label="Punto de ingreso">${escapeHtml(row.punto_ingreso || '—')}</span>
+        <span data-label="Punto destino">${escapeHtml(row.punto_destino || '—')}</span>
+        <span data-label="Flujo en KG/Hora">${escapeHtml(row.flujo_kg_h || '—')}</span>
+        <span data-label="Distancia Horizontal de Transporte (m)">${escapeHtml(row.distancia_horizontal_m || '—')}</span>
+        <span data-label="Distancia Vertical de Transporte (m)">${escapeHtml(row.distancia_vertical_m || '—')}</span>
+        <span data-label="Cantidad de curvas de tubería x 90 grados">${escapeHtml(row.curvas_90 || '—')}</span>
+        <span data-label="Tipo de Industria">${escapeHtml(row.industria || '—')}</span>
+        <span class="od-cell-transporte" data-label="Tipo de Transporte">${escapeHtml(row.tipo_transporte || '—')}</span>
+        <span data-label="Material de contacto con el producto">${escapeHtml(row.material_contacto || '—')}</span>
       </button>`).join('');
 
     if (currentId && !rows.some(row => Number(row.id) === currentId)) closeDetail(false);
@@ -180,63 +189,23 @@
     });
   }
 
-  const opportunityFields = ['proyecto','nombre','cliente','descripcion','planta','ciudad','pais','industria','tipo_oportunidad','fecha_inicio','valor_estimado','observaciones'];
-  const subsystemFields = ['nombre','voltaje_potencia','material_transportado','flujo_kg_h','potencia_hp','diferencial_presion_psi','caudal_cfm','area_filtracion_m2'];
-  const visibleTechnicalFields = [
-    ['voltaje_potencia', 'Voltaje de potencia (V)'],
-    ['material_transportado', 'Material transportado'],
-    ['flujo_kg_h', 'Flujo (kg/h)'],
-    ['potencia_hp', 'Potencia (HP)'],
-    ['diferencial_presion_psi', 'Diferencial de presión (PSI)'],
-    ['caudal_cfm', 'Caudal (CFM)'],
-    ['area_filtracion_m2', 'Área de filtración (m²)'],
+  const opportunityFields = ['proyecto','cliente','industria','fecha_inicio'];
+  const subsystemFields = [
+    'nombre','material_transportado','punto_ingreso','punto_destino','flujo_kg_h',
+    'distancia_horizontal_m','distancia_vertical_m','curvas_90','distancia_unidad_soplado_m',
+    'curvas_unidad_soplado','tipo_flujo','atex','material_contacto','voltaje_potencia',
+    'tipo_transporte','diametro_tuberia','tipo_acople','potencia_hp','caudal_cfm',
+    'diferencial_presion_psi','tipo_bomba','area_filtracion_m2','micraje_filtracion',
+    'consumo_aire_cfm','presion_alimentacion_psi'
   ];
 
-  function renderTechnicalControl(field, label, subsystemId, rawValue) {
-    const name = `tech_${subsystemId}_${field}`;
-    const value = String(rawValue ?? '');
-    const options = Array.isArray(technicalOptions[field]) ? technicalOptions[field] : [];
-    if (!options.length) {
-      return `<label>${escapeHtml(label)}<input name="${name}" value="${escapeHtml(value)}"></label>`;
-    }
-
-    const matched = options.find(option => String(option).localeCompare(value, 'es', {sensitivity:'base'}) === 0);
-    const selectedValue = matched !== undefined ? String(matched) : value;
-    const legacyOption = value && matched === undefined
-      ? `<option value="${escapeHtml(value)}" selected>${escapeHtml(value)}</option>`
-      : '';
-    const optionHtml = options.map(option => {
-      const optionValue = String(option);
-      const selected = optionValue === selectedValue ? ' selected' : '';
-      return `<option value="${escapeHtml(optionValue)}"${selected}>${escapeHtml(optionValue)}</option>`;
-    }).join('');
-    const placeholder = field === 'voltaje_potencia' ? 'Seleccione voltaje' : 'Seleccione material';
-    return `<label>${escapeHtml(label)}<select name="${name}"><option value="">${placeholder}</option>${legacyOption}${optionHtml}</select></label>`;
-  }
-
-  function renderEditTechnicalSections(data) {
-    const container = document.getElementById('odEditTechnicalSections');
-    if (!container) return;
-    const subsystems = Array.isArray(data?.subsystems) ? data.subsystems : [];
-    if (!subsystems.length) {
-      container.innerHTML = '<div class="od-edit-tech-empty">Este proyecto todavía no tiene datos técnicos registrados.</div>';
-      return;
-    }
-    container.innerHTML = subsystems.map((subsystem, index) => {
-      const id = Number(subsystem.id);
-      const groupName = escapeHtml(subsystem.nombre || `Grupo ${index + 1}`);
-      const fields = visibleTechnicalFields.map(([field, label]) =>
-        renderTechnicalControl(field, label, id, subsystem[field])
-      ).join('');
-      return `
-        <section class="od-edit-tech-card">
-          <div class="od-edit-tech-card-head">
-            <div><span>GRUPO TÉCNICO ${index + 1}</span><strong>${groupName}</strong></div>
-          </div>
-          <input type="hidden" name="technical_subsystem_id" value="${id}">
-          <div class="od-form-grid od-form-grid-3">${fields}</div>
-        </section>`;
-    }).join('');
+  function fillSelectOptions(select, options, placeholder = 'Seleccione tipo') {
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>` + (options || []).map(value =>
+      `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`
+    ).join('');
+    if (current && Array.from(select.options).some(option => option.value === current)) select.value = current;
   }
 
   document.addEventListener('click', async event => {
@@ -246,7 +215,7 @@
       return;
     }
 
-    const resourceButton = event.target.closest('.od-js-show-offers, .od-js-show-images');
+    const resourceButton = event.target.closest('.od-js-show-offers, .od-js-show-images, .od-js-show-materials');
     if (resourceButton) {
       const shell = resourceButton.closest('.od-detail-shell');
       const panel = document.getElementById(resourceButton.dataset.panel);
@@ -304,7 +273,6 @@
         const data = await getCurrentData(true);
         const form = document.getElementById('odEditForm');
         setFormValues(form, data, opportunityFields);
-        renderEditTechnicalSections(data);
         const selected = new Set((data.responsibles || []).map(item => String(item.user_id)));
         Array.from(form.elements.responsables?.options || []).forEach(option => option.selected = selected.has(String(option.value)));
         form.action = urlForId(app.dataset.editUrlTemplate, currentId);
@@ -333,7 +301,12 @@
         if (!subsystem) throw new Error('Datos técnicos no encontrados.');
         const form = document.getElementById('odSubsystemForm');
         form.reset();
-        setFormValues(form, subsystem, subsystemFields);
+        const editable = {
+          ...subsystem,
+          punto_ingreso: subsystem.entry_points?.[0]?.tipo || '',
+          punto_destino: subsystem.exit_points?.[0]?.tipo || ''
+        };
+        setFormValues(form, editable, subsystemFields);
         form.action = urlForId(app.dataset.editSubsystemUrlTemplate, subsystem.id);
         document.getElementById('odSubsystemModalTitle').textContent = 'Editar datos técnicos';
         openModal('odSubsystemModal');
@@ -363,6 +336,8 @@
       form.reset();
       form.elements.cantidad.value = '1';
       const kind = addPoint.dataset.kind;
+      const pointOptions = technicalOptions[kind === 'entrada' ? 'punto_ingreso' : 'punto_destino'] || [];
+      fillSelectOptions(document.getElementById('odPointType'), pointOptions, kind === 'entrada' ? 'Seleccione punto de ingreso' : 'Seleccione punto de salida');
       let url = urlForId(app.dataset.addPointUrlTemplate, Number(addPoint.dataset.subsystemId));
       url = url.replace('/entrada/agregar', `/${kind}/agregar`);
       form.action = url;

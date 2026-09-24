@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'oportunidades/_subsystem_fields.html' import subsystem_fields %}
 {% block title %}Oportunidades de Proyecto · {{ app_name }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/oportunidades.css') }}?v=20260923-od-industry-select1">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/oportunidades.css') }}?v=20260924-od-a-ab1">{% endblock %}
 
 {% block content %}
 <div class="od-page" id="odApp"
@@ -49,15 +49,24 @@
     <div class="od-list-head"><strong id="odResultCount">{{ opportunities|length }} resultados</strong><span>Seleccione un proyecto para abrir el panel de detalle</span></div>
     <div class="od-project-table">
       <div class="od-table-head" role="row">
-        <span>Proyecto</span><span>Cliente</span><span>Oportunidad</span><span>Responsable</span>
+        <span>Proyecto</span><span>Cliente</span><span>Inicio</span><span>Material a Transportar</span><span>Punto de ingreso</span><span>Punto destino</span><span>Flujo en KG/Hora</span><span>Distancia Horizontal de Transporte (m)</span><span>Distancia Vertical de Transporte (m)</span><span>Cantidad de curvas de tubería x 90 grados</span><span>Tipo de Industria</span><span>Tipo de Transporte</span><span>Material de contacto con el producto</span>
       </div>
       <div class="od-list" id="odList" role="rowgroup">
         {% for od in opportunities %}
         <button class="od-list-row {% if selected and selected.id == od.id %}active{% endif %}" type="button" data-id="{{ od.id }}" role="row">
           <span class="od-cell-proyecto" data-label="Proyecto"><strong>{{ od.proyecto }}</strong></span>
-          <span class="od-cell-cliente" data-label="Cliente">{{ od.cliente }}</span>
-          <span class="od-cell-nombre" data-label="Oportunidad">{{ od.nombre }}<small>{{ od.subsystem_count }} grupo{% if od.subsystem_count != 1 %}s{% endif %} técnico{% if od.subsystem_count != 1 %}s{% endif %}</small></span>
-          <span class="od-cell-responsable" data-label="Responsable">{{ od.responsible_names or '—' }}</span>
+          <span class="od-cell-cliente" data-label="Cliente">{{ od.cliente or '—' }}</span>
+          <span class="od-cell-inicio" data-label="Inicio">{{ od.fecha_inicio or '—' }}</span>
+          <span class="od-cell-material" data-label="Material a Transportar">{{ od.material_transportado or '—' }}</span>
+          <span data-label="Punto de ingreso">{{ od.punto_ingreso or '—' }}</span>
+          <span data-label="Punto destino">{{ od.punto_destino or '—' }}</span>
+          <span data-label="Flujo en KG/Hora">{{ od.flujo_kg_h or '—' }}</span>
+          <span data-label="Distancia Horizontal de Transporte (m)">{{ od.distancia_horizontal_m or '—' }}</span>
+          <span data-label="Distancia Vertical de Transporte (m)">{{ od.distancia_vertical_m or '—' }}</span>
+          <span data-label="Cantidad de curvas de tubería x 90 grados">{{ od.curvas_90 or '—' }}</span>
+          <span data-label="Tipo de Industria">{{ od.industria or '—' }}</span>
+          <span class="od-cell-transporte" data-label="Tipo de Transporte">{{ od.tipo_transporte or '—' }}</span>
+          <span data-label="Material de contacto con el producto">{{ od.material_contacto or '—' }}</span>
         </button>
         {% else %}<div class="od-list-empty"><strong>No hay oportunidades</strong><p>Cree la primera OD o cambie la búsqueda.</p></div>{% endfor %}
       </div>
@@ -77,22 +86,18 @@
     <div class="od-modal-head"><div><span class="od-kicker">NUEVA OPORTUNIDAD</span><h3 id="odNewTitle">Crear OD</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
     <form method="post" action="{{ url_for('oportunidades.create') }}" enctype="multipart/form-data" class="od-modal-body">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-      <div class="od-form-section">
-        <div class="od-form-section-head"><div><strong>Información general</strong><small>Datos generales del proyecto.</small></div></div>
+      <div class="od-form-section od-form-section-blue">
+        <div class="od-form-section-head"><div><strong>Datos del proyecto · columnas A–Q</strong><small>La estructura sigue la hoja SISTEMAS del archivo de carga A–AB.</small></div></div>
         <div class="od-form-grid od-form-grid-3">
-          <label>Proyecto<input name="proyecto" required></label>
-          <label class="wide-2">Nombre de la oportunidad<input name="nombre" required></label>
-          <label>Fecha de inicio<input type="date" name="fecha_inicio"></label>
-          <label class="wide">Descripción<textarea name="descripcion" rows="2"></textarea></label>
-          <label>Cliente<input name="cliente" required></label>
-          <label>Planta<input name="planta"></label>
-          <label>Tipo de oportunidad<input name="tipo_oportunidad"></label>
-          <label>Ciudad<input name="ciudad" placeholder="Escritura libre"></label>
-          <label>País<select name="pais"><option value="">Seleccione país</option>{% for country in countries %}<option value="{{ country }}">{{ country }}</option>{% endfor %}</select></label>
-          <label>Industria / sector<input name="industria"></label>
-          <label>Valor estimado<input name="valor_estimado" placeholder="Ej. 125000000 COP"></label>
-          <label class="wide-2">Equipo responsable<select name="responsables" multiple size="4">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select><small>Ctrl + clic permite seleccionar varios responsables.</small></label>
-          <label class="wide">Observaciones<textarea name="observaciones" rows="2"></textarea></label>
+          <label>Proyecto<input name="proyecto" required placeholder="Ej. 4100"></label>
+          <label>Cliente
+            <select name="cliente" required><option value="">Seleccione cliente</option>{% for option in technical_options.get('cliente', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select>
+          </label>
+          <label>Inicio<input type="date" name="fecha_inicio"></label>
+          <label>Tipo de industria
+            <select name="industria"><option value="">Seleccione industria</option>{% for option in technical_options.get('industria', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select>
+          </label>
+          <label class="wide-2">Equipo responsable<select name="responsables" multiple size="4">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select><small>Dato interno de OGA; no modifica las columnas A–AB.</small></label>
         </div>
       </div>
       {{ subsystem_fields('sub_', {'nombre':'Principal'}, technical_options) }}
@@ -112,25 +117,18 @@
 
 <div class="od-modal-backdrop hidden" id="odEditModal" role="dialog" aria-modal="true">
   <div class="od-modal od-modal-xl">
-    <div class="od-modal-head"><div><span class="od-kicker">ADMINISTRACIÓN</span><h3>Editar oportunidad</h3><p class="od-edit-modal-help">Todos los datos visibles del proyecto se cargan aquí para editarlos en una sola ventana.</p></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
+    <div class="od-modal-head"><div><span class="od-kicker">ADMINISTRACIÓN</span><h3>Editar oportunidad</h3><p class="od-edit-modal-help">Edita los datos generales; cada grupo técnico se edita desde su tabla A–AB.</p></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
     <form method="post" id="odEditForm" class="od-modal-body">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-      <div class="od-form-section">
-        <div class="od-form-section-head"><div><strong>Información general</strong><small>Datos visibles en el encabezado y en la tabla de detalle del proyecto.</small></div></div>
+      <div class="od-form-section od-form-section-blue">
+        <div class="od-form-section-head"><div><strong>Datos generales del proyecto</strong><small>Para modificar A–AB de cada grupo use “Editar datos técnicos” dentro del detalle.</small></div></div>
         <div class="od-form-grid od-form-grid-3">
           <label>Proyecto<input name="proyecto" required></label>
-          <label class="wide-2">Nombre<input name="nombre" required></label><label>Fecha inicio<input type="date" name="fecha_inicio"></label>
-          <label class="wide">Descripción<textarea name="descripcion" rows="2"></textarea></label>
-          <label>Cliente<input name="cliente" required></label><label>Planta<input name="planta"></label><label>Tipo oportunidad<input name="tipo_oportunidad"></label>
-          <label>Ciudad<input name="ciudad" placeholder="Escritura libre"></label><label>País<select name="pais"><option value="">Seleccione país</option>{% for country in countries %}<option value="{{ country }}">{{ country }}</option>{% endfor %}</select></label><label>Industria<input name="industria"></label>
-          <label>Valor estimado<input name="valor_estimado"></label>
-          <label class="wide-2">Equipo responsable<select name="responsables" multiple size="5">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select><small>Ctrl + clic permite seleccionar varios responsables.</small></label>
-          <label class="wide">Observaciones<textarea name="observaciones" rows="2"></textarea></label>
+          <label>Cliente<select name="cliente" required><option value="">Seleccione cliente</option>{% for option in technical_options.get('cliente', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select></label>
+          <label>Inicio<input type="date" name="fecha_inicio"></label>
+          <label>Tipo de industria<select name="industria"><option value="">Seleccione industria</option>{% for option in technical_options.get('industria', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select></label>
+          <label class="wide-2">Equipo responsable<select name="responsables" multiple size="5">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select></label>
         </div>
-      </div>
-      <div class="od-form-section od-edit-technical-section">
-        <div class="od-form-section-head"><div><strong>Datos técnicos visibles</strong><small>Voltaje, material transportado, flujo, potencia, diferencial de presión, caudal y área de filtración.</small></div></div>
-        <div id="odEditTechnicalSections" class="od-edit-tech-sections"></div>
       </div>
       <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar todos los cambios</button></div>
     </form>
@@ -163,7 +161,7 @@
   <div class="od-modal od-modal-sm">
     <div class="od-modal-head"><div><span class="od-kicker">DATOS RELACIONADOS</span><h3 id="odPointTitle">Agregar punto</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
     <form method="post" id="odPointForm" class="od-modal-body"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-      <div class="od-form-grid"><label>Tipo<input name="tipo" required placeholder="Ej. BIG BAG"></label><label>Cantidad<input name="cantidad" value="1"></label><label>Restricción de altura<input name="restriccion_altura" placeholder="SI / NO"></label></div>
+      <div class="od-form-grid"><label>Tipo<select name="tipo" id="odPointType" required><option value="">Seleccione tipo</option></select></label><label>Cantidad<input name="cantidad" value="1"></label><label>Restricción de altura<input name="restriccion_altura" placeholder="SI / NO"></label></div>
       <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Agregar</button></div>
     </form>
   </div>
@@ -173,7 +171,7 @@
   <div class="od-modal od-modal-sm">
     <div class="od-modal-head"><div><span class="od-kicker">DATOS RELACIONADOS</span><h3>Agregar equipo</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
     <form method="post" id="odEquipmentForm" class="od-modal-body"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-      <div class="od-form-grid"><label>Tipo de equipo<input name="tipo_equipo" required placeholder="Ej. BOM"></label><label>Referencia<input name="referencia"></label><label>Cantidad<input name="cantidad" value="1"></label></div>
+      <div class="od-form-grid"><label>Tipo de equipo<select name="tipo_equipo" required><option value="">Seleccione equipo</option>{% for option in technical_options.get('tipo_equipo', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select></label><label>Referencia<input name="referencia"></label><label>Cantidad<input name="cantidad" value="1"></label></div>
       <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Agregar</button></div>
     </form>
   </div>
@@ -185,4 +183,4 @@
 </div>
 {% endblock %}
 
-{% block scripts %}<script src="{{ url_for('static', filename='js/oportunidades.js') }}?v=20260923-od-industry-select1"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/oportunidades.js') }}?v=20260924-od-a-ab1"></script>{% endblock %}

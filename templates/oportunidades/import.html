@@ -6,9 +6,9 @@
 <div class="od-page od-import-page">
   <div class="od-page-head">
     <div>
-      <span class="page-eyebrow">OPORTUNIDADES DE PROYECTO </span>
+      <span class="page-eyebrow">OPORTUNIDADES DE PROYECTO</span>
       <h2>Subida masiva</h2>
-      <p>Analice el Excel antes de modificar la base. La importación es acumulativa y no sobrescribe información existente.</p>
+      <p>Analice el Excel antes de modificar la base. La importación completa campos vacíos y conserva la información ya registrada.</p>
     </div>
     <div class="od-head-actions">
       <a class="btn outline" href="{{ url_for('oportunidades.index') }}">← Volver</a>
@@ -20,8 +20,8 @@
     <div class="od-import-intro">
       <div class="od-import-icon">XL</div>
       <div>
-        <h3>Plantilla histórica de proyectos</h3>
-        <p>Se esperan las hojas <b>SISTEMAS</b>, <b>PUNTOS DE ENTRADA</b>, <b>PUNTOS DE SALIDA</b> y <b>Equipos</b>.</p>
+        <h3>Plantilla de proyectos A–AB</h3>
+        <p>El formato actual usa la hoja <b>SISTEMAS</b> con las columnas A–AB. Si el archivo también contiene <b>EQUIPOS</b>, se importan como información complementaria; no es obligatorio.</p>
       </div>
     </div>
     <form method="post" action="{{ url_for('oportunidades.import_analyze') }}" enctype="multipart/form-data" class="od-import-form">
@@ -32,8 +32,8 @@
         <small>Máximo 25 MB.</small>
       </label>
       <div class="od-import-rules">
-        <div><strong>1</strong><span>Se analiza la estructura y se relacionan los subsistemas.</span></div>
-        <div><strong>2</strong><span>Se muestran cantidades, advertencias y duplicados.</span></div>
+        <div><strong>1</strong><span>Se reconocen Proyecto, datos A–Q y criterios técnicos R–AB.</span></div>
+        <div><strong>2</strong><span>Los sufijos A, B, C… se convierten en grupos técnicos del mismo proyecto.</span></div>
         <div><strong>3</strong><span>Solo al confirmar se modifica la base de datos.</span></div>
       </div>
       <div class="od-modal-actions"><button class="btn primary" type="submit">Analizar Excel</button></div>
@@ -43,15 +43,15 @@
   {% set s = import_payload.summary %}
   <section class="od-import-filebar">
     <div><span>ARCHIVO ANALIZADO</span><strong>{{ import_payload.source_filename }}</strong></div>
-    <div><span>RESULTADO</span><strong>{{ s.oportunidades }} oportunidades detectadas</strong></div>
+    <div><span>RESULTADO</span><strong>{{ s.oportunidades }} proyectos detectados</strong></div>
   </section>
 
   <div class="od-import-kpis">
-    <div><strong>{{ s.oportunidades }}</strong><span>Oportunidades</span><small>{{ s.radicados_unicos }} radicados únicos</small></div>
-    <div><strong>{{ s.subsistemas }}</strong><span>Subsistemas</span><small>desde SISTEMAS</small></div>
-    <div><strong>{{ s.entradas }}</strong><span>Puntos de entrada</span><small>{{ s.filas_entradas }} filas leídas</small></div>
-    <div><strong>{{ s.salidas }}</strong><span>Puntos de salida</span><small>{{ s.filas_salidas }} filas leídas</small></div>
-    <div><strong>{{ s.equipos }}</strong><span>Equipos</span><small>{{ s.filas_equipos }} filas leídas</small></div>
+    <div><strong>{{ s.oportunidades }}</strong><span>Proyectos</span><small>{{ s.radicados_unicos }} proyectos únicos</small></div>
+    <div><strong>{{ s.subsistemas }}</strong><span>Grupos técnicos</span><small>desde SISTEMAS A–AB</small></div>
+    <div><strong>{{ s.entradas }}</strong><span>Puntos de ingreso</span><small>{{ s.filas_entradas }} valores leídos</small></div>
+    <div><strong>{{ s.salidas }}</strong><span>Puntos de salida</span><small>{{ s.filas_salidas }} valores leídos</small></div>
+    <div><strong>{{ s.equipos }}</strong><span>Equipos asociados</span><small>{{ s.filas_equipos }} filas leídas</small></div>
     <div class="{% if s.no_asociados %}warn{% else %}ok{% endif %}"><strong>{{ s.no_asociados }}</strong><span>No asociados</span><small>{% if s.no_asociados %}revise advertencias{% else %}relaciones completas{% endif %}</small></div>
   </div>
 
@@ -59,17 +59,17 @@
     <div class="od-import-shield">✓</div>
     <div>
       <strong>Modo seguro de combinación</strong>
-      <p><b>Radicado + Proyecto</b> identifica la oportunidad. Si ya existe, no se sobrescriben sus datos ni criterios técnicos. Solo se agregan subsistemas, entradas, salidas o equipos que todavía falten. Cargar el mismo Excel otra vez no duplica los registros.</p>
+      <p><b>Proyecto</b> identifica la oportunidad. Si ya existe, los valores actuales se conservan y el Excel solo completa campos que estén vacíos. Los grupos, puntos y equipos que ya existen no se duplican al cargar nuevamente el mismo archivo.</p>
     </div>
   </section>
 
   <section class="od-import-dbcheck">
     <div class="od-form-section-head"><div><strong>Comparación con la base actual</strong><small>Lo que ocurrirá si confirma ahora.</small></div></div>
     <div class="od-import-compare-grid">
-      <div class="create"><strong>{{ comparison.new_opportunities }}</strong><span>OD nuevas</span></div>
-      <div class="merge"><strong>{{ comparison.existing_opportunities }}</strong><span>OD a combinar</span></div>
-      <div class="create"><strong>{{ comparison.new_subsystems }}</strong><span>Subsistemas nuevos</span></div>
-      <div class="merge"><strong>{{ comparison.existing_subsystems }}</strong><span>Subsistemas existentes</span></div>
+      <div class="create"><strong>{{ comparison.new_opportunities }}</strong><span>Proyectos nuevos</span></div>
+      <div class="merge"><strong>{{ comparison.existing_opportunities }}</strong><span>Proyectos a completar</span></div>
+      <div class="create"><strong>{{ comparison.new_subsystems }}</strong><span>Grupos nuevos</span></div>
+      <div class="merge"><strong>{{ comparison.existing_subsystems }}</strong><span>Grupos existentes</span></div>
     </div>
   </section>
 
@@ -86,19 +86,18 @@
 
   <section class="od-import-preview">
     <div class="od-form-section-head">
-      <div><strong>Previsualización de oportunidades</strong><small>{{ comparison.rows|length }} registros. Los datos técnicos completos se importan dentro de sus subsistemas.</small></div>
+      <div><strong>Previsualización de proyectos</strong><small>{{ comparison.rows|length }} proyectos. Los 28 campos A–AB se importan dentro de cada grupo técnico.</small></div>
     </div>
     <div class="od-import-table-wrap">
       <table class="od-import-table">
-        <thead><tr><th>Radicado</th><th>Proyecto</th><th>Cliente</th><th>Descripción</th><th>Estado</th><th>Subsistemas</th><th>Acción</th></tr></thead>
+        <thead><tr><th>Proyecto</th><th>Cliente</th><th>Inicio</th><th>Industria</th><th>Grupos técnicos</th><th>Acción</th></tr></thead>
         <tbody>
         {% for row in comparison.rows %}
           <tr>
-            <td><b>{{ row.radicado }}</b></td>
-            <td>{{ row.proyecto }}</td>
-            <td>{{ row.cliente }}</td>
-            <td title="{{ row.nombre }}">{{ row.nombre }}</td>
-            <td><span class="od-import-status">{{ row.estado }}</span></td>
+            <td><b>{{ row.proyecto }}</b></td>
+            <td>{{ row.cliente or '—' }}</td>
+            <td>{{ row.fecha_inicio or '—' }}</td>
+            <td>{{ row.industria or '—' }}</td>
             <td>{{ row.subsistemas }}{% if row.subsistemas_existentes %}<small>{{ row.subsistemas_nuevos }} nuevos · {{ row.subsistemas_existentes }} existentes</small>{% endif %}</td>
             <td><span class="od-import-action {{ row.action|lower }}">{{ row.action }}</span></td>
           </tr>
@@ -118,7 +117,7 @@
         <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
         <button class="btn outline" type="submit">Descartar</button>
       </form>
-      <form method="post" action="{{ url_for('oportunidades.import_confirm', token=import_token) }}" onsubmit="return confirm('¿Importar las oportunidades previsualizadas a la base de datos?');">
+      <form method="post" action="{{ url_for('oportunidades.import_confirm', token=import_token) }}" onsubmit="return confirm('¿Importar los proyectos previsualizados a la base de datos?');">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
         <button class="btn primary" type="submit">Confirmar carga masiva</button>
       </form>

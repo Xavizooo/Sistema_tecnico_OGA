@@ -643,6 +643,52 @@ def add_point(subsystem_id: int, kind: str, tipo: str, cantidad: str, restriccio
             raise
 
 
+def set_primary_point(subsystem_id: int, kind: str, tipo: str) -> int:
+    """Crea, actualiza o limpia el punto principal mostrado en A-AB.
+
+    Los puntos adicionales se conservan. El formulario técnico edita únicamente
+    el primer punto de entrada/salida; la tabla flotante sigue permitiendo
+    administrar puntos adicionales de forma independiente.
+    """
+    table = "entry_points" if kind == "entrada" else "exit_points" if kind == "salida" else ""
+    if not table:
+        raise ValueError("Tipo de punto inválido.")
+    value = str(tipo or "").strip()
+    with connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            row = conn.execute(
+                "SELECT opportunity_id FROM subsystems WHERE id=? AND eliminado_en IS NULL",
+                (subsystem_id,),
+            ).fetchone()
+            if not row:
+                raise ValueError("El subsistema no existe.")
+            opportunity_id = int(row["opportunity_id"])
+            point = conn.execute(
+                f"SELECT id FROM {table} WHERE subsystem_id=? ORDER BY id LIMIT 1",
+                (subsystem_id,),
+            ).fetchone()
+            if point and value:
+                conn.execute(f"UPDATE {table} SET tipo=? WHERE id=?", (value, int(point["id"])))
+            elif point and not value:
+                conn.execute(f"DELETE FROM {table} WHERE id=?", (int(point["id"]),))
+            elif value:
+                _insert(conn, table, {
+                    "subsystem_id": subsystem_id,
+                    "tipo": value,
+                    "cantidad": "1",
+                    "restriccion_altura": "",
+                    "creado_en": utcnow(),
+                })
+            conn.execute("UPDATE opportunities SET actualizado_en=? WHERE id=?", (utcnow(), opportunity_id))
+            _rebuild_search_index_conn(conn, opportunity_id)
+            conn.execute("COMMIT")
+            return opportunity_id
+        except Exception:
+            conn.execute("ROLLBACK")
+            raise
+
+
 def add_equipment(subsystem_id: int, tipo_equipo: str, referencia: str, cantidad: str) -> int:
     with connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
@@ -854,6 +900,24 @@ def search_opportunities(tokens: list[tuple[str | None, str]], limit: int = 200)
         SELECT o.id, o.radicado, o.proyecto, o.nombre, o.cliente, o.descripcion, o.planta, o.ciudad, o.pais,
                o.industria, o.tipo_oportunidad, o.estado, o.fecha_inicio, o.valor_estimado, o.actualizado_en,
                (SELECT COUNT(*) FROM subsystems s WHERE s.opportunity_id=o.id AND s.eliminado_en IS NULL) AS subsystem_count,
+               (SELECT s.material_transportado FROM subsystems s
+                  WHERE s.opportunity_id=o.id AND s.eliminado_en IS NULL ORDER BY s.id LIMIT 1) AS material_transportado,
+               (SELECT ep.tipo FROM entry_points ep JOIN subsystems s ON s.id=ep.subsystem_id
+                  WHERE s.opportunity_id=o.id AND s.eliminado_en IS NULL ORDER BY s.id, ep.id LIMIT 1) AS punto_ingreso,
+               (SELECT xp.tipo FROM exit_points xp JOIN subsystems s ON s.id=xp.subsystem_id
+                  WHERE s.opportunity_id=o.id AND s.eliminado_en IS NULL ORDER BY s.id, xp.id LIMIT 1) AS punto_destino,
+               (SELECT s.flujo_kg_h FROM subsystems s
+                  WHERE s.opportunity_id=o.id AND s.eliminado_en IS NULL ORDER BY s.id LIMIT 1) AS flujo_kg_h,
+               (SELECT s.distancia_horizontal_m FROM subsystems s
+                  WHERE s.opportunity_id=o.id AND s.eliminado_en IS NULL ORDER BY s.id LIMIT 1) AS distancia_horizontal_m,
+               (SELECT s.distancia_vertical_m FROM subsystems s
+                  WHERE s.opportunity_id=o.id AND s.eliminado_en IS NULL ORDER BY s.id LIMIT 1) AS distancia_vertical_m,
+               (SELECT s.curvas_90 FROM subsystems s
+                  WHERE s.opportunity_id=o.id AND s.eliminado_en IS NULL ORDER BY s.id LIMIT 1) AS curvas_90,
+               (SELECT s.tipo_transporte FROM subsystems s
+                  WHERE s.opportunity_id=o.id AND s.eliminado_en IS NULL ORDER BY s.id LIMIT 1) AS tipo_transporte,
+               (SELECT s.material_contacto FROM subsystems s
+                  WHERE s.opportunity_id=o.id AND s.eliminado_en IS NULL ORDER BY s.id LIMIT 1) AS material_contacto,
                (SELECT GROUP_CONCAT(CASE WHEN r.name<>'' THEN r.name ELSE r.username END, ', ')
                   FROM opportunity_responsibles r WHERE r.opportunity_id=o.id) AS responsible_names
         FROM opportunities o
@@ -882,15 +946,16 @@ def stats() -> dict[str, int]:
 # ---------------------------------------------------------------------------
 
 def _bulk_opportunity_key(radicado: Any, proyecto: Any) -> tuple[str, str]:
-    return normalize_search(radicado), normalize_search(proyecto)
+    # Proyecto es el identificador funcional de la plantilla actual. Radicado se
+    # conserva solo por compatibilidad histórica y ya no participa en el merge.
+    return "", normalize_search(proyecto)
 
 
 def preview_bulk_import(payload: dict[str, Any]) -> dict[str, Any]:
     """Compara una previsualización normalizada contra la base actual.
 
-    Una oportunidad se identifica por la pareja Radicado + Proyecto. Esto es
-    intencional: la plantilla histórica contiene al menos dos radicados que se
-    reutilizaron para proyectos diferentes.
+    En la plantilla actual una oportunidad se identifica por Proyecto.
+    Radicado se conserva únicamente como compatibilidad con cargas históricas.
     """
     opportunities = list(payload.get("opportunities") or [])
     with connection() as conn:
@@ -935,8 +1000,8 @@ def preview_bulk_import(payload: dict[str, Any]) -> dict[str, Any]:
                 "radicado": str(data.get("radicado") or ""),
                 "proyecto": str(data.get("proyecto") or ""),
                 "cliente": str(data.get("cliente") or ""),
-                "nombre": str(data.get("nombre") or ""),
-                "estado": str(data.get("estado") or "Nueva"),
+                "fecha_inicio": str(data.get("fecha_inicio") or ""),
+                "industria": str(data.get("industria") or ""),
                 "subsistemas": len(staged_subsystems),
                 "subsistemas_nuevos": new_count,
                 "subsistemas_existentes": existing_count,
@@ -996,16 +1061,38 @@ def _insert_missing_multiset(
     return added, skipped
 
 
+def _fill_empty_fields_conn(
+    conn: sqlite3.Connection,
+    table: str,
+    row_id: int,
+    source: dict[str, Any],
+    fields: Iterable[str],
+) -> bool:
+    """Completa solo campos vacíos; nunca pisa información existente."""
+    row = conn.execute(f"SELECT * FROM {table} WHERE id=?", (row_id,)).fetchone()
+    if not row:
+        return False
+    updates: dict[str, Any] = {}
+    for field in fields:
+        incoming = str(source.get(field) or "").strip()
+        current = str(row[field] or "").strip() if field in row.keys() else ""
+        if incoming and not current:
+            updates[field] = incoming
+    if not updates:
+        return False
+    _update(conn, table, row_id, updates)
+    return True
+
+
 def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[str, int]:
     """Importa la previsualización en una sola transacción segura.
 
     Reglas de combinación:
-    - Radicado + Proyecto identifica la OD.
-    - Una OD existente nunca se sobrescribe.
-    - Un subsistema existente (por nombre normalizado) nunca sobrescribe sus
-      criterios actuales; solo recibe entradas/salidas/equipos que falten.
-    - Las ODs nuevas se crean sin responsables internos, porque la plantilla
-      histórica no contiene esa información.
+    - Proyecto identifica la OD en la plantilla A–AB.
+    - Una OD existente conserva sus valores y solo completa campos vacíos.
+    - Un grupo técnico existente conserva sus valores y solo completa campos vacíos.
+    - Entradas, salidas y equipos se agregan únicamente si no existen todavía.
+    - Las ODs nuevas se crean sin responsables internos, porque el Excel no contiene esa información.
     """
     opportunities = list(payload.get("opportunities") or [])
     result = {
@@ -1057,6 +1144,14 @@ def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[s
                 else:
                     result["oportunidades_combinadas"] += 1
 
+                opportunity_changed = created_opportunity
+                if not created_opportunity:
+                    # La plantilla A:AB puede aportar datos que antes no existían en
+                    # la OD. Solo completamos celdas vacías para respetar ediciones.
+                    opportunity_changed = _fill_empty_fields_conn(
+                        conn, "opportunities", opportunity_id, data, OPPORTUNITY_FIELDS
+                    )
+
                 existing_subsystems = {
                     normalize_search(row["nombre"]): int(row["id"])
                     for row in conn.execute(
@@ -1065,7 +1160,6 @@ def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[s
                     ).fetchall()
                 }
 
-                opportunity_changed = created_opportunity
                 for staged_subsystem in item.get("subsystems") or []:
                     sub_data = _clean_dict(dict(staged_subsystem.get("data") or {}), SUBSYSTEM_FIELDS)
                     sub_data["nombre"] = sub_data["nombre"] or "Principal"
@@ -1087,6 +1181,14 @@ def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[s
                         opportunity_changed = True
                     else:
                         result["subsistemas_existentes"] += 1
+                        if _fill_empty_fields_conn(
+                            conn, "subsystems", subsystem_id, sub_data, SUBSYSTEM_FIELDS
+                        ):
+                            conn.execute(
+                                "UPDATE subsystems SET actualizado_en=? WHERE id=?",
+                                (utcnow(), subsystem_id),
+                            )
+                            opportunity_changed = True
 
                     added, skipped = _insert_missing_multiset(
                         conn, "entry_points", subsystem_id,

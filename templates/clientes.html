@@ -100,10 +100,8 @@
     <div class="cliente-list-actions">
       <form class="cliente-search" method="get" action="{{ url_for('clientes.index') }}">
         <input type="hidden" name="view" value="lista">
-        <input name="q" value="{{ query }}" placeholder="Buscar nombre, país, ciudad o NIT"
+        <input id="clientesSearch" name="q" value="{{ query }}" placeholder="Buscar nombre, país, ciudad o NIT"
           aria-label="Buscar clientes">
-        <button class="btn outline" type="submit">BUSCAR</button>
-        {% if query %}<a class="btn outline" href="{{ url_for('clientes.index', view='lista') }}">LIMPIAR</a>{% endif %}
       </form>
       <form class="cliente-bulk-form" method="post" action="{{ url_for('clientes.bulk_upload') }}" enctype="multipart/form-data">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
@@ -158,4 +156,5 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/clientes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/clientes_search_reactivo.js') }}"></script>
 {% endblock %}

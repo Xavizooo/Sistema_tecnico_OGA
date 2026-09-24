@@ -8,12 +8,13 @@
   <div class="od-detail-head od-detail-head-new">
     <div class="od-detail-title-block">
       <span class="od-kicker">OD · PROYECTO {{ opportunity.proyecto }}</span>
-      <h2>{{ opportunity.nombre }}</h2>
-      <p>{{ opportunity.descripcion or 'Sin descripción general.' }}</p>
+      <h2>Proyecto {{ opportunity.proyecto }}</h2>
+      <p>{{ opportunity.cliente or 'Sin cliente registrado.' }}</p>
     </div>
     <div class="od-detail-actions od-detail-actions-top">
       <button class="btn outline od-top-resource-button od-js-show-offers" type="button" data-panel="od-top-offers-{{ opportunity.id }}">PDF · Ofertas <b>{{ totals.offers }}</b></button>
       <button class="btn outline od-top-resource-button od-js-show-images" type="button" data-panel="od-top-images-{{ opportunity.id }}">Imagen <b>{{ totals.images }}</b></button>
+      <button class="btn outline od-top-resource-button od-js-show-materials" type="button" data-panel="od-top-materials-{{ opportunity.id }}">Detalles de material</button>
       {% if current_user and current_user.is_admin %}
       <button class="btn outline od-js-edit-opportunity" type="button" data-id="{{ opportunity.id }}">Editar</button>
       <form method="post" action="{{ url_for('oportunidades.delete', opportunity_id=opportunity.id) }}" onsubmit="return confirm('¿Eliminar esta oportunidad? Se ocultará del módulo y quedará registrada en auditoría.');">
@@ -79,56 +80,67 @@
     {% else %}<div class="od-empty-mini">El proyecto no tiene grupos técnicos.</div>{% endfor %}
   </div>
 
-  <section class="od-detail-table-card">
-    <div class="od-detail-table-title"><div><span class="od-kicker">DETALLE DEL PROYECTO</span><h3>Información general y técnica</h3></div></div>
-
-    <div class="od-general-table-wrap">
-      <table class="od-general-detail-table">
-        <tbody>
-          <tr><th>Proyecto</th><td>{{ opportunity.proyecto }}</td><th>Cliente</th><td>{{ opportunity.cliente }}</td></tr>
-          <tr><th>Fecha inicio</th><td>{{ opportunity.fecha_inicio or '—' }}</td><th>Planta</th><td>{{ opportunity.planta or '—' }}</td></tr>
-          <tr><th>Ciudad</th><td>{{ opportunity.ciudad or '—' }}</td><th>País</th><td>{{ opportunity.pais or '—' }}</td></tr>
-          <tr><th>Tipo</th><td>{{ opportunity.tipo_oportunidad or '—' }}</td><th>Industria</th><td>{{ opportunity.industria or '—' }}</td></tr>
-          <tr><th>Valor estimado</th><td>{{ opportunity.valor_estimado or '—' }}</td><th>Responsables</th><td>{% for user in opportunity.responsibles %}{{ user.name or user.username }}{% if not loop.last %}, {% endif %}{% else %}—{% endfor %}</td></tr>
-          {% if opportunity.observaciones %}<tr><th>Observaciones</th><td colspan="3">{{ opportunity.observaciones }}</td></tr>{% endif %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="od-tech-table-headline"><strong>Datos técnicos</strong><span>Solo se muestran los siete criterios definidos para esta vista.</span></div>
-    <div class="od-tech-table-wrap">
-      <table class="od-tech-detail-table">
-        <thead>
-          <tr>
-            <th>Voltaje de potencia</th>
-            <th>Material transportado</th>
-            <th>Flujo</th>
-            <th>Potencia HP</th>
-            <th>Diferencial de presión</th>
-            <th>Caudal</th>
-            <th>Área de filtración</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for subsystem in opportunity.subsystems %}
-          <tr class="od-tech-group-row">
-            <td colspan="7">
-              <span>{{ subsystem.nombre or 'Principal' }}</span>
-              {% if current_user and current_user.is_admin %}<button type="button" class="od-tech-edit od-js-edit-subsystem" data-id="{{ subsystem.id }}" data-opportunity-id="{{ opportunity.id }}">Editar datos técnicos</button>{% endif %}
-            </td>
-          </tr>
-          <tr>
-            <td>{{ subsystem.voltaje_potencia or '—' }}</td>
-            <td>{{ subsystem.material_transportado or '—' }}</td>
-            <td>{{ subsystem.flujo_kg_h or '—' }}</td>
-            <td>{{ subsystem.potencia_hp or '—' }}</td>
-            <td>{{ subsystem.diferencial_presion_psi or '—' }}</td>
-            <td>{{ subsystem.caudal_cfm or '—' }}</td>
-            <td>{{ subsystem.area_filtracion_m2 or '—' }}</td>
-          </tr>
-          {% else %}
-          <tr><td colspan="7" class="od-table-empty-cell">Sin datos técnicos registrados.</td></tr>
+  <div class="od-resource-panel od-top-resource-panel hidden" id="od-top-materials-{{ opportunity.id }}">
+    <div class="od-resource-panel-head"><strong>Detalles de material</strong><span>Información consultada directamente desde Datos → Materiales.</span></div>
+    {% for subsystem in opportunity.subsystems %}
+      {% if subsystem.material_transportado %}
+      <div class="od-resource-group">
+        <div class="od-resource-group-head"><strong>{{ subsystem.material_transportado }}</strong></div>
+        {% if subsystem.material_details %}
+        <div class="od-material-details-grid">
+          {% for label, value in subsystem.material_details.items() %}
+          <div class="od-material-detail-item"><span>{{ label }}</span><strong>{{ value or '—' }}</strong></div>
           {% endfor %}
+        </div>
+        {% else %}
+        <div class="od-empty-mini">El material está asignado al proyecto, pero no se encontró su ficha en el catálogo maestro.</div>
+        {% endif %}
+      </div>
+      {% endif %}
+    {% else %}<div class="od-empty-mini">El proyecto no tiene materiales asignados.</div>{% endfor %}
+  </div>
+
+  <section class="od-detail-table-card">
+    <div class="od-detail-table-title"><div><span class="od-kicker">DETALLE DEL PROYECTO</span><h3>Información A–AB</h3><p>Azul pastel: A–Q · Amarillo pastel: R–AB.</p></div></div>
+
+    <div class="od-ab-table-wrap">
+      <table class="od-ab-detail-table">
+        <thead><tr><th>Campo</th><th>Valor</th></tr></thead>
+        <tbody>
+        {% for subsystem in opportunity.subsystems %}
+          <tr class="od-ab-group-row"><td colspan="2"><div><strong>{{ subsystem.nombre or 'Principal' }}</strong>{% if current_user and current_user.is_admin %}<button type="button" class="od-tech-edit od-js-edit-subsystem" data-id="{{ subsystem.id }}" data-opportunity-id="{{ opportunity.id }}">Editar datos técnicos</button>{% endif %}</div></td></tr>
+          <tr class="od-ab-blue"><th>A · Proyecto</th><td>{{ opportunity.proyecto or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>B · Cliente</th><td>{{ opportunity.cliente or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>C · Inicio</th><td>{{ opportunity.fecha_inicio or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>D · Material a transportar</th><td>{{ subsystem.material_transportado or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>E · Punto de ingreso</th><td>{% if subsystem.entry_points %}{{ subsystem.entry_points[0].tipo or '—' }}{% else %}—{% endif %}</td></tr>
+          <tr class="od-ab-blue"><th>F · Punto destino</th><td>{% if subsystem.exit_points %}{{ subsystem.exit_points[0].tipo or '—' }}{% else %}—{% endif %}</td></tr>
+          <tr class="od-ab-blue"><th>G · Flujo en KG/Hora</th><td>{{ subsystem.flujo_kg_h or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>H · Distancia horizontal de transporte (m)</th><td>{{ subsystem.distancia_horizontal_m or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>I · Distancia vertical de transporte (m)</th><td>{{ subsystem.distancia_vertical_m or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>J · Cantidad de curvas x 90°</th><td>{{ subsystem.curvas_90 or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>K · Distancia unidad de soplado (m)</th><td>{{ subsystem.distancia_unidad_soplado_m or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>L · Curvas unidad de soplado / vacío (Ud)</th><td>{{ subsystem.curvas_unidad_soplado or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>M · Tipo de industria</th><td>{{ opportunity.industria or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>N · Tipo de flujo</th><td>{{ subsystem.tipo_flujo or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>O · ATEX</th><td>{{ subsystem.atex or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>P · Material de contacto con el producto</th><td>{{ subsystem.material_contacto or '—' }}</td></tr>
+          <tr class="od-ab-blue"><th>Q · Voltaje de potencia</th><td>{{ subsystem.voltaje_potencia or '—' }}</td></tr>
+
+          <tr class="od-ab-yellow"><th>R · Tipo de transporte</th><td>{{ subsystem.tipo_transporte or '—' }}</td></tr>
+          <tr class="od-ab-yellow"><th>S · Diámetro tubería transporte</th><td>{{ subsystem.diametro_tuberia or '—' }}</td></tr>
+          <tr class="od-ab-yellow"><th>T · Tipo de acople</th><td>{{ subsystem.tipo_acople or '—' }}</td></tr>
+          <tr class="od-ab-yellow"><th>U · Potencia (hp)</th><td>{{ subsystem.potencia_hp or '—' }}</td></tr>
+          <tr class="od-ab-yellow"><th>V · Caudal (CFM)</th><td>{{ subsystem.caudal_cfm or '—' }}</td></tr>
+          <tr class="od-ab-yellow"><th>W · Diferencial de presión (PSI)</th><td>{{ subsystem.diferencial_presion_psi or '—' }}</td></tr>
+          <tr class="od-ab-yellow"><th>X · Tipo de bomba</th><td>{{ subsystem.tipo_bomba or '—' }}</td></tr>
+          <tr class="od-ab-yellow"><th>Y · Área de filtración (m²)</th><td>{{ subsystem.area_filtracion_m2 or '—' }}</td></tr>
+          <tr class="od-ab-yellow"><th>Z · Micraje de área de filtración</th><td>{{ subsystem.micraje_filtracion or '—' }}</td></tr>
+          <tr class="od-ab-yellow"><th>AA · Consumo de aire (CFM)</th><td>{{ subsystem.consumo_aire_cfm or '—' }}</td></tr>
+          <tr class="od-ab-yellow"><th>AB · Presión de alimentación (PSI)</th><td>{{ subsystem.presion_alimentacion_psi or '—' }}</td></tr>
+        {% else %}
+          <tr><td colspan="2" class="od-table-empty-cell">Sin datos registrados.</td></tr>
+        {% endfor %}
         </tbody>
       </table>
     </div>

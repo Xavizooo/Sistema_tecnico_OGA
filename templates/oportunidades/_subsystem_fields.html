@@ -1,43 +1,56 @@
+{% macro select_control(field_name, label, options, current='', placeholder='Seleccione') %}
+<label>{{ label }}
+  <select name="{{ field_name }}">
+    <option value="">{{ placeholder }}</option>
+    {% if current and current not in options %}<option value="{{ current }}" selected>{{ current }}</option>{% endif %}
+    {% for option in options %}<option value="{{ option }}" {% if option == current %}selected{% endif %}>{{ option }}</option>{% endfor %}
+  </select>
+</label>
+{% endmacro %}
+
 {% macro subsystem_fields(prefix='', values={}, technical_options={}) %}
-{% set voltage_options = technical_options.get('voltaje_potencia', []) %}
-{% set material_options = technical_options.get('material_transportado', []) %}
-{% set current_voltage = values.get('voltaje_potencia','') %}
-{% set current_material = values.get('material_transportado','') %}
 <input type="hidden" name="{{ prefix }}nombre" value="{{ values.get('nombre','Principal') or 'Principal' }}">
-<div class="od-form-section">
+
+<div class="od-form-section od-form-section-blue">
   <div class="od-form-section-head">
-    <div><strong>Datos técnicos</strong><small>Los catálogos de Voltaje y Material se toman directamente del módulo Industria.</small></div>
+    <div><strong>Información técnica · columnas D–Q</strong><small>Los campos desplegables se alimentan directamente desde Proyectos → Datos.</small></div>
   </div>
   <div class="od-form-grid od-form-grid-3">
-    <label>Voltaje de potencia (V)
-      <select name="{{ prefix }}voltaje_potencia">
-        <option value="">Seleccione voltaje</option>
-        {% if current_voltage and current_voltage not in voltage_options %}<option value="{{ current_voltage }}" selected>{{ current_voltage }}</option>{% endif %}
-        {% for option in voltage_options %}<option value="{{ option }}" {% if option == current_voltage %}selected{% endif %}>{{ option }}</option>{% endfor %}
-      </select>
-    </label>
-    <label>Material transportado
-      <select name="{{ prefix }}material_transportado">
-        <option value="">Seleccione material</option>
-        {% if current_material and current_material not in material_options %}<option value="{{ current_material }}" selected>{{ current_material }}</option>{% endif %}
-        {% for option in material_options %}<option value="{{ option }}" {% if option == current_material %}selected{% endif %}>{{ option }}</option>{% endfor %}
-      </select>
-    </label>
-    <label>Flujo (kg/h)
-      <input name="{{ prefix }}flujo_kg_h" value="{{ values.get('flujo_kg_h','') }}">
-    </label>
-    <label>Potencia (HP)
-      <input name="{{ prefix }}potencia_hp" value="{{ values.get('potencia_hp','') }}">
-    </label>
-    <label>Diferencial de presión (PSI)
-      <input name="{{ prefix }}diferencial_presion_psi" value="{{ values.get('diferencial_presion_psi','') }}">
-    </label>
-    <label>Caudal (CFM)
-      <input name="{{ prefix }}caudal_cfm" value="{{ values.get('caudal_cfm','') }}">
-    </label>
-    <label>Área de filtración (m²)
-      <input name="{{ prefix }}area_filtracion_m2" value="{{ values.get('area_filtracion_m2','') }}">
-    </label>
+    {{ select_control(prefix ~ 'material_transportado', 'Material a transportar', technical_options.get('material_transportado', []), values.get('material_transportado',''), 'Seleccione material') }}
+    {{ select_control(prefix ~ 'punto_ingreso', 'Punto de ingreso', technical_options.get('punto_ingreso', []), values.get('punto_ingreso',''), 'Seleccione punto de ingreso') }}
+    {{ select_control(prefix ~ 'punto_destino', 'Punto destino', technical_options.get('punto_destino', []), values.get('punto_destino',''), 'Seleccione punto destino') }}
+
+    <label>Flujo en KG/Hora<input name="{{ prefix }}flujo_kg_h" value="{{ values.get('flujo_kg_h','') }}"></label>
+    <label>Distancia horizontal de transporte (m)<input name="{{ prefix }}distancia_horizontal_m" value="{{ values.get('distancia_horizontal_m','') }}"></label>
+    <label>Distancia vertical de transporte (m)<input name="{{ prefix }}distancia_vertical_m" value="{{ values.get('distancia_vertical_m','') }}"></label>
+    <label>Cantidad de curvas x 90°<input name="{{ prefix }}curvas_90" value="{{ values.get('curvas_90','') }}"></label>
+    <label>Distancia unidad de soplado (m)<input name="{{ prefix }}distancia_unidad_soplado_m" value="{{ values.get('distancia_unidad_soplado_m','') }}"></label>
+    <label>Curvas unidad de soplado / vacío (Ud)<input name="{{ prefix }}curvas_unidad_soplado" value="{{ values.get('curvas_unidad_soplado','') }}"></label>
+
+    {{ select_control(prefix ~ 'tipo_flujo', 'Tipo de flujo', technical_options.get('tipo_flujo', []), values.get('tipo_flujo',''), 'Seleccione tipo de flujo') }}
+    {{ select_control(prefix ~ 'atex', 'ATEX', technical_options.get('atex', []), values.get('atex',''), 'Seleccione ATEX') }}
+    {{ select_control(prefix ~ 'material_contacto', 'Material de contacto con el producto', technical_options.get('material_contacto', []), values.get('material_contacto',''), 'Seleccione material') }}
+    {{ select_control(prefix ~ 'voltaje_potencia', 'Voltaje de potencia', technical_options.get('voltaje_potencia', []), values.get('voltaje_potencia',''), 'Seleccione voltaje') }}
+  </div>
+</div>
+
+<div class="od-form-section od-form-section-yellow">
+  <div class="od-form-section-head">
+    <div><strong>Criterios de salida · columnas R–AB</strong><small>Información de selección y resultados del sistema.</small></div>
+  </div>
+  <div class="od-form-grid od-form-grid-3">
+    {{ select_control(prefix ~ 'tipo_transporte', 'Tipo de transporte', technical_options.get('tipo_transporte', []), values.get('tipo_transporte',''), 'Seleccione tipo de transporte') }}
+    {{ select_control(prefix ~ 'diametro_tuberia', 'Diámetro tubería transporte', technical_options.get('diametro_tuberia', []), values.get('diametro_tuberia',''), 'Seleccione diámetro') }}
+    {{ select_control(prefix ~ 'tipo_acople', 'Tipo de acople', technical_options.get('tipo_acople', []), values.get('tipo_acople',''), 'Seleccione acople') }}
+
+    <label>Potencia (hp)<input name="{{ prefix }}potencia_hp" value="{{ values.get('potencia_hp','') }}"></label>
+    <label>Caudal (CFM)<input name="{{ prefix }}caudal_cfm" value="{{ values.get('caudal_cfm','') }}"></label>
+    <label>Diferencial de presión (PSI)<input name="{{ prefix }}diferencial_presion_psi" value="{{ values.get('diferencial_presion_psi','') }}"></label>
+    {{ select_control(prefix ~ 'tipo_bomba', 'Tipo de bomba', technical_options.get('tipo_bomba', []), values.get('tipo_bomba',''), 'Seleccione bomba') }}
+    <label>Área de filtración (m²)<input name="{{ prefix }}area_filtracion_m2" value="{{ values.get('area_filtracion_m2','') }}"></label>
+    <label>Micraje de área de filtración<input name="{{ prefix }}micraje_filtracion" value="{{ values.get('micraje_filtracion','') }}"></label>
+    <label>Consumo de aire (CFM)<input name="{{ prefix }}consumo_aire_cfm" value="{{ values.get('consumo_aire_cfm','') }}"></label>
+    <label>Presión de alimentación (PSI)<input name="{{ prefix }}presion_alimentacion_psi" value="{{ values.get('presion_alimentacion_psi','') }}"></label>
   </div>
 </div>
 {% endmacro %}

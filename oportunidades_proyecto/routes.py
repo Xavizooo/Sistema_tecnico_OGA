@@ -20,7 +20,7 @@ from .db import (
     delete_child, ensure_database, get_attachment, get_opportunity, get_opportunity_detail,
     get_subsystem, preview_bulk_import, search_opportunities, soft_delete_attachment, soft_delete_opportunity,
     soft_delete_subsystem, stats, update_opportunity, update_opportunity_with_visible_technical,
-    update_subsystem, update_visible_subsystem,
+    update_subsystem, update_visible_subsystem, set_primary_point,
 )
 from .import_excel import delete_stage, load_stage, parse_workbook, save_stage
 from .search import parse_query, query_help_fields
@@ -33,7 +33,10 @@ MAX_IMPORT_BYTES = 25 * 1024 * 1024
 ALLOWED_IMAGES = {".jpg", ".jpeg", ".png", ".webp"}
 COUNTRIES_FILE = Path(__file__).resolve().parent.parent / "data" / "paises_y_10_ciudades_importantes.json"
 INDUSTRIA_DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "INDUSTRIA"
+CLIENTES_FILE = Path(__file__).resolve().parent.parent / "data" / "CLIENTES" / "clientes.json"
 _TECH_OPTIONS_CACHE: dict[str, tuple[int, int, list[str]]] = {}
+_CLIENT_OPTIONS_CACHE: tuple[int, int, list[dict]] | None = None
+_MATERIAL_DETAILS_CACHE: tuple[int, int, dict[str, dict[str, str]]] | None = None
 
 CRITERIA_LABELS = (
     ("nombre_proceso", "Nombre del proceso"),
@@ -185,22 +188,130 @@ def _catalog_values(filename: str, aliases: tuple[str, ...], *, numeric: bool = 
     return values
 
 
-def _technical_catalog_options() -> dict[str, list[str]]:
-    """Catálogos de Industria usados como selección en datos técnicos de OD.
+def _client_rows() -> list[dict]:
+    global _CLIENT_OPTIONS_CACHE
+    try:
+        stat = CLIENTES_FILE.stat()
+    except OSError:
+        return []
+    cached = _CLIENT_OPTIONS_CACHE
+    if cached and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
+        return [dict(row) for row in cached[2]]
+    try:
+        payload = json.loads(CLIENTES_FILE.read_text(encoding="utf-8-sig"))
+        rows = [dict(row) for row in payload if isinstance(row, dict)] if isinstance(payload, list) else []
+    except (OSError, json.JSONDecodeError):
+        return []
+    _CLIENT_OPTIONS_CACHE = (stat.st_mtime_ns, stat.st_size, [dict(row) for row in rows])
+    return rows
 
-    Solo se convierten en selector los campos que realmente tienen un catálogo
-    de valores. Los criterios numéricos de CS son reglas/valores de cálculo y
-    permanecen como entrada libre en Oportunidades.
+
+def _client_values(field: str) -> list[str]:
+    values: list[str] = []
+    seen: set[str] = set()
+    for row in _client_rows():
+        value = str(row.get(field) or "").strip()
+        key = value.casefold()
+        if value and key not in seen:
+            seen.add(key)
+            values.append(value)
+    return sorted(values, key=str.casefold)
+
+
+
+
+def _material_details_map() -> dict[str, dict[str, str]]:
+    """Devuelve el detalle vivo de Datos > Materiales indexado por nombre común."""
+    global _MATERIAL_DETAILS_CACHE
+    path = INDUSTRIA_DATA_DIR / "TIPOS_DE_MATERIALES.xlsx"
+    try:
+        stat = path.stat()
+    except OSError:
+        return {}
+    cached = _MATERIAL_DETAILS_CACHE
+    if cached and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
+        return {key: dict(value) for key, value in cached[2].items()}
+
+    result: dict[str, dict[str, str]] = {}
+    try:
+        wb = load_workbook(path, read_only=True, data_only=True)
+    except Exception:
+        return {}
+    try:
+        ws = wb.active
+        rows = ws.iter_rows(values_only=True)
+        headers = [str(value or "").strip() for value in next(rows, ())]
+        name_idx = next((idx for idx, header in enumerate(headers) if _norm_header(header) == _norm_header("Nombre común")), None)
+        if name_idx is None:
+            return {}
+        for row in rows:
+            if name_idx >= len(row):
+                continue
+            name = str(row[name_idx] or "").strip()
+            if not name:
+                continue
+            details: dict[str, str] = {}
+            for idx, header in enumerate(headers):
+                if not header or header == "_OGA_ID":
+                    continue
+                raw = row[idx] if idx < len(row) else None
+                if raw is None:
+                    value = ""
+                elif isinstance(raw, float) and raw.is_integer():
+                    value = str(int(raw))
+                else:
+                    value = str(raw).strip()
+                details[header] = value
+            result[name.casefold()] = details
+    finally:
+        wb.close()
+    _MATERIAL_DETAILS_CACHE = (stat.st_mtime_ns, stat.st_size, {key: dict(value) for key, value in result.items()})
+    return result
+
+def _technical_catalog_options() -> dict[str, list[str]]:
+    """Catálogos vivos usados por Nueva OD y edición técnica.
+
+    Cada selector lee directamente los archivos de Proyectos > Datos, por lo
+    que cualquier cambio en esos catálogos se refleja sin duplicar listas.
     """
     return {
-        "voltaje_potencia": _catalog_values(
-            "CB_MATRIZ.xlsx",
-            ("Voltaje De Potencia", "Voltaje de potencia (V)", "Voltaje de potencia"),
-            numeric=True,
-        ),
+        "cliente": _client_values("nombre"),
+        "industria": _client_values("tipo_industria"),
         "material_transportado": _catalog_values(
-            "TIPOS_DE_MATERIALES.xlsx",
-            ("Nombre común",),
+            "TIPOS_DE_MATERIALES.xlsx", ("Nombre común",),
+        ),
+        "punto_ingreso": _catalog_values(
+            "TIPOS_DE_PUNTOS_DE_ORIGEN.xlsx", ("Tipo de punto de origen", "Puntos de origen"),
+        ),
+        "punto_destino": _catalog_values(
+            "TIPOS_DE_PUNTOS_DE_ORIGEN.xlsx", ("Tipo de punto de destino", "Puntos de destino"),
+        ),
+        "tipo_flujo": _catalog_values(
+            "CB_MATRIZ.xlsx", ("Tipo de flujo",),
+        ),
+        "atex": _catalog_values(
+            "CB_MATRIZ.xlsx", ("ATEX",),
+        ),
+        "material_contacto": _catalog_values(
+            "CB_MATRIZ.xlsx", ("Material en contacto con producto", "Material de contacto con el producto"),
+        ),
+        "voltaje_potencia": _catalog_values(
+            "CB_MATRIZ.xlsx", ("Voltaje De Potencia", "Voltaje de potencia (V)", "Voltaje de potencia"), numeric=True,
+        ),
+        "tipo_transporte": _catalog_values(
+            "CS_CRITERIOS_DE_SALIDA.xlsx", ("Descripción transporte", "Tipo de transporte"),
+        ),
+        "diametro_tuberia": _catalog_values(
+            "CS_CRITERIOS_DE_SALIDA.xlsx", ("Ø tubería de transporte", "Diámetro Tubería Transporte"),
+        ),
+        "tipo_acople": _catalog_values(
+            "CS_CRITERIOS_DE_SALIDA.xlsx", ("Tipo de acople",),
+        ),
+        "tipo_bomba": _catalog_values(
+            "CS_CRITERIOS_DE_SALIDA.xlsx", ("Tipo de bomba",),
+        ),
+        "tipo_equipo": _catalog_values(
+            "CODIGO_DE_EQUIPOS.xlsx", ("Tipo de Equipo",),
         ),
     }
 
@@ -215,10 +326,13 @@ def _selected_users(ids: list[str]) -> list[dict]:
 
 
 def _opportunity_form() -> dict[str, str]:
+    proyecto = (request.form.get("proyecto") or "").strip()
     return {
-        "radicado": (request.form.get("radicado") or "").strip(),
-        "proyecto": (request.form.get("proyecto") or "").strip(),
-        "nombre": (request.form.get("nombre") or "").strip(),
+        # Radicado/nombre/estado se mantienen internamente para no romper el
+        # esquema histórico, pero la interfaz actual se rige por PROYECTOS.xlsx.
+        "radicado": proyecto,
+        "proyecto": proyecto,
+        "nombre": (request.form.get("nombre") or proyecto).strip(),
         "cliente": (request.form.get("cliente") or "").strip(),
         "descripcion": (request.form.get("descripcion") or "").strip(),
         "planta": (request.form.get("planta") or "").strip(),
@@ -226,7 +340,7 @@ def _opportunity_form() -> dict[str, str]:
         "pais": (request.form.get("pais") or "").strip(),
         "industria": (request.form.get("industria") or "").strip(),
         "tipo_oportunidad": (request.form.get("tipo_oportunidad") or "").strip(),
-        "estado": (request.form.get("estado") or "Nueva").strip(),
+        "estado": STATUSES[0],
         "fecha_inicio": (request.form.get("fecha_inicio") or "").strip(),
         "valor_estimado": (request.form.get("valor_estimado") or "").strip(),
         "observaciones": (request.form.get("observaciones") or "").strip(),
@@ -260,14 +374,10 @@ def _visible_technical_updates_from_edit() -> dict[int, dict[str, str]]:
 
 
 def _validate_opportunity(data: dict[str, str]) -> None:
-    if not data["radicado"]:
-        raise ValueError("Ingrese el número de radicado.")
     if not data["proyecto"]:
         raise ValueError("Ingrese el número o código de proyecto.")
     if not data["cliente"]:
         raise ValueError("Ingrese el cliente.")
-    if not data["nombre"]:
-        raise ValueError("Ingrese el nombre de la oportunidad.")
     if data["estado"] not in STATUSES:
         raise ValueError("Estado de oportunidad no válido.")
     limits = {"radicado": 60, "proyecto": 60, "nombre": 180, "cliente": 180, "descripcion": 1200,
@@ -281,11 +391,14 @@ def _validate_opportunity(data: dict[str, str]) -> None:
 def _decorate_detail(detail: dict | None) -> dict | None:
     if not detail:
         return None
+    material_map = _material_details_map()
     for subsystem in detail.get("subsystems", []):
         subsystem["criteria"] = [
             {"key": key, "label": label, "value": subsystem.get(key)}
             for key, label in CRITERIA_LABELS if str(subsystem.get(key) or "").strip()
         ]
+        material_name = str(subsystem.get("material_transportado") or "").strip()
+        subsystem["material_details"] = material_map.get(material_name.casefold(), {}) if material_name else {}
     return detail
 
 
@@ -515,9 +628,8 @@ def api_detail_data(opportunity_id: int):
 @_admin_required
 def create():
     data = _opportunity_form()
-    # Radicado y Estado dejaron de ser campos de usuario. Se conservan
-    # internamente para compatibilidad con la BD, importaciones y relaciones.
-    data["radicado"] = f"AUTO-{uuid.uuid4().hex[:12].upper()}"
+    data["radicado"] = data.get("proyecto") or f"AUTO-{uuid.uuid4().hex[:12].upper()}"
+    data["nombre"] = data.get("nombre") or data.get("proyecto") or "Proyecto"
     data["estado"] = STATUSES[0]
     try:
         _validate_opportunity(data)
@@ -531,6 +643,12 @@ def create():
         opportunity_id = create_opportunity(data, responsibles, _user())
         subsystem_data = _subsystem_form("sub_")
         subsystem_id = create_subsystem(opportunity_id, subsystem_data, _user())
+        punto_ingreso = (request.form.get("sub_punto_ingreso") or "").strip()
+        punto_destino = (request.form.get("sub_punto_destino") or "").strip()
+        if punto_ingreso:
+            add_point(subsystem_id, "entrada", punto_ingreso, "1", "")
+        if punto_destino:
+            add_point(subsystem_id, "salida", punto_destino, "1", "")
         warnings: list[str] = []
         if offer and offer.filename:
             try:
@@ -566,7 +684,8 @@ def edit(opportunity_id: int):
         abort(404)
     data = _opportunity_form()
     # Mantener los valores internos históricos aunque ya no sean editables/visibles.
-    data["radicado"] = str(existing.get("radicado") or f"AUTO-{uuid.uuid4().hex[:12].upper()}")
+    data["radicado"] = str(existing.get("radicado") or data.get("proyecto") or f"AUTO-{uuid.uuid4().hex[:12].upper()}")
+    data["nombre"] = str(existing.get("nombre") or data.get("proyecto") or "Proyecto")
     data["estado"] = str(existing.get("estado") or STATUSES[0])
     try:
         _validate_opportunity(data)
@@ -605,6 +724,8 @@ def create_subsystem_route(opportunity_id: int):
         abort(404)
     try:
         subsystem_id = create_subsystem(opportunity_id, _subsystem_form(), _user())
+        set_primary_point(subsystem_id, "entrada", request.form.get("sub_punto_ingreso") or "")
+        set_primary_point(subsystem_id, "salida", request.form.get("sub_punto_destino") or "")
         audit_event("CREAR SUBSISTEMA", "OPORTUNIDADES DE PROYECTO", f"OD {opportunity_id} · Subsistema {subsystem_id}", "OK", _user(), _client_ip())
         g.audit_logged = True
         flash("Subsistema agregado.", "ok")
@@ -620,7 +741,9 @@ def edit_subsystem_route(subsystem_id: int):
     if not subsystem:
         abort(404)
     try:
-        opportunity_id = update_visible_subsystem(subsystem_id, _visible_technical_form())
+        opportunity_id = update_subsystem(subsystem_id, _subsystem_form())
+        set_primary_point(subsystem_id, "entrada", request.form.get("sub_punto_ingreso") or "")
+        set_primary_point(subsystem_id, "salida", request.form.get("sub_punto_destino") or "")
         audit_event("EDITAR SUBSISTEMA", "OPORTUNIDADES DE PROYECTO", f"OD {opportunity_id} · {subsystem.get('nombre')}", "OK", _user(), _client_ip())
         g.audit_logged = True
         flash("Subsistema actualizado.", "ok")

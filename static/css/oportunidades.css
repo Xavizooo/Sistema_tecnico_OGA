@@ -2392,29 +2392,37 @@
   }
 }
 
-\n\n
 
-/* =====================================================================\n   OD · EDICIÓN INTEGRAL + TIPOGRAFÍA LEGIBLE (2026-09-23)\n   ===================================================================== */
-\n.od-edit-modal-help {
+
+
+
+/* =====================================================================
+   OD · EDICIÓN INTEGRAL + TIPOGRAFÍA LEGIBLE (2026-09-23)
+   ===================================================================== */
+
+.od-edit-modal-help {
   margin: 5px 0 0;
   color: #7b899c;
   font-size: 15px;
   line-height: 1.45;
 }
 
-\n.od-edit-tech-sections {
+
+.od-edit-tech-sections {
   display: grid;
   gap: 12px;
 }
 
-\n.od-edit-tech-card {
+
+.od-edit-tech-card {
   padding: 13px;
   border: 1px solid #dce4ee;
   border-radius: 9px;
   background: #fafcff;
 }
 
-\n.od-edit-tech-card-head {
+
+.od-edit-tech-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2423,7 +2431,8 @@
   border-bottom: 1px solid #e6ebf2;
 }
 
-\n.od-edit-tech-card-head span {
+
+.od-edit-tech-card-head span {
   display: block;
   color: #6d85aa;
   font-size: 12px;
@@ -2431,14 +2440,16 @@
   letter-spacing: .06em;
 }
 
-\n.od-edit-tech-card-head strong {
+
+.od-edit-tech-card-head strong {
   display: block;
   margin-top: 2px;
   color: #344b6c;
   font-size: 16px;
 }
 
-\n.od-edit-tech-empty {
+
+.od-edit-tech-empty {
   padding: 18px;
   border: 1px dashed #d6dfe9;
   border-radius: 8px;
@@ -2448,322 +2459,597 @@
   text-align: center;
 }
 
-\n\n
+
+
+
 
 /* Aumento general de tamaño de letra del módulo Oportunidades. */
-\n.od-page {
+
+.od-page {
   font-size: 15px;
 }
 
-\n.od-page-head h2 {
+
+.od-page-head h2 {
   font-size: 28px;
 }
 
-\n.od-page-head p {
+
+.od-page-head p {
   font-size: 15px;
 }
 
-\n.od-soft-tag {
+
+.od-soft-tag {
   font-size: 13px;
 }
 
-\n.od-kpi strong {
+
+.od-kpi strong {
   font-size: 21px;
 }
 
-\n.od-kpi span {
-  font-size: 13px;
+
+.od-kpi span {
+  font-size: 9px;
 }
 
-\n.od-search-box input {
+
+.od-search-box input {
   font-size: 16px;
 }
 
-\n.od-search-help {
+
+.od-search-help {
   font-size: 13px;
 }
 
-\n.od-search-token {
+
+.od-search-token {
   font-size: 13px;
   padding: 5px 9px;
 }
 
-\n.od-list-head {
+
+.od-list-head {
   font-size: 13px;
 }
 
-\n.od-list-head strong {
+
+.od-list-head strong {
   font-size: 14px;
 }
 
-\n.od-table-head {
+
+.od-table-head {
   min-height: 42px;
-  font-size: 13px;
+  font-size: 11.5px;
 }
 
-\n.od-project-table .od-list-row {
+
+.od-project-table .od-list-row {
   min-height: 60px;
 }
 
-\n.od-project-table .od-list-row b,
-\n.od-project-table .od-list-row strong {
+
+.od-project-table .od-list-row b,
+
+.od-project-table .od-list-row strong {
   font-size: 14px;
 }
 
-\n.od-cell-cliente,
+
+.od-cell-cliente,
 .od-cell-nombre,
 .od-cell-responsable {
   font-size: 14px;
 }
 
-\n.od-cell-estado {
+
+.od-cell-estado {
   font-size: 14px;
 }
 
-\n.od-cell-estado small {
+
+.od-cell-estado small {
   font-size: 13px;
 }
 
-\n.od-list-empty strong,
+
+.od-list-empty strong,
 .od-empty-detail strong {
   font-size: 18px;
 }
 
-\n.od-list-empty p,
+
+.od-list-empty p,
 .od-empty-detail p {
   font-size: 15px;
 }
 
-\n.od-kicker {
+
+.od-kicker {
   font-size: 13px;
 }
 
-\n.od-detail-head h2 {
+
+.od-detail-head h2 {
   font-size: 22px;
 }
 
-\n.od-detail-head p {
+
+.od-detail-head p {
   font-size: 13px;
   line-height: 1.55;
 }
 
-\n.od-status {
+
+.od-status {
   min-height: 32px;
   padding: 6px 10px;
   font-size: 11.5px;
 }
 
-\n.od-page .btn,
+
+.od-page .btn,
 .od-modal .btn {
   font-size: 12px;
 }
 
-\n.od-resource-button {
+
+.od-resource-button {
   min-height: 35px;
   font-size: 11.5px;
 }
 
-\n.od-resource-button b {
+
+.od-resource-button b {
   font-size: 10px;
 }
 
-\n.od-resource-group-head>strong {
+
+.od-resource-group-head>strong {
   font-size: 12px;
 }
 
-\n.od-resource-panel-head strong {
+
+.od-resource-panel-head strong {
   font-size: 12.5px;
 }
 
-\n.od-resource-panel-head span {
+
+.od-resource-panel-head span {
   font-size: 10.5px;
 }
 
-\n.od-file-row strong {
+
+.od-file-row strong {
   font-size: 12px;
 }
 
-\n.od-file-row small {
+
+.od-file-row small {
   font-size: 10px;
 }
 
-\n.od-empty-mini {
+
+.od-empty-mini {
   font-size: 11px;
 }
 
-\n.od-detail-table-title h3 {
+
+.od-detail-table-title h3 {
   font-size: 16px;
 }
 
-\n.od-general-detail-table th {
+
+.od-general-detail-table th {
   padding: 10px;
   font-size: 11.5px;
 }
 
-\n.od-general-detail-table td {
+
+.od-general-detail-table td {
   padding: 10px 11px;
   font-size: 14px;
 }
 
-\n.od-tech-table-headline strong {
+
+.od-tech-table-headline strong {
   font-size: 13px;
 }
 
-\n.od-tech-table-headline span {
+
+.od-tech-table-headline span {
   font-size: 10.5px;
 }
 
-\n.od-tech-detail-table th,
+
+.od-tech-detail-table th,
 .od-linked-table th {
   padding: 9px;
   font-size: 10.5px;
 }
 
-\n.od-tech-detail-table td,
+
+.od-tech-detail-table td,
 .od-linked-table td {
   padding: 10px 9px;
   font-size: 12px;
 }
 
-\n.od-tech-edit {
+
+.od-tech-edit {
   padding: 5px 9px;
   font-size: 10.5px;
 }
 
-\n.od-floating-table-head {
+
+.od-floating-table-head {
   height: 44px;
 }
 
-\n.od-floating-table-head strong {
+
+.od-floating-table-head strong {
   font-size: 13px;
 }
 
-\n.od-linked-group-row .od-mini-add {
+
+.od-linked-group-row .od-mini-add {
   height: 28px;
   font-size: 10px;
 }
 
-\n.od-table-delete {
+
+.od-table-delete {
   padding: 5px 8px;
   font-size: 10px;
 }
 
-\n.od-detail-fab-options button {
+
+.od-detail-fab-options button {
   min-height: 38px;
   font-size: 11px;
 }
 
-\n.od-modal-head h3 {
+
+.od-modal-head h3 {
   font-size: 18px;
 }
 
-\n.od-form-section-head strong {
+
+.od-form-section-head strong {
   font-size: 13px;
 }
 
-\n.od-form-section-head small {
+
+.od-form-section-head small {
   font-size: 10.5px;
 }
 
-\n.od-form-grid label {
+
+.od-form-grid label {
   gap: 6px;
   font-size: 11.5px;
 }
 
-\n.od-form-grid input,
+
+.od-form-grid input,
 .od-form-grid textarea,
 .od-form-grid select {
   padding: 10px 11px;
   font-size: 13px;
 }
 
-\n.od-form-grid label>small {
+
+.od-form-grid label>small {
   font-size: 10px;
 }
 
-\n.od-modal-actions {
+
+.od-modal-actions {
   gap: 9px;
 }
 
-\n.od-loading {
+
+.od-loading {
   font-size: 12.5px;
 }
 
-\n\n
+
+
+
 
 /* La vista de importación pertenece al mismo módulo y también debe ser legible. */
-\n.od-import-intro h3 {
+
+.od-import-intro h3 {
   font-size: 17px;
 }
 
-\n.od-import-intro p,
+
+.od-import-intro p,
 .od-dropzone input {
   font-size: 12px;
 }
 
-\n.od-drop-main {
+
+.od-drop-main {
   font-size: 16px;
 }
 
-\n.od-dropzone small {
+
+.od-dropzone small {
   font-size: 13px;
 }
 
-\n.od-import-rules span {
+
+.od-import-rules span {
   font-size: 14px;
 }
 
-\n.od-import-filebar span {
+
+.od-import-filebar span {
   font-size: 12px;
 }
 
-\n.od-import-filebar strong {
+
+.od-import-filebar strong {
   font-size: 14px;
 }
 
-\n.od-import-kpis span {
+
+.od-import-kpis span {
   font-size: 13px;
 }
 
-\n.od-import-kpis small {
+
+.od-import-kpis small {
   font-size: 12px;
 }
 
-\n.od-import-safety strong {
+
+.od-import-safety strong {
   font-size: 14px;
 }
 
-\n.od-import-safety p {
+
+.od-import-safety p {
   font-size: 12px;
 }
 
-\n.od-import-table th {
+
+.od-import-table th {
   font-size: 11px;
 }
 
-\n.od-import-table td {
+
+.od-import-table td {
   font-size: 13px;
 }
 
-\n.od-import-table td small {
+
+.od-import-table td small {
   font-size: 12px;
 }
 
-\n.od-import-status,
+
+.od-import-status,
 .od-import-action {
   font-size: 12px;
 }
 
-\n\n@media (max-width:760px) {
-  \n .od-project-table .od-list-row>span::before {
+
+
+@media (max-width:760px) {
+  
+ .od-project-table .od-list-row>span::before {
     font-size: 9px;
   }
 
-  \n .od-form-grid label {
+  
+ .od-form-grid label {
     font-size: 11px;
   }
 
-  \n
+  
+
 }
 
-\n
+
+
+/* =====================================================================
+   OD · MATRIZ A–AB Y CATÁLOGOS (2026-09-24)
+   ===================================================================== */
+.od-table-head,
+.od-project-table .od-list-row {
+  grid-template-columns: minmax(105px,.75fr) minmax(170px,1.2fr) minmax(105px,.75fr) minmax(180px,1.25fr) minmax(180px,1.25fr);
+}
+
+.od-cell-proyecto small {
+  display: block;
+  margin-top: 3px;
+  color: #8c99aa;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.od-cell-inicio,
+.od-cell-material,
+.od-cell-transporte {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.od-form-section-blue {
+  border-color: #c8e1f5;
+  background: #edf7ff;
+}
+
+.od-form-section-yellow {
+  border-color: #eadba3;
+  background: #fff8da;
+}
+
+.od-ab-table-wrap {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid #dfe6ef;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.od-ab-detail-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.od-ab-detail-table th,
+.od-ab-detail-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(91,112,139,.12);
+  vertical-align: top;
+}
+
+.od-ab-detail-table th {
+  width: 42%;
+  color: #49617d;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.od-ab-detail-table td {
+  color: #30435a;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.od-ab-detail-table .od-ab-blue > th,
+.od-ab-detail-table .od-ab-blue > td {
+  background: #eaf6ff;
+}
+
+.od-ab-detail-table .od-ab-yellow > th,
+.od-ab-detail-table .od-ab-yellow > td {
+  background: #fff4c9;
+}
+
+.od-ab-detail-table .od-ab-group-row > td {
+  padding: 9px 10px;
+  border-top: 2px solid #c8d7e8;
+  border-bottom: 1px solid #c8d7e8;
+  background: #f5f8fc;
+}
+
+.od-ab-group-row strong {
+  color: #35587f;
+  font-size: 13px;
+}
+
+.od-ab-group-row .od-tech-edit {
+  float: right;
+}
+
+@media (max-width:1050px) {
+  .od-table-head,
+  .od-project-table .od-list-row {
+    grid-template-columns: minmax(100px,.8fr) minmax(150px,1.2fr) minmax(100px,.75fr) minmax(150px,1fr);
+  }
+  .od-table-head span:last-child,
+  .od-cell-transporte {
+    display: none;
+  }
+}
+
+@media (max-width:760px) {
+  .od-project-table .od-list-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .od-cell-transporte {
+    display: block;
+  }
+  .od-ab-detail-table {
+    min-width: 590px;
+  }
+}
+
+
+/* OD · Lista ampliada A-Q/R y detalle de material · 2026-09-24 */
+.od-project-table {
+  overflow-x: auto;
+}
+.od-table-head,
+.od-project-table .od-list-row {
+  width: max-content;
+  min-width: 2460px;
+  grid-template-columns:
+    92px 180px 95px 190px 165px 165px 125px 195px 195px 210px 160px 170px 220px;
+  column-gap: 10px;
+}
+.od-table-head {
+  align-items: stretch;
+  min-height: 58px;
+}
+.od-table-head > span {
+  display: flex;
+  align-items: center;
+  line-height: 1.25;
+  white-space: normal;
+}
+.od-project-table .od-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 2460px;
+}
+.od-project-table .od-list-row {
+  min-height: 56px;
+}
+.od-project-table .od-list-row > span {
+  white-space: normal;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+}
+.od-cell-proyecto small {
+  display: none !important;
+}
+.od-material-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  padding: 10px 0 4px;
+}
+.od-material-detail-item {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #dce6f3;
+  border-radius: 9px;
+  background: #f8fbff;
+}
+.od-material-detail-item span {
+  display: block;
+  margin-bottom: 4px;
+  color: #708096;
+  font-size: 10px;
+  font-weight: 700;
+}
+.od-material-detail-item strong {
+  color: #30486a;
+  font-size: 12px;
+  word-break: break-word;
+}
+@media (max-width: 900px) {
+  .od-table-head { display: none; }
+  .od-project-table,
+  .od-project-table .od-list { overflow: visible; min-width: 0; }
+  .od-project-table .od-list-row {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: 1fr;
+  }
+}
