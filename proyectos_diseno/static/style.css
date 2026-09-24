@@ -1932,7 +1932,7 @@ label select {
   min-width: 2050px
 }
 
-/* Rev19: revisiones, tamaños, imagen y edición directa del calendario */
+/* v18.1: revisiones, tamaños, imagen y edición directa del calendario */
 .revision-marker {
   background: #22c55e !important
 }
