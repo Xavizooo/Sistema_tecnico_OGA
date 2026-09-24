@@ -256,7 +256,7 @@ def validate_activity_totals(require_complete: bool = False) -> Dict[str, float]
 
 
 def refresh_active_project_activity_percentages(activity_id: str | None = None) -> Dict[str, int]:
-    """Rev19: sincroniza nombre en todos los proyectos y porcentaje solo en activos.
+    """v18: sincroniza nombre en todos los proyectos y porcentaje solo en activos.
 
     Los históricos conservan el porcentaje con el que cerraron, pero si cambia el
     nombre de una actividad el nuevo nombre se refleja tanto en activos como históricos.
@@ -1381,7 +1381,7 @@ def finish_project(project_id: str):
     # La programación original se conserva en el histórico para comparar lo planeado.
     project["estado"] = "Finalizado"
     project["fecha_finalizacion"] = iso(finish_date)
-    # Rev19: los retrasos dejan de formar parte del histórico.
+    # v18.1: los retrasos dejan de formar parte del histórico.
     project["retraso_etapa1"] = 0
     project["retraso_etapa2"] = 0
     project["retraso_etapa3"] = 0

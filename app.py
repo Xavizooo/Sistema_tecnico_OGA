@@ -48,7 +48,7 @@ from clientes import bp as clientes_bp
 from industria import bp as industria_bp
 
 APP_NAME = "SISTEMA TECNICO"
-APP_REV = "0.18.1"
+APP_REV = "0.18.5"
 
 ensure_security_storage()
 app = Flask(__name__)

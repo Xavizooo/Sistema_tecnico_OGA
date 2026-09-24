@@ -280,7 +280,7 @@ class ExcelStorage:
 
 
     def migrate_rev19_defaults(self) -> None:
-        """Agrega valores iniciales de Rev19 sin modificar información existente."""
+        """Agrega valores iniciales de v18.1 sin modificar información existente."""
         equipment = self.read("equipment")
         changed = False
         for row in equipment:
@@ -309,7 +309,7 @@ class ExcelStorage:
             ])
 
     def migrate_rev20_defaults(self) -> None:
-        """Convierte la aprobación legada de Rev19 en un lapso explícito de etapa 0."""
+        """Convierte la aprobación legada de v18.1 en un lapso explícito de etapa 0."""
         periods=self.read("stage_periods"); projects=self.read("projects"); import uuid
         changed=False
         from datetime import date as _date, timedelta as _timedelta
