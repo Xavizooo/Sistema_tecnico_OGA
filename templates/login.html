@@ -10,23 +10,60 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/typography.css') }}">
 </head>
-<body class="login-page login-reference">
+<body class="login-page login-reference login-cinematic">
+  <div class="login-scene" aria-hidden="true">
+    <canvas class="login-particles" id="loginParticles"></canvas>
+    <div class="login-ambient login-ambient-a"></div>
+    <div class="login-ambient login-ambient-b"></div>
+    <div class="login-ambient login-ambient-c"></div>
+    <div class="login-grid"></div>
+    <div class="login-light-beam login-light-beam-a"></div>
+    <div class="login-light-beam login-light-beam-b"></div>
+  </div>
+
   <main class="login-shell" aria-labelledby="loginTitle">
     <section class="login-brand-panel" aria-label="OGA Sistema Técnico y Comercial">
       <div class="login-brand-decoration login-brand-decoration-a"></div>
       <div class="login-brand-decoration login-brand-decoration-b"></div>
+      <div class="login-brand-decoration login-brand-decoration-c"></div>
+
       <div class="login-brand-lockup">
         <span class="login-oga-mark">OGA<sup>®</sup></span>
-        <strong>Sistema Técnico y Comercial</strong>
+        <strong>Sistema Técnico</strong>
+        <p class="login-brand-lead">Desafiando la gravedad en cada proceso.</p>
       </div>
-      <div class="login-brand-caption">GESTIÓN TÉCNICA · MATERIALES · PLANOS</div>
+
+      <div class="login-brand-highlights">
+        <article class="login-highlight-card">
+          <span class="login-highlight-kicker">MÓDULOS</span>
+          <strong>Diseño · Materiales · Planos · Proyectos y Mas</strong>
+          <p>Plataforma centralizada de alta disponibilidad.</p>
+        </article>
+        <article class="login-highlight-card login-highlight-card-accent">
+          <span class="login-highlight-kicker">AMBIENTE</span>
+          <strong>Interfaz animada</strong>
+          <p>Coherencia de marca integrada con una navegación fluida e intuitiva.</p>
+        </article>
+      </div>
+
+      <div class="login-floating-tags" aria-hidden="true">
+        <span>Innovación</span>
+        <span>Proyectos</span>
+        <span>Gestión</span>
+        <span>Precisión</span>
+      </div>
     </section>
 
     <section class="login-form-panel">
       <div class="login-form-wrap">
         <div class="login-main-logo" aria-label="OGA"><span>OGA<sup>®</sup></span></div>
+        <div class="login-welcome-badge">Acceso seguro · Interfaz dinámica</div>
         <h1 id="loginTitle">Bienvenido de nuevo</h1>
-        <p class="login-subtitle">Inicia sesión para acceder a tu cuenta.</p>
+        <p class="login-subtitle">¿No tienes cuenta? Pidele a un administrador que te proporcione una.</p>
+        <div class="login-rotating-copy" aria-live="polite">
+          <span class="login-rotating-label">Tu tiempo, tu talento</span>
+          <strong id="loginRotatingText">Eleva el nivel de lo que haces.</strong>
+        </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -42,12 +79,14 @@
           <div class="login-input-wrap">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg>
             <input id="username" name="username" value="{{ username or '' }}" autocomplete="username" maxlength="50" placeholder="usuario.oga" required autofocus>
+            <span class="login-input-glow" aria-hidden="true"></span>
           </div>
 
           <label for="password">Contraseña <span>*</span></label>
           <div class="login-input-wrap">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M5 10h14v10H5z"/></svg>
             <input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required>
+            <span class="login-input-glow" aria-hidden="true"></span>
             <button class="password-toggle" type="button" data-password-toggle="password" aria-label="Mostrar contraseña" title="Mostrar contraseña">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
             </button>
@@ -56,9 +95,16 @@
           <button class="login-submit" type="submit"><span>Iniciar sesión</span><b aria-hidden="true">→</b></button>
         </form>
 
-        <div class="login-security-note">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.8 2.9 8 7 10 4.1-2 7-5.2 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
-          <span>Acceso exclusivo para personal autorizado de OGA.</span>
+        <div class="login-form-footer">
+          <div class="login-security-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.8 2.9 8 7 10 4.1-2 7-5.2 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+            <span>Acceso exclusivo para personal autorizado de OGA.</span>
+          </div>
+          <div class="login-mini-stats" aria-hidden="true">
+            <span><b></b> Seguro</span>
+            <span><b></b> Visual</span>
+            <span><b></b> Fluido</span>
+          </div>
         </div>
       </div>
     </section>

@@ -18,12 +18,13 @@ from .db import (
     ATTACHMENT_IMAGE, ATTACHMENT_OFFER, DATA_DIR, FILES_DIR, STATUSES, SUBSYSTEM_FIELDS, VISIBLE_TECH_FIELDS,
     add_equipment, add_point, bulk_import_payload, create_attachment, create_opportunity, create_subsystem,
     delete_child, ensure_database, get_attachment, get_opportunity, get_opportunity_detail,
-    get_subsystem, preview_bulk_import, search_opportunities, soft_delete_attachment, soft_delete_opportunity,
+    get_subsystem, preview_bulk_import, search_opportunities, search_opportunities_advanced,
+    advanced_filter_fields, filter_value_suggestions, soft_delete_attachment, soft_delete_opportunity,
     soft_delete_subsystem, stats, update_opportunity, update_opportunity_with_visible_technical,
     update_subsystem, update_visible_subsystem, set_primary_point,
 )
 from .import_excel import delete_stage, load_stage, parse_workbook, save_stage
-from .search import parse_query, query_help_fields
+from .search import parse_advanced_filters, parse_query
 
 bp = Blueprint("oportunidades", __name__, url_prefix="/oportunidades-proyecto")
 
@@ -474,7 +475,9 @@ def _save_attachment(file_storage, kind: str, opportunity_id: int, subsystem_id:
 def index():
     ensure_database()
     query = (request.args.get("q") or "").strip()
-    rows = search_opportunities(parse_query(query), limit=500)
+    active_filters = parse_advanced_filters(request.args.get("f"))
+    search_result = search_opportunities_advanced(parse_query(query), active_filters, limit=500)
+    rows = search_result["rows"]
     selected_id = request.args.get("od", type=int)
     detail = _decorate_detail(get_opportunity_detail(selected_id)) if selected_id else None
     return render_template(
@@ -482,12 +485,14 @@ def index():
         opportunities=rows,
         selected=detail,
         query=query,
+        active_filters=active_filters,
+        filter_fields=advanced_filter_fields(),
+        initial_search_meta=search_result.get("meta") or {},
         od_stats=stats(),
         statuses=STATUSES,
         countries=_country_options(),
         technical_options=_technical_catalog_options(),
         active_users=_active_users(),
-        search_fields=list(query_help_fields()),
         opportunities_page=True,
     )
 
@@ -601,9 +606,28 @@ def import_cancel(token: str):
 
 @bp.get("/api/buscar")
 def api_search():
+    ensure_database()
     query = (request.args.get("q") or "").strip()
-    rows = search_opportunities(parse_query(query), limit=500)
-    return jsonify({"ok": True, "q": query, "rows": rows, "total": len(rows)})
+    active_filters = parse_advanced_filters(request.args.get("f"))
+    result = search_opportunities_advanced(parse_query(query), active_filters, limit=500)
+    rows = result["rows"]
+    return jsonify({
+        "ok": True,
+        "q": query,
+        "filters": active_filters,
+        "rows": rows,
+        "total": len(rows),
+        "meta": result.get("meta") or {},
+    })
+
+
+@bp.get("/api/filtros/valores")
+def api_filter_values():
+    ensure_database()
+    field = (request.args.get("field") or "").strip()
+    query = (request.args.get("q") or "").strip()
+    values = filter_value_suggestions(field, query, limit=8)
+    return jsonify({"ok": True, "field": field, "q": query, "values": values})
 
 
 @bp.get("/api/<int:opportunity_id>/detalle")

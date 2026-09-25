@@ -3,7 +3,10 @@ from __future__ import annotations
 from collections import Counter
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
+import math
+import re
 import sqlite3
 import unicodedata
 from typing import Any, Iterable
@@ -82,6 +85,115 @@ SEARCH_FIELD_MAP = {
     "imagen": "imagen",
 }
 
+# Definición central del filtro avanzado Clave -> Valor. Las claves son estables
+# y apuntan a entradas específicas de search_index; así la interfaz puede filtrar
+# cualquier dato funcional del proyecto sin conocer la estructura física de SQLite.
+ADVANCED_FILTER_FIELDS = (
+    # Proyecto
+    {"key": "proyecto", "label": "Proyecto", "group": "Proyecto", "type": "text"},
+    {"key": "nombre", "label": "Nombre / título", "group": "Proyecto", "type": "text"},
+    {"key": "cliente", "label": "Cliente", "group": "Proyecto", "type": "text"},
+    {"key": "descripcion", "label": "Descripción", "group": "Proyecto", "type": "text"},
+    {"key": "planta", "label": "Planta", "group": "Proyecto", "type": "text"},
+    {"key": "ciudad", "label": "Ciudad", "group": "Proyecto", "type": "text"},
+    {"key": "pais", "label": "País", "group": "Proyecto", "type": "text"},
+    {"key": "industria", "label": "Tipo de industria", "group": "Proyecto", "type": "text"},
+    {"key": "tipo", "label": "Tipo de oportunidad", "group": "Proyecto", "type": "text"},
+    {"key": "fecha", "label": "Fecha de inicio", "group": "Proyecto", "type": "text"},
+    {"key": "valor", "label": "Valor estimado", "group": "Proyecto", "type": "number"},
+    {"key": "observaciones", "label": "Observaciones del proyecto", "group": "Proyecto", "type": "text"},
+    {"key": "responsable", "label": "Responsable", "group": "Proyecto", "type": "text"},
+
+    # Grupo técnico / proceso
+    {"key": "subsistema", "label": "Grupo técnico / subsistema", "group": "Datos técnicos", "type": "text"},
+    {"key": "nombre_proceso", "label": "Nombre del proceso", "group": "Datos técnicos", "type": "text"},
+    {"key": "descripcion_proceso", "label": "Descripción del proceso", "group": "Datos técnicos", "type": "text"},
+    {"key": "voltaje_potencia", "label": "Voltaje de potencia", "group": "Datos técnicos", "type": "text"},
+    {"key": "material_contacto", "label": "Material de contacto con el producto", "group": "Datos técnicos", "type": "text"},
+    {"key": "material_estructural", "label": "Material estructural", "group": "Datos técnicos", "type": "text"},
+    {"key": "material_transportado", "label": "Material a transportar", "group": "Datos técnicos", "type": "text"},
+    {"key": "flujo_kg_h", "label": "Flujo (kg/h)", "group": "Datos técnicos", "type": "number"},
+    {"key": "distancia_horizontal_m", "label": "Distancia horizontal (m)", "group": "Datos técnicos", "type": "number"},
+    {"key": "distancia_vertical_m", "label": "Distancia vertical (m)", "group": "Datos técnicos", "type": "number"},
+    {"key": "curvas_90", "label": "Cantidad de curvas x 90°", "group": "Datos técnicos", "type": "number"},
+    {"key": "distancia_unidad_soplado_m", "label": "Distancia unidad de soplado (m)", "group": "Datos técnicos", "type": "number"},
+    {"key": "curvas_unidad_soplado", "label": "Curvas unidad de soplado / vacío", "group": "Datos técnicos", "type": "number"},
+    {"key": "preferencia_tipologia", "label": "Preferencia de tipología", "group": "Datos técnicos", "type": "text"},
+    {"key": "preferencia_acoples", "label": "Preferencia de acoples", "group": "Datos técnicos", "type": "text"},
+    {"key": "tipo_flujo", "label": "Tipo de flujo", "group": "Datos técnicos", "type": "text"},
+    {"key": "pesaje_oga", "label": "Pesaje OGA", "group": "Datos técnicos", "type": "text"},
+    {"key": "atex", "label": "ATEX", "group": "Datos técnicos", "type": "text"},
+    {"key": "nec", "label": "NEC", "group": "Datos técnicos", "type": "text"},
+    {"key": "ubicacion", "label": "Ubicación", "group": "Datos técnicos", "type": "text"},
+    {"key": "aire_comprimido", "label": "Aire comprimido", "group": "Datos técnicos", "type": "text"},
+    {"key": "tipo_transporte", "label": "Tipo de transporte", "group": "Datos técnicos", "type": "text"},
+    {"key": "diametro_tuberia", "label": "Diámetro de tubería", "group": "Datos técnicos", "type": "text"},
+    {"key": "tipo_acople", "label": "Tipo de acople", "group": "Datos técnicos", "type": "text"},
+    {"key": "potencia_hp", "label": "Potencia (hp)", "group": "Datos técnicos", "type": "number"},
+    {"key": "caudal_cfm", "label": "Caudal (CFM)", "group": "Datos técnicos", "type": "number"},
+    {"key": "diferencial_presion_psi", "label": "Diferencial de presión (PSI)", "group": "Datos técnicos", "type": "number"},
+    {"key": "tipo_bomba", "label": "Tipo de bomba", "group": "Datos técnicos", "type": "text"},
+    {"key": "area_filtracion_m2", "label": "Área de filtración (m²)", "group": "Datos técnicos", "type": "number"},
+    {"key": "micraje_filtracion", "label": "Micraje de filtración", "group": "Datos técnicos", "type": "number"},
+    {"key": "consumo_aire_cfm", "label": "Consumo de aire (CFM)", "group": "Datos técnicos", "type": "number"},
+    {"key": "presion_alimentacion_psi", "label": "Presión de alimentación (PSI)", "group": "Datos técnicos", "type": "number"},
+    {"key": "es_multiequipos", "label": "Es multiequipos", "group": "Datos técnicos", "type": "text"},
+    {"key": "observaciones_tecnicas", "label": "Observaciones técnicas", "group": "Datos técnicos", "type": "text"},
+
+    # Datos relacionados
+    {"key": "entrada_tipo", "label": "Punto de origen · Tipo", "group": "Puntos de origen", "type": "text"},
+    {"key": "entrada_cantidad", "label": "Punto de origen · Cantidad", "group": "Puntos de origen", "type": "number"},
+    {"key": "entrada_altura", "label": "Punto de origen · Restricción de altura", "group": "Puntos de origen", "type": "text"},
+    {"key": "salida_tipo", "label": "Punto de destino · Tipo", "group": "Puntos de destino", "type": "text"},
+    {"key": "salida_cantidad", "label": "Punto de destino · Cantidad", "group": "Puntos de destino", "type": "number"},
+    {"key": "salida_altura", "label": "Punto de destino · Restricción de altura", "group": "Puntos de destino", "type": "text"},
+    {"key": "equipo_tipo", "label": "Equipo · Tipo", "group": "Equipos", "type": "text"},
+    {"key": "equipo_referencia", "label": "Equipo · Referencia", "group": "Equipos", "type": "text"},
+    {"key": "equipo_cantidad", "label": "Equipo · Cantidad", "group": "Equipos", "type": "number"},
+    {"key": "oferta_titulo", "label": "Oferta · Título", "group": "Archivos", "type": "text"},
+    {"key": "oferta_archivo", "label": "Oferta · Nombre de archivo", "group": "Archivos", "type": "text"},
+    {"key": "imagen_titulo", "label": "Imagen · Título", "group": "Archivos", "type": "text"},
+    {"key": "imagen_archivo", "label": "Imagen · Nombre de archivo", "group": "Archivos", "type": "text"},
+)
+
+ADVANCED_FILTER_FIELD_MAP = {item["key"]: item for item in ADVANCED_FILTER_FIELDS}
+SEARCH_INDEX_VERSION = "4"
+
+
+def advanced_filter_fields() -> list[dict[str, str]]:
+    return [dict(item) for item in ADVANCED_FILTER_FIELDS]
+
+
+def parse_filter_number(value: Any) -> float | None:
+    """Extrae un número de valores como '1200', '11.5 hp' o '11,5'.
+
+    También soporta separadores de miles repetidos (2.000.000) y formatos
+    mixtos comunes (1.200,50 / 1,200.50). Un único punto o coma se trata como
+    decimal para no alterar valores técnicos como 1.753 m².
+    """
+    text = str(value or "").strip().replace("\u00a0", " ")
+    match = re.search(r"[-+]?\d[\d.,]*", text)
+    if not match:
+        return None
+    token = match.group(0)
+    sign = "-" if token.startswith("-") else ""
+    token = token.lstrip("+-")
+    try:
+        if token.count(".") > 1 and "," not in token:
+            normalized = token.replace(".", "")
+        elif token.count(",") > 1 and "." not in token:
+            normalized = token.replace(",", "")
+        elif "." in token and "," in token:
+            decimal_sep = "." if token.rfind(".") > token.rfind(",") else ","
+            thousand_sep = "," if decimal_sep == "." else "."
+            normalized = token.replace(thousand_sep, "").replace(decimal_sep, ".")
+        else:
+            normalized = token.replace(",", ".")
+        return float(sign + normalized)
+    except ValueError:
+        return None
+
+
 
 def utcnow() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -92,6 +204,64 @@ def normalize_search(value: Any) -> str:
     text = unicodedata.normalize("NFKD", text)
     text = "".join(ch for ch in text if not unicodedata.combining(ch))
     return " ".join(text.split())
+
+
+def predictive_text_score(query: Any, candidate: Any) -> float:
+    """Puntaje 0..1 para búsqueda tolerante a errores y palabras parciales.
+
+    Da prioridad a coincidencias literales, pero permite errores pequeños de
+    digitación (``peet`` -> ``pet``), palabras en distinto orden y valores con
+    texto adicional (``pet food`` -> ``PET FOOD (PELLET)``).
+    """
+    q = normalize_search(query)
+    c = normalize_search(candidate)
+    if not q or not c:
+        return 0.0
+    if q == c:
+        return 1.0
+    # Las mayúsculas/minúsculas y tildes ya quedaron normalizadas arriba.
+    # Priorizamos además los prefijos para que escribir "ne" sugiera NESTLE
+    # antes que valores que solo contienen esas letras en la mitad.
+    if c.startswith(q):
+        return 0.999
+    if q in c:
+        return 0.995
+
+    q_tokens = re.findall(r"[a-z0-9]+", q)
+    c_tokens = re.findall(r"[a-z0-9]+", c)
+    if not q_tokens or not c_tokens:
+        return SequenceMatcher(None, q, c).ratio()
+
+    token_scores: list[float] = []
+    for q_token in q_tokens:
+        best = 0.0
+        for c_token in c_tokens:
+            ratio = SequenceMatcher(None, q_token, c_token).ratio()
+            # Una palabra parcialmente escrita sigue siendo una señal fuerte.
+            if q_token.startswith(c_token) or c_token.startswith(q_token):
+                overlap = min(len(q_token), len(c_token)) / max(len(q_token), len(c_token))
+                ratio = max(ratio, overlap)
+            best = max(best, ratio)
+        token_scores.append(best)
+
+    average = sum(token_scores) / len(token_scores)
+    weakest = min(token_scores)
+    phrase = SequenceMatcher(None, q, c).ratio()
+    # Obliga a que todas las palabras aporten, evitando que una sola palabra
+    # exacta haga pasar una frase completamente distinta.
+    token_score = (average * 0.70) + (weakest * 0.30)
+    return max(phrase, token_score)
+
+
+def predictive_text_threshold(query: Any) -> float:
+    """Umbral conservador: las consultas cortas necesitan mayor similitud."""
+    normalized = normalize_search(query)
+    compact = re.sub(r"[^a-z0-9]", "", normalized)
+    if len(compact) <= 3:
+        return 0.88
+    if len(compact) <= 5:
+        return 0.80
+    return 0.72
 
 
 def ensure_directories() -> None:
@@ -258,7 +428,13 @@ def ensure_database() -> None:
                 opportunity_id INTEGER NOT NULL,
                 field TEXT NOT NULL,
                 value_norm TEXT NOT NULL,
+                value_display TEXT NOT NULL DEFAULT '',
                 FOREIGN KEY (opportunity_id) REFERENCES opportunities(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS search_index_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL DEFAULT ''
             );
 
             CREATE INDEX IF NOT EXISTS idx_od_active ON opportunities(eliminado_en, actualizado_en DESC);
@@ -270,6 +446,29 @@ def ensure_database() -> None:
             CREATE INDEX IF NOT EXISTS idx_search_field ON search_index(field);
             """
         )
+        # Migración compatible desde el índice histórico (sin value_display).
+        search_columns = {row[1] for row in conn.execute("PRAGMA table_info(search_index)").fetchall()}
+        if "value_display" not in search_columns:
+            conn.execute("ALTER TABLE search_index ADD COLUMN value_display TEXT NOT NULL DEFAULT ''")
+
+        index_version_row = conn.execute(
+            "SELECT value FROM search_index_meta WHERE key='version'"
+        ).fetchone()
+        index_version = str(index_version_row[0]) if index_version_row else ""
+        if index_version != SEARCH_INDEX_VERSION:
+            conn.execute("DELETE FROM search_index")
+            ids = [
+                int(row[0]) for row in conn.execute(
+                    "SELECT id FROM opportunities WHERE eliminado_en IS NULL ORDER BY id"
+                ).fetchall()
+            ]
+            for opportunity_id in ids:
+                _rebuild_search_index_conn(conn, opportunity_id)
+            conn.execute(
+                "INSERT INTO search_index_meta(key,value) VALUES('version',?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (SEARCH_INDEX_VERSION,),
+            )
 
 
 def _clean_dict(source: dict[str, Any], fields: Iterable[str]) -> dict[str, str]:
@@ -804,10 +1003,18 @@ def list_recent(limit: int = 100) -> list[dict[str, Any]]:
         return [dict(row) for row in rows]
 
 
-def _append_index(entries: list[tuple[int, str, str]], opportunity_id: int, field: str, value: Any) -> None:
-    normalized = normalize_search(value)
+def _append_index(entries: list[tuple[int, str, str, str]], opportunity_id: int, field: str, value: Any) -> None:
+    display = str(value or "").strip()
+    normalized = normalize_search(display)
     if normalized:
-        entries.append((opportunity_id, field, normalized))
+        entries.append((opportunity_id, field, normalized, display))
+
+
+def _append_index_aliases(
+    entries: list[tuple[int, str, str, str]], opportunity_id: int, fields: Iterable[str], value: Any
+) -> None:
+    for field in fields:
+        _append_index(entries, opportunity_id, field, value)
 
 
 def _rebuild_search_index_conn(conn: sqlite3.Connection, opportunity_id: int) -> None:
@@ -817,47 +1024,127 @@ def _rebuild_search_index_conn(conn: sqlite3.Connection, opportunity_id: int) ->
     ).fetchone()
     if not opportunity:
         return
-    entries: list[tuple[int, str, str]] = []
+
+    entries: list[tuple[int, str, str, str]] = []
     field_names = {
-        "radicado": "radicado", "proyecto": "proyecto", "nombre": "nombre", "cliente": "cliente",
-        "descripcion": "descripcion", "planta": "planta", "ciudad": "ciudad", "pais": "pais",
-        "industria": "industria", "tipo_oportunidad": "tipo", "estado": "estado", "fecha_inicio": "fecha",
-        "valor_estimado": "valor", "observaciones": "observaciones",
+        "radicado": "radicado",
+        "proyecto": "proyecto",
+        "nombre": "nombre",
+        "cliente": "cliente",
+        "descripcion": "descripcion",
+        "planta": "planta",
+        "ciudad": "ciudad",
+        "pais": "pais",
+        "industria": "industria",
+        "tipo_oportunidad": "tipo",
+        "estado": "estado",
+        "fecha_inicio": "fecha",
+        "valor_estimado": "valor",
+        "observaciones": "observaciones",
     }
     for column, field in field_names.items():
         _append_index(entries, opportunity_id, field, opportunity[column])
-    for row in conn.execute("SELECT username,name FROM opportunity_responsibles WHERE opportunity_id=?", (opportunity_id,)):
-        _append_index(entries, opportunity_id, "responsable", f"{row['name']} {row['username']}")
+
+    for row in conn.execute(
+        "SELECT username,name FROM opportunity_responsibles WHERE opportunity_id=?", (opportunity_id,)
+    ):
+        label = " ".join(part for part in (str(row["name"] or "").strip(), str(row["username"] or "").strip()) if part)
+        _append_index(entries, opportunity_id, "responsable", label)
 
     subsystem_rows = conn.execute(
         "SELECT * FROM subsystems WHERE opportunity_id=? AND eliminado_en IS NULL", (opportunity_id,)
     ).fetchall()
     for subsystem in subsystem_rows:
         sid = int(subsystem["id"])
-        _append_index(entries, opportunity_id, "subsistema", subsystem["nombre"])
+        # Índice detallado para el nuevo filtro Clave -> Valor.
+        subsystem_fields = {
+            "nombre": "subsistema",
+            "nombre_proceso": "nombre_proceso",
+            "descripcion_proceso": "descripcion_proceso",
+            "voltaje_potencia": "voltaje_potencia",
+            "material_contacto": "material_contacto",
+            "material_estructural": "material_estructural",
+            "material_transportado": "material_transportado",
+            "flujo_kg_h": "flujo_kg_h",
+            "distancia_horizontal_m": "distancia_horizontal_m",
+            "distancia_vertical_m": "distancia_vertical_m",
+            "curvas_90": "curvas_90",
+            "distancia_unidad_soplado_m": "distancia_unidad_soplado_m",
+            "curvas_unidad_soplado": "curvas_unidad_soplado",
+            "preferencia_tipologia": "preferencia_tipologia",
+            "preferencia_acoples": "preferencia_acoples",
+            "tipo_flujo": "tipo_flujo",
+            "pesaje_oga": "pesaje_oga",
+            "atex": "atex",
+            "nec": "nec",
+            "ubicacion": "ubicacion",
+            "aire_comprimido": "aire_comprimido",
+            "tipo_transporte": "tipo_transporte",
+            "diametro_tuberia": "diametro_tuberia",
+            "tipo_acople": "tipo_acople",
+            "potencia_hp": "potencia_hp",
+            "caudal_cfm": "caudal_cfm",
+            "diferencial_presion_psi": "diferencial_presion_psi",
+            "tipo_bomba": "tipo_bomba",
+            "area_filtracion_m2": "area_filtracion_m2",
+            "micraje_filtracion": "micraje_filtracion",
+            "consumo_aire_cfm": "consumo_aire_cfm",
+            "presion_alimentacion_psi": "presion_alimentacion_psi",
+            "es_multiequipos": "es_multiequipos",
+            "observaciones": "observaciones_tecnicas",
+        }
+        for column, field in subsystem_fields.items():
+            _append_index(entries, opportunity_id, field, subsystem[column])
+
+        # Alias del buscador libre/campo:valor histórico.
         _append_index(entries, opportunity_id, "proceso", f"{subsystem['nombre_proceso']} {subsystem['descripcion_proceso']}")
         _append_index(entries, opportunity_id, "voltaje", subsystem["voltaje_potencia"])
-        _append_index(entries, opportunity_id, "material", " ".join(str(subsystem[key] or "") for key in ("material_contacto", "material_estructural", "material_transportado")))
+        _append_index(
+            entries, opportunity_id, "material",
+            " ".join(str(subsystem[key] or "") for key in ("material_contacto", "material_estructural", "material_transportado")),
+        )
         _append_index(entries, opportunity_id, "flujo", subsystem["flujo_kg_h"])
-        _append_index(entries, opportunity_id, "distancia", " ".join(str(subsystem[key] or "") for key in ("distancia_horizontal_m", "distancia_vertical_m", "distancia_unidad_soplado_m")))
-        _append_index(entries, opportunity_id, "atex", subsystem["atex"])
-        _append_index(entries, opportunity_id, "nec", subsystem["nec"])
-        _append_index(entries, opportunity_id, "ubicacion", subsystem["ubicacion"])
-        _append_index(entries, opportunity_id, "transporte", " ".join(str(subsystem[key] or "") for key in ("tipo_transporte", "tipo_flujo", "diametro_tuberia", "tipo_acople", "preferencia_acoples", "preferencia_tipologia")))
+        _append_index(
+            entries, opportunity_id, "distancia",
+            " ".join(str(subsystem[key] or "") for key in ("distancia_horizontal_m", "distancia_vertical_m", "distancia_unidad_soplado_m")),
+        )
+        _append_index(entries, opportunity_id, "transporte", " ".join(
+            str(subsystem[key] or "") for key in ("tipo_transporte", "tipo_flujo", "diametro_tuberia", "tipo_acople", "preferencia_acoples", "preferencia_tipologia")
+        ))
         _append_index(entries, opportunity_id, "observaciones", subsystem["observaciones"])
 
         for row in conn.execute("SELECT tipo,cantidad,restriccion_altura FROM entry_points WHERE subsystem_id=?", (sid,)):
+            _append_index(entries, opportunity_id, "entrada_tipo", row["tipo"])
+            _append_index(entries, opportunity_id, "entrada_cantidad", row["cantidad"])
+            _append_index(entries, opportunity_id, "entrada_altura", row["restriccion_altura"])
             _append_index(entries, opportunity_id, "entrada", " ".join(str(value or "") for value in row))
         for row in conn.execute("SELECT tipo,cantidad,restriccion_altura FROM exit_points WHERE subsystem_id=?", (sid,)):
+            _append_index(entries, opportunity_id, "salida_tipo", row["tipo"])
+            _append_index(entries, opportunity_id, "salida_cantidad", row["cantidad"])
+            _append_index(entries, opportunity_id, "salida_altura", row["restriccion_altura"])
             _append_index(entries, opportunity_id, "salida", " ".join(str(value or "") for value in row))
         for row in conn.execute("SELECT tipo_equipo,referencia,cantidad FROM equipment WHERE subsystem_id=?", (sid,)):
+            _append_index(entries, opportunity_id, "equipo_tipo", row["tipo_equipo"])
+            _append_index(entries, opportunity_id, "equipo_referencia", row["referencia"])
+            _append_index(entries, opportunity_id, "equipo_cantidad", row["cantidad"])
             _append_index(entries, opportunity_id, "equipo", " ".join(str(value or "") for value in row))
-        for row in conn.execute("SELECT tipo,titulo,nombre_original FROM attachments WHERE subsystem_id=? AND eliminado_en IS NULL", (sid,)):
-            field = "oferta" if row["tipo"] == ATTACHMENT_OFFER else "imagen"
-            _append_index(entries, opportunity_id, field, f"{row['titulo']} {row['nombre_original']}")
+        for row in conn.execute(
+            "SELECT tipo,titulo,nombre_original FROM attachments WHERE subsystem_id=? AND eliminado_en IS NULL", (sid,)
+        ):
+            if row["tipo"] == ATTACHMENT_OFFER:
+                _append_index(entries, opportunity_id, "oferta_titulo", row["titulo"])
+                _append_index(entries, opportunity_id, "oferta_archivo", row["nombre_original"])
+                _append_index(entries, opportunity_id, "oferta", f"{row['titulo']} {row['nombre_original']}")
+            else:
+                _append_index(entries, opportunity_id, "imagen_titulo", row["titulo"])
+                _append_index(entries, opportunity_id, "imagen_archivo", row["nombre_original"])
+                _append_index(entries, opportunity_id, "imagen", f"{row['titulo']} {row['nombre_original']}")
 
     if entries:
-        conn.executemany("INSERT INTO search_index (opportunity_id,field,value_norm) VALUES (?,?,?)", entries)
+        conn.executemany(
+            "INSERT INTO search_index (opportunity_id,field,value_norm,value_display) VALUES (?,?,?,?)",
+            entries,
+        )
 
 
 def rebuild_search_index(opportunity_id: int | None = None) -> None:
@@ -927,6 +1214,295 @@ def search_opportunities(tokens: list[tuple[str | None, str]], limit: int = 200)
     """
     with connection() as conn:
         return [dict(row) for row in conn.execute(sql, params).fetchall()]
+
+
+def _numeric_filter_values(
+    conn: sqlite3.Connection, opportunity_ids: list[int], field: str
+) -> dict[int, list[tuple[float, str]]]:
+    if not opportunity_ids:
+        return {}
+    marks = ",".join("?" for _ in opportunity_ids)
+    sql = (
+        f"SELECT opportunity_id,value_display FROM search_index "
+        f"WHERE field=? AND opportunity_id IN ({marks})"
+    )
+    values: dict[int, list[tuple[float, str]]] = {}
+    for row in conn.execute(sql, [field, *opportunity_ids]).fetchall():
+        number = parse_filter_number(row["value_display"])
+        if number is None:
+            continue
+        values.setdefault(int(row["opportunity_id"]), []).append((number, str(row["value_display"] or "")))
+    return values
+
+
+def _text_filter_values(
+    conn: sqlite3.Connection, opportunity_ids: list[int], field: str
+) -> dict[int, list[str]]:
+    if not opportunity_ids:
+        return {}
+    marks = ",".join("?" for _ in opportunity_ids)
+    sql = (
+        f"SELECT opportunity_id,value_display FROM search_index "
+        f"WHERE field=? AND opportunity_id IN ({marks}) AND TRIM(value_display)<>''"
+    )
+    values: dict[int, list[str]] = {}
+    for row in conn.execute(sql, [field, *opportunity_ids]).fetchall():
+        display = str(row["value_display"] or "").strip()
+        if display:
+            values.setdefault(int(row["opportunity_id"]), []).append(display)
+    return values
+
+
+def search_opportunities_advanced(
+    tokens: list[tuple[str | None, str]],
+    filters: Iterable[dict[str, Any]] | None = None,
+    limit: int = 500,
+) -> dict[str, Any]:
+    """Busca texto libre + filtros Clave -> Valor.
+
+    Los filtros de texto del constructor avanzado usan coincidencia predictiva:
+    toleran errores pequeños, texto parcial y orden diferente de palabras. Los
+    filtros numéricos conservan el comportamiento de valor exacto / más cercano.
+    """
+    cleaned: list[dict[str, str]] = []
+    for item in list(filters or [])[:20]:
+        key = str((item or {}).get("key") or "").strip()
+        value = str((item or {}).get("value") or "").strip()
+        if key in ADVANCED_FILTER_FIELD_MAP and value:
+            cleaned.append({"key": key, "value": value})
+
+    numeric_filters: list[tuple[dict[str, str], dict[str, str], float]] = []
+    text_filters: list[tuple[dict[str, str], dict[str, str]]] = []
+    for item in cleaned:
+        definition = ADVANCED_FILTER_FIELD_MAP[item["key"]]
+        if definition["type"] == "number":
+            target = parse_filter_number(item["value"])
+            if target is not None:
+                numeric_filters.append((item, definition, target))
+                continue
+        text_filters.append((item, definition))
+
+    # La búsqueda libre superior conserva su semántica histórica. Los filtros
+    # avanzados de texto se evalúan después para poder aplicar similitud.
+    rows = search_opportunities(list(tokens), limit=500)
+    meta: dict[str, Any] = {
+        "approximate": False,
+        "predictive": False,
+        "candidate_total": len(rows),
+        "nearest": [],
+        "predictive_matches": [],
+    }
+
+    if text_filters and rows:
+        ids = [int(row["id"]) for row in rows]
+        with connection() as conn:
+            text_maps = {
+                definition["key"]: _text_filter_values(conn, ids, definition["key"])
+                for _, definition in text_filters
+            }
+
+        surviving: list[dict[str, Any]] = []
+        best_examples: dict[str, tuple[float, str, bool]] = {}
+        predictive_used = False
+        for row in rows:
+            oid = int(row["id"])
+            accepted = True
+            row_matches: list[tuple[str, float, str, bool]] = []
+            for item, definition in text_filters:
+                query_value = item["value"]
+                candidates = text_maps.get(definition["key"], {}).get(oid, [])
+                if not candidates:
+                    accepted = False
+                    break
+                scored = [
+                    (predictive_text_score(query_value, candidate), candidate)
+                    for candidate in candidates
+                ]
+                score, display = max(scored, key=lambda pair: pair[0])
+                threshold = predictive_text_threshold(query_value)
+                if score < threshold:
+                    accepted = False
+                    break
+                literal = normalize_search(query_value) in normalize_search(display)
+                row_matches.append((definition["key"], score, display, literal))
+            if not accepted:
+                continue
+            surviving.append(row)
+            for key, score, display, literal in row_matches:
+                if not literal:
+                    predictive_used = True
+                    previous = best_examples.get(key)
+                    if previous is None or score > previous[0]:
+                        best_examples[key] = (score, display, literal)
+
+        rows = surviving
+        meta["predictive"] = predictive_used
+        for item, definition in text_filters:
+            example = best_examples.get(definition["key"])
+            if not example:
+                continue
+            meta["predictive_matches"].append({
+                "key": definition["key"],
+                "label": definition["label"],
+                "requested": item["value"],
+                "matched": example[1],
+                "score": round(example[0], 4),
+            })
+
+    candidate_total = len(rows)
+    meta["candidate_total"] = candidate_total
+    result_limit = max(1, min(int(limit), 500))
+    if not numeric_filters or not rows:
+        return {"rows": rows[:result_limit], "meta": meta}
+
+    ids = [int(row["id"]) for row in rows]
+    with connection() as conn:
+        value_maps = {
+            definition["key"]: _numeric_filter_values(conn, ids, definition["key"])
+            for _, definition, _ in numeric_filters
+        }
+
+    scored: list[tuple[float, bool, dict[str, Any], dict[str, tuple[float, str] | None]]] = []
+    for row in rows:
+        oid = int(row["id"])
+        score = 0.0
+        all_exact = True
+        nearest_for_row: dict[str, tuple[float, str] | None] = {}
+        valid = True
+        for item, definition, target in numeric_filters:
+            choices = value_maps.get(definition["key"], {}).get(oid, [])
+            if not choices:
+                valid = False
+                break
+            nearest = min(choices, key=lambda pair: abs(pair[0] - target))
+            distance = abs(nearest[0] - target)
+            tolerance = max(1e-9, abs(target) * 1e-9)
+            exact = distance <= tolerance
+            all_exact = all_exact and exact
+            score += distance / max(abs(target), 1.0)
+            nearest_for_row[definition["key"]] = nearest
+        if valid:
+            scored.append((score, all_exact, row, nearest_for_row))
+
+    exact_rows = [item for item in scored if item[1]]
+    if exact_rows:
+        exact_ids = {int(item[2]["id"]) for item in exact_rows}
+        result_rows = [row for row in rows if int(row["id"]) in exact_ids][:result_limit]
+        return {"rows": result_rows, "meta": meta}
+
+    scored.sort(key=lambda item: (item[0], -int(item[2]["id"])))
+    result_rows = [item[2] for item in scored[:min(result_limit, 25)]]
+    meta["approximate"] = bool(scored)
+
+    for original, definition, target in numeric_filters:
+        seen: set[float] = set()
+        nearest_values: list[dict[str, Any]] = []
+        pool: list[tuple[float, str]] = []
+        for _, _, _, nearest_for_row in scored:
+            pair = nearest_for_row.get(definition["key"])
+            if pair is not None:
+                pool.append(pair)
+        for number, display in sorted(pool, key=lambda pair: (abs(pair[0] - target), pair[0])):
+            rounded = round(number, 10)
+            if rounded in seen:
+                continue
+            seen.add(rounded)
+            nearest_values.append({
+                "value": display,
+                "number": number,
+                "distance": abs(number - target),
+            })
+            if len(nearest_values) >= 5:
+                break
+        meta["nearest"].append({
+            "key": definition["key"],
+            "label": definition["label"],
+            "requested": original["value"],
+            "values": nearest_values,
+        })
+
+    return {"rows": result_rows, "meta": meta}
+
+def filter_value_suggestions(field: str, query: str = "", limit: int = 8) -> list[dict[str, Any]]:
+    definition = ADVANCED_FILTER_FIELD_MAP.get(str(field or "").strip())
+    if not definition:
+        return []
+    max_items = max(1, min(int(limit), 20))
+    query_text = str(query or "").strip()
+    with connection() as conn:
+        rows = conn.execute(
+            """SELECT value_display, value_norm, COUNT(*) AS uses
+                 FROM search_index
+                 WHERE field=? AND TRIM(value_display)<>''
+                 GROUP BY value_display, value_norm
+            """,
+            (definition["key"],),
+        ).fetchall()
+
+    if definition["type"] == "number":
+        target = parse_filter_number(query_text)
+        values: list[tuple[float, str, int]] = []
+        for row in rows:
+            number = parse_filter_number(row["value_display"])
+            if number is None:
+                continue
+            values.append((number, str(row["value_display"]), int(row["uses"])))
+        if target is None:
+            values.sort(key=lambda item: (item[0], -item[2]))
+        else:
+            values.sort(key=lambda item: (abs(item[0] - target), item[0], -item[2]))
+        result = []
+        seen: set[float] = set()
+        for number, display, uses in values:
+            rounded = round(number, 10)
+            if rounded in seen:
+                continue
+            seen.add(rounded)
+            result.append({
+                "value": display,
+                "count": uses,
+                "distance": None if target is None else abs(number - target),
+                "exact": False if target is None else math.isclose(number, target, rel_tol=1e-9, abs_tol=1e-9),
+            })
+            if len(result) >= max_items:
+                break
+        return result
+
+    normalized_query = normalize_search(query_text)
+    if not normalized_query:
+        text_values = [(str(row["value_display"]), int(row["uses"])) for row in rows]
+        text_values.sort(key=lambda item: (-item[1], normalize_search(item[0])))
+        return [{"value": value, "count": uses, "score": None, "predictive": False} for value, uses in text_values[:max_items]]
+
+    ranked: list[tuple[bool, bool, float, int, str]] = []
+    suggestion_threshold = max(0.55, predictive_text_threshold(query_text) - 0.16)
+    for row in rows:
+        display = str(row["value_display"] or "").strip()
+        if not display:
+            continue
+        # No confiamos únicamente en value_norm almacenado: lo normalizamos de
+        # nuevo para que bases antiguas también sean 100 % case/accent insensitive.
+        normalized_value = normalize_search(row["value_norm"] or display)
+        prefix = normalized_value.startswith(normalized_query)
+        literal = normalized_query in normalized_value
+        score = predictive_text_score(query_text, display)
+        if not literal and score < suggestion_threshold:
+            continue
+        ranked.append((prefix, literal, score, int(row["uses"]), display))
+
+    # Prefijo > coincidencia contenida > similitud > frecuencia de uso.
+    # Así "ne" coloca NESTLE antes que palabras que casualmente contienen "ne".
+    ranked.sort(key=lambda item: (not item[0], not item[1], -item[2], -item[3], normalize_search(item[4])))
+    return [
+        {
+            "value": display,
+            "count": uses,
+            "score": round(score, 4),
+            "predictive": not literal,
+            "prefix": prefix,
+        }
+        for prefix, literal, score, uses, display in ranked[:max_items]
+    ]
 
 
 def stats() -> dict[str, int]:
