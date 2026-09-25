@@ -1,23 +1,104 @@
 /* REV15: a lighter system-font stack inspired by GitHub/Primer. */
-:root { --oga-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; }
-body, button, input, select, textarea { font-family: var(--oga-font); -webkit-font-smoothing: antialiased; }
-body { font-weight: 400; }
-button, input, select, textarea { font-size: inherit; }
-button, .btn, .side-nav-link, .side-nav-group summary, label { font-weight: 500; }
-h1, h2, h3, h4, th, strong, b { font-weight: 600; }
-.side-submenu a { font-weight: 400; }
-.side-submenu a.active, .side-nav-link.active { font-weight: 500; }
-.app-sidebar .sidebar-brand-mark, .login-oga-mark, .login-main-logo > span { font-weight: 800; }
-.login-reference .login-form h1, .login-reference h1, .management-hero-copy h1 { font-weight: 600; }
-.login-reference .login-submit, .login-reference label, .login-reference input { font-weight: 500; }
-.topbar-title > span { font-weight: 400; }
+:root {
+    --oga-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+body,
+button,
+input,
+select,
+textarea {
+    font-family: var(--oga-font);
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    font-weight: 400;
+}
+
+button,
+input,
+select,
+textarea {
+    font-size: inherit;
+}
+
+button,
+.btn,
+.side-nav-link,
+.side-nav-group summary,
+label {
+    font-weight: 500;
+}
+
+h1,
+h2,
+h3,
+h4,
+th,
+strong,
+b {
+    font-weight: 600;
+}
+
+.side-submenu a {
+    font-weight: 400;
+}
+
+.side-submenu a.active,
+.side-nav-link.active {
+    font-weight: 500;
+}
+
+.app-sidebar .sidebar-brand-mark,
+.login-oga-mark,
+.login-main-logo>span {
+    font-weight: 800;
+}
+
+.login-reference .login-form h1,
+.login-reference h1,
+.management-hero-copy h1 {
+    font-weight: 600;
+}
+
+.login-reference .login-submit,
+.login-reference label,
+.login-reference input {
+    font-weight: 500;
+}
+
+.topbar-title>span {
+    font-weight: 400;
+}
 
 
 /* REV16: legibilidad mejorada, manteniendo exactamente la familia tipográfica de REV15. */
-.side-section-label { font-size: 9.5px; }
-.side-nav-link, .side-nav-group > summary { font-size: 12px; }
-.side-submenu a { font-size: 11px; }
-.side-logout { font-size: 11px; }
-.sidebar-user-text strong { font-size: 10.5px; }
-.sidebar-user-text small { font-size: 9px; }
-.topbar-title > span { font-size: 10px; }
+.side-section-label {
+    font-size: 9.5px;
+}
+
+.side-nav-link,
+.side-nav-group>summary {
+    font-size: 12px;
+}
+
+.side-submenu a {
+    font-size: 11px;
+}
+
+.side-logout {
+    font-size: 11px;
+}
+
+.sidebar-user-text strong {
+    font-size: 10.5px;
+}
+
+.sidebar-user-text small {
+    font-size: 9px;
+}
+
+.topbar-title>span {
+    font-size: 10px;
+}

@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 {% from 'oportunidades/_subsystem_fields.html' import subsystem_fields %}
 {% block title %}Oportunidades de Proyecto · {{ app_name }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/oportunidades.css') }}?v=20260924-od-a-ab1">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/oportunidades.css') }}?v=20260925-od-filter-v5">{% endblock %}
 
 {% block content %}
 <div class="od-page" id="odApp"
   data-search-url="{{ url_for('oportunidades.api_search') }}"
+  data-filter-values-url="{{ url_for('oportunidades.api_filter_values') }}"
   data-detail-url-template="{{ url_for('oportunidades.api_detail_html', opportunity_id=999999) }}"
   data-data-url-template="{{ url_for('oportunidades.api_detail_data', opportunity_id=999999) }}"
   data-edit-url-template="{{ url_for('oportunidades.edit', opportunity_id=999999) }}"
@@ -35,21 +36,42 @@
   <div class="od-search-card">
     <div class="od-search-box">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-      <input id="odSearch" value="{{ query }}" autocomplete="off" placeholder='Buscar '>
-      <button id="odClearSearch" type="button" title="Limpiar búsqueda">×</button>
+      <input id="odSearch" value="{{ query }}" autocomplete="off" placeholder="Buscar en todos los datos del proyecto">
+      <button id="odClearSearch" type="button" title="Limpiar búsqueda libre">×</button>
     </div>
-    <details class="od-search-help">
-      <summary>Filtro avanzado</summary>
-      <p>El texto libre busca también dentro de datos técnicos, equipos, entradas, salidas, ofertas e imágenes. Combine condiciones con <code>campo:valor</code>.</p>
-      <div>{% for field in search_fields %}<button type="button" class="od-search-token" data-token="{{ field }}:">{{ field }}:</button>{% endfor %}</div>
-    </details>
+
+    <div class="od-filter-toolbar">
+      <button class="od-filter-open" id="odAdvancedFilterButton" type="button" aria-expanded="false" aria-controls="odAdvancedFilterPanel">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+        <span>Filtro avanzado</span>
+        <b id="odFilterCount" class="hidden">0</b>
+      </button>
+      <div class="od-filter-chips" id="odFilterChips" aria-live="polite"></div>
+    </div>
+
+    <div class="od-filter-panel hidden" id="odAdvancedFilterPanel" role="dialog" aria-label="Filtro avanzado">
+      <div class="od-filter-panel-head">
+        <div><strong>Buscar por Clave → Valor</strong><small>Combine varios datos del proyecto. Todas las condiciones se cumplen al mismo tiempo. Arrastre la esquina inferior derecha para cambiar el tamaño.</small></div>
+        <button type="button" id="odCloseFilterPanel" title="Cerrar">×</button>
+      </div>
+      <div class="od-filter-rule-list" id="odFilterRuleList"></div>
+      <div class="od-filter-panel-foot">
+        <button class="btn outline od-filter-add" id="odAddFilterRule" type="button">+ Agregar condición</button>
+        <div class="od-filter-panel-foot-right">
+          <button class="btn outline" id="odResetFilters" type="button">Limpiar</button>
+          <button class="btn primary" id="odApplyFilters" type="button">Buscar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="od-filter-nearest hidden" id="odNearestNotice" aria-live="polite"></div>
   </div>
 
-  <div class="od-project-table-shell">
-    <div class="od-list-head"><strong id="odResultCount">{{ opportunities|length }} resultados</strong><span>Seleccione un proyecto para abrir el panel de detalle</span></div>
+  <div class="od-project-table-shell" id="odProjectTableShell" title="Arrastre el borde inferior para cambiar la altura de la tabla">
+    <div class="od-list-head"><strong id="odResultCount">{{ opportunities|length }} resultados</strong><span>Seleccione un proyecto para abrir el panel de detalle · ↕ Arrastre abajo para cambiar la altura</span></div>
     <div class="od-project-table">
       <div class="od-table-head" role="row">
-        <span>Proyecto</span><span>Cliente</span><span>Inicio</span><span>Material a Transportar</span><span>Punto de ingreso</span><span>Punto destino</span><span>Flujo en KG/Hora</span><span>Distancia Horizontal de Transporte (m)</span><span>Distancia Vertical de Transporte (m)</span><span>Cantidad de curvas de tubería x 90 grados</span><span>Tipo de Industria</span><span>Tipo de Transporte</span><span>Material de contacto con el producto</span>
+        <span>Proyecto</span><span>Cliente</span><span>Inicio</span><span>Material a Transportar</span><span>Punto de origen</span><span>Punto de destino</span><span>Flujo en KG/Hora</span><span>Distancia Horizontal de Transporte (m)</span><span>Distancia Vertical de Transporte (m)</span><span>Cantidad de curvas de tubería x 90 grados</span><span>Tipo de Industria</span><span>Tipo de Transporte</span><span>Material de contacto con el producto</span>
       </div>
       <div class="od-list" id="odList" role="rowgroup">
         {% for od in opportunities %}
@@ -58,8 +80,8 @@
           <span class="od-cell-cliente" data-label="Cliente">{{ od.cliente or '—' }}</span>
           <span class="od-cell-inicio" data-label="Inicio">{{ od.fecha_inicio or '—' }}</span>
           <span class="od-cell-material" data-label="Material a Transportar">{{ od.material_transportado or '—' }}</span>
-          <span data-label="Punto de ingreso">{{ od.punto_ingreso or '—' }}</span>
-          <span data-label="Punto destino">{{ od.punto_destino or '—' }}</span>
+          <span data-label="Punto de origen">{{ od.punto_ingreso or '—' }}</span>
+          <span data-label="Punto de destino">{{ od.punto_destino or '—' }}</span>
           <span data-label="Flujo en KG/Hora">{{ od.flujo_kg_h or '—' }}</span>
           <span data-label="Distancia Horizontal de Transporte (m)">{{ od.distancia_horizontal_m or '—' }}</span>
           <span data-label="Distancia Vertical de Transporte (m)">{{ od.distancia_vertical_m or '—' }}</span>
@@ -79,6 +101,9 @@
   </section>
 </div>
 <script type="application/json" id="odTechnicalOptions">{{ technical_options|tojson }}</script>
+<script type="application/json" id="odFilterFields">{{ filter_fields|tojson }}</script>
+<script type="application/json" id="odInitialFilters">{{ active_filters|tojson }}</script>
+<script type="application/json" id="odInitialSearchMeta">{{ initial_search_meta|tojson }}</script>
 
 {% if current_user and current_user.is_admin %}
 <div class="od-modal-backdrop hidden" id="odNewModal" role="dialog" aria-modal="true" aria-labelledby="odNewTitle">
@@ -183,4 +208,4 @@
 </div>
 {% endblock %}
 
-{% block scripts %}<script src="{{ url_for('static', filename='js/oportunidades.js') }}?v=20260924-od-a-ab1"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/oportunidades.js') }}?v=20260925-od-filter-v5"></script>{% endblock %}
