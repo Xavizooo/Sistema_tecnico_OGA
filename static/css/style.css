@@ -3890,7 +3890,7 @@ body.app-body {
     color: #fff;
     background:
         radial-gradient(circle at -10% -5%, rgba(255, 255, 255, .16), transparent 25%),
-        linear-gradient(180deg, #2e63de 0%, #285bd5 50%, #2454cb 100%);
+        linear-gradient(180deg, #3b67d8 0%, #2075f4 50%, #6484ff 100%);
     box-shadow: 6px 0 26px rgba(38, 83, 190, .12);
     transition: width .26s cubic-bezier(.2, .8, .2, 1), transform .26s ease;
 }
@@ -3947,7 +3947,6 @@ body.app-body {
 .side-section-label {
     display: block;
     margin: 14px 9px 7px;
-    color: rgba(255, 255, 255, .55);
     font-size: 8px;
     font-weight: 600;
     letter-spacing: .13em;
@@ -5492,8 +5491,8 @@ body.sidebar-collapsed .side-nav-priority {
     transform: scale(1);
 }
 
-.login-cinematic .login-input-wrap:focus-within > svg,
-.login-cinematic .login-input-wrap:hover > svg {
+.login-cinematic .login-input-wrap:focus-within>svg,
+.login-cinematic .login-input-wrap:hover>svg {
     stroke: #467ddd;
 }
 
@@ -5585,59 +5584,116 @@ body.sidebar-collapsed .side-nav-priority {
 }
 
 @keyframes ambientDrift {
+
     0%,
-    100% { transform: translate3d(0, 0, 0) scale(1); }
-    50% { transform: translate3d(16px, -18px, 0) scale(1.08); }
+    100% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate3d(16px, -18px, 0) scale(1.08);
+    }
 }
 
 @keyframes gridShift {
-    from { transform: translateY(0); }
-    to { transform: translateY(44px); }
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(44px);
+    }
 }
 
 @keyframes beamSweep {
+
     0%,
-    100% { transform: rotate(18deg) translateX(0); }
-    50% { transform: rotate(18deg) translateX(42px); }
+    100% {
+        transform: rotate(18deg) translateX(0);
+    }
+
+    50% {
+        transform: rotate(18deg) translateX(42px);
+    }
 }
 
 @keyframes haloSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes pillPulse {
+
     0%,
-    100% { transform: translateY(0); box-shadow: 0 8px 18px rgba(38, 84, 157, .14); }
-    50% { transform: translateY(-3px); box-shadow: 0 14px 28px rgba(38, 84, 157, .2); }
+    100% {
+        transform: translateY(0);
+        box-shadow: 0 8px 18px rgba(38, 84, 157, .14);
+    }
+
+    50% {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 28px rgba(38, 84, 157, .2);
+    }
 }
 
 @keyframes floatCard {
+
     0%,
-    100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
 }
 
 @keyframes tagDrift {
+
     0%,
-    100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-    50% { transform: translate3d(0, -7px, 0) rotate(-1deg); }
+    100% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+
+    50% {
+        transform: translate3d(0, -7px, 0) rotate(-1deg);
+    }
 }
 
 @keyframes beaconPulse {
-    0% { box-shadow: 0 0 0 0 rgba(77, 142, 255, .45); }
-    70% { box-shadow: 0 0 0 12px rgba(77, 142, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(77, 142, 255, 0); }
+    0% {
+        box-shadow: 0 0 0 0 rgba(77, 142, 255, .45);
+    }
+
+    70% {
+        box-shadow: 0 0 0 12px rgba(77, 142, 255, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(77, 142, 255, 0);
+    }
 }
 
 @keyframes buttonShine {
+
     0%,
-    100% { transform: rotate(18deg) translateX(-240px); }
+    100% {
+        transform: rotate(18deg) translateX(-240px);
+    }
+
     35%,
-    65% { transform: rotate(18deg) translateX(560px); }
+    65% {
+        transform: rotate(18deg) translateX(560px);
+    }
 }
 
 @media (max-width: 720px) {
+
     .login-brand-topline,
     .login-brand-highlights,
     .login-floating-tags,

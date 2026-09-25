@@ -11,15 +11,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/typography.css') }}">
 </head>
 <body class="login-page login-reference login-cinematic">
-  <div class="login-scene" aria-hidden="true">
-    <canvas class="login-particles" id="loginParticles"></canvas>
-    <div class="login-ambient login-ambient-a"></div>
-    <div class="login-ambient login-ambient-b"></div>
-    <div class="login-ambient login-ambient-c"></div>
-    <div class="login-grid"></div>
-    <div class="login-light-beam login-light-beam-a"></div>
-    <div class="login-light-beam login-light-beam-b"></div>
-  </div>
+  {% include '_particle_background.html' %}
 
   <main class="login-shell" aria-labelledby="loginTitle">
     <section class="login-brand-panel" aria-label="OGA Sistema Técnico y Comercial">
@@ -28,21 +20,25 @@
       <div class="login-brand-decoration login-brand-decoration-c"></div>
 
       <div class="login-brand-lockup">
-        <span class="login-oga-mark">OGA<sup>®</sup></span>
+        <img src="{{ url_for('static', filename='img/favicon.svg') }}"
+             alt="OGA"
+             width="92"
+             height="92"
+             style="display:block;width:92px;height:92px;object-fit:contain;filter:drop-shadow(0 12px 22px rgba(22,72,145,.22));animation:brandFloat 4s ease-in-out infinite;">
         <strong>Sistema Técnico</strong>
-        <p class="login-brand-lead">Desafiando la gravedad en cada proceso.</p>
+        <p class="login-brand-lead">Desafiando la gravedad.</p>
       </div>
 
       <div class="login-brand-highlights">
         <article class="login-highlight-card">
           <span class="login-highlight-kicker">MÓDULOS</span>
-          <strong>Diseño · Materiales · Planos · Proyectos y Mas</strong>
-          <p>Plataforma centralizada de alta disponibilidad.</p>
+          <strong>Diseño · Materiales · Planos · Proyectos</strong>
+          <p>Herramientas diseñadas para ahorrar tiempo a colaboradores de OGA.</p>
         </article>
         <article class="login-highlight-card login-highlight-card-accent">
           <span class="login-highlight-kicker">AMBIENTE</span>
           <strong>Interfaz animada</strong>
-          <p>Coherencia de marca integrada con una navegación fluida e intuitiva.</p>
+          <p>Partículas, resplandores, brillos y microinteracciones en vivo.</p>
         </article>
       </div>
 
@@ -59,10 +55,10 @@
         <div class="login-main-logo" aria-label="OGA"><span>OGA<sup>®</sup></span></div>
         <div class="login-welcome-badge">Acceso seguro · Interfaz dinámica</div>
         <h1 id="loginTitle">Bienvenido de nuevo</h1>
-        <p class="login-subtitle">¿No tienes cuenta? Pidele a un administrador que te proporcione una.</p>
+        <p class="login-subtitle">Inicia sesión para acceder a tu cuenta.</p>
         <div class="login-rotating-copy" aria-live="polite">
-          <span class="login-rotating-label">Tu tiempo, tu talento</span>
-          <strong id="loginRotatingText">Eleva el nivel de lo que haces.</strong>
+          <span class="login-rotating-label">Hoy te acompaña:</span>
+          <strong id="loginRotatingText">Un acceso más moderno y animado.</strong>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -110,6 +106,7 @@
     </section>
   </main>
   <footer class="login-footer">OGA · SISTEMA TÉCNICO Y COMERCIAL</footer>
+  <script src="{{ url_for('static', filename='js/global_background.js') }}"></script>
   <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 </body>
 </html>
