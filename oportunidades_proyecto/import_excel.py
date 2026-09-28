@@ -225,16 +225,6 @@ PROJECT_MATRIX_HEADERS = {
 }
 
 
-def _split_project_subsystem(value: Any) -> tuple[str, str]:
-    """Convierte `3107 A` en proyecto `3107` y subsistema `Principal A`."""
-    raw = _cell_text(value)
-    match = re.match(r"^\s*([0-9]+)\s+(.+?)\s*$", raw)
-    if not match:
-        return raw, "Principal"
-    suffix = match.group(2).strip()
-    return match.group(1), f"Principal {suffix}" if suffix else "Principal"
-
-
 def _parse_project_matrix_workbook(workbook, source_filename: str) -> dict[str, Any]:
     """Lee la plantilla SISTEMAS A:AB usada actualmente por OGA.
 
