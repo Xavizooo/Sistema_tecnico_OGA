@@ -29,7 +29,6 @@
     <form method="get" class="industry-search" autocomplete="off">
       {% if proximity_active %}<input type="hidden" name="prox_criterio" value="{{ proximity_field }}"><input type="hidden" name="prox_valor" value="{{ proximity_value }}">{% endif %}
       <input type="search" name="q" value="{{ q }}" placeholder="Buscar criterio, equipo, TAG o referencia...">
-      <button class="btn outline" type="submit">Buscar</button>
       {% if q %}<a class="btn outline" href="{{ url_for('industria.industria_section', slug='cs', prox_criterio=proximity_field, prox_valor=proximity_value) if proximity_active else url_for('industria.industria_section', slug='cs') }}">Limpiar texto</a>{% endif %}
     </form>
   </div>
