@@ -183,7 +183,7 @@
         <span class="od-cell-proyecto" data-label="Proyecto"><strong>${escapeHtml(row.proyecto || '—')}</strong></span>
         <span class="od-cell-cliente" data-label="Cliente">${escapeHtml(row.cliente || '—')}</span>
         <span class="od-cell-inicio" data-label="Inicio">${escapeHtml(row.fecha_inicio || '—')}</span>
-        <span class="od-cell-material" data-label="Material a Transportar">${escapeHtml(row.material_transportado || '—')}</span>
+        <span class="od-cell-material" data-label="Material a Transportar">${row.material_group ? `${escapeHtml(row.material_group)} · ` : ''}${escapeHtml(row.material_transportado || '—')}</span>
         <span data-label="Punto de origen">${escapeHtml(row.punto_ingreso || '—')}</span>
         <span data-label="Punto de destino">${escapeHtml(row.punto_destino || '—')}</span>
         <span data-label="Flujo en KG/Hora">${escapeHtml(row.flujo_kg_h || '—')}</span>
@@ -317,7 +317,7 @@
             </button>
             <span class="od-filter-arrow">→</span>
             <div class="od-filter-value-wrap">
-              <input class="od-filter-value" value="${escapeHtml(rule.value)}" ${field ? '' : 'disabled'} inputmode="${numeric ? 'decimal' : 'text'}" autocomplete="off" placeholder="${numeric ? 'Escriba un número' : 'Escriba; admite texto aproximado'}">
+              <input class="od-filter-value" value="${escapeHtml(rule.value)}" ${field ? '' : 'disabled'} inputmode="${numeric ? 'decimal' : 'text'}" autocomplete="off" placeholder="${numeric ? 'Escriba un número' : rule.key === 'material_transportado' ? 'Escriba el material a transportar' : 'Escriba; admite texto aproximado'}">
               <div class="od-filter-suggestions hidden"></div>
             </div>
             <button type="button" class="od-filter-remove-rule" data-action="remove-rule" title="Quitar condición">×</button>

@@ -1253,6 +1253,46 @@ def _text_filter_values(
     return values
 
 
+def _show_matching_material_group(rows: list[dict[str, Any]], requested: list[str]) -> None:
+    """Muestra en el listado el subsistema que cumplió el filtro de material."""
+    if not rows or not requested:
+        return
+    ids = [int(row["id"]) for row in rows]
+    marks = ",".join("?" for _ in ids)
+    with connection() as conn:
+        subsystems = conn.execute(
+            f"""SELECT s.opportunity_id, s.id, s.nombre, s.material_transportado,
+                       s.flujo_kg_h, s.distancia_horizontal_m, s.distancia_vertical_m,
+                       s.curvas_90, s.tipo_transporte, s.material_contacto,
+                       (SELECT ep.tipo FROM entry_points ep WHERE ep.subsystem_id=s.id
+                        ORDER BY ep.id LIMIT 1) AS punto_ingreso,
+                       (SELECT xp.tipo FROM exit_points xp WHERE xp.subsystem_id=s.id
+                        ORDER BY xp.id LIMIT 1) AS punto_destino
+                FROM subsystems s
+                WHERE s.eliminado_en IS NULL AND s.opportunity_id IN ({marks})
+                ORDER BY s.id""",
+            ids,
+        ).fetchall()
+    by_opportunity: dict[int, list[sqlite3.Row]] = {}
+    for subsystem in subsystems:
+        by_opportunity.setdefault(int(subsystem["opportunity_id"]), []).append(subsystem)
+    for row in rows:
+        for subsystem in by_opportunity.get(int(row["id"]), []):
+            material = normalize_search(subsystem["material_transportado"])
+            # Las condiciones pueden corresponder a grupos distintos del mismo
+            # proyecto; la tabla muestra el grupo de la primera condición.
+            if normalize_search(requested[0]) not in material:
+                continue
+            for column in (
+                "material_transportado", "flujo_kg_h", "distancia_horizontal_m",
+                "distancia_vertical_m", "curvas_90", "tipo_transporte", "material_contacto",
+                "punto_ingreso", "punto_destino",
+            ):
+                row[column] = subsystem[column]
+            row["material_group"] = subsystem["nombre"] or "Principal"
+            break
+
+
 def search_opportunities_advanced(
     tokens: list[tuple[str | None, str]],
     filters: Iterable[dict[str, Any]] | None = None,
@@ -1260,9 +1300,9 @@ def search_opportunities_advanced(
 ) -> dict[str, Any]:
     """Busca texto libre + filtros Clave -> Valor.
 
-    Los filtros de texto del constructor avanzado usan coincidencia predictiva:
-    toleran errores pequeños, texto parcial y orden diferente de palabras. Los
-    filtros numéricos conservan el comportamiento de valor exacto / más cercano.
+    Los filtros de texto toleran errores pequeños, excepto Material a transportar:
+    este exige que el valor buscado aparezca literalmente (sin distinguir tildes
+    o mayúsculas) en el material de algún subsistema del proyecto.
     """
     cleaned: list[dict[str, str]] = []
     for item in list(filters or [])[:20]:
@@ -1314,16 +1354,28 @@ def search_opportunities_advanced(
                 if not candidates:
                     accepted = False
                     break
-                scored = [
-                    (predictive_text_score(query_value, candidate), candidate)
-                    for candidate in candidates
-                ]
-                score, display = max(scored, key=lambda pair: pair[0])
-                threshold = predictive_text_threshold(query_value)
-                if score < threshold:
-                    accepted = False
-                    break
-                literal = normalize_search(query_value) in normalize_search(display)
+                if definition["key"] == "material_transportado":
+                    literal_matches = [
+                        candidate for candidate in candidates
+                        if normalize_search(query_value) in normalize_search(candidate)
+                    ]
+                    if not literal_matches:
+                        accepted = False
+                        break
+                    display = literal_matches[0]
+                    score = 1.0
+                    literal = True
+                else:
+                    scored = [
+                        (predictive_text_score(query_value, candidate), candidate)
+                        for candidate in candidates
+                    ]
+                    score, display = max(scored, key=lambda pair: pair[0])
+                    threshold = predictive_text_threshold(query_value)
+                    if score < threshold:
+                        accepted = False
+                        break
+                    literal = normalize_search(query_value) in normalize_search(display)
                 row_matches.append((definition["key"], score, display, literal))
             if not accepted:
                 continue
@@ -1348,6 +1400,10 @@ def search_opportunities_advanced(
                 "matched": example[1],
                 "score": round(example[0], 4),
             })
+
+        material_requests = [item["value"] for item, definition in text_filters
+                             if definition["key"] == "material_transportado"]
+        _show_matching_material_group(rows, material_requests)
 
     candidate_total = len(rows)
     meta["candidate_total"] = candidate_total

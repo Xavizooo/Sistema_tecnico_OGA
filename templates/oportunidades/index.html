@@ -79,7 +79,7 @@
           <span class="od-cell-proyecto" data-label="Proyecto"><strong>{{ od.proyecto }}</strong></span>
           <span class="od-cell-cliente" data-label="Cliente">{{ od.cliente or '—' }}</span>
           <span class="od-cell-inicio" data-label="Inicio">{{ od.fecha_inicio or '—' }}</span>
-          <span class="od-cell-material" data-label="Material a Transportar">{{ od.material_transportado or '—' }}</span>
+          <span class="od-cell-material" data-label="Material a Transportar">{% if od.material_group %}{{ od.material_group }} · {% endif %}{{ od.material_transportado or '—' }}</span>
           <span data-label="Punto de origen">{{ od.punto_ingreso or '—' }}</span>
           <span data-label="Punto de destino">{{ od.punto_destino or '—' }}</span>
           <span data-label="Flujo en KG/Hora">{{ od.flujo_kg_h or '—' }}</span>
@@ -208,4 +208,4 @@
 </div>
 {% endblock %}
 
-{% block scripts %}<script src="{{ url_for('static', filename='js/oportunidades.js') }}?v=20260925-od-filter-v5"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/oportunidades.js') }}?v=20260928-od-material-exacto"></script>{% endblock %}
