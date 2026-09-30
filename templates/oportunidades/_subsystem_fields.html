@@ -28,7 +28,13 @@
     <label>Curvas unidad de soplado / vacío (Ud)<input name="{{ prefix }}curvas_unidad_soplado" value="{{ values.get('curvas_unidad_soplado','') }}"></label>
 
     {{ select_control(prefix ~ 'tipo_flujo', 'Tipo de flujo', technical_options.get('tipo_flujo', []), values.get('tipo_flujo',''), 'Seleccione tipo de flujo') }}
-    {{ select_control(prefix ~ 'atex', 'ATEX', technical_options.get('atex', []), values.get('atex',''), 'Seleccione ATEX') }}
+    <label>ATEX
+      <select name="{{ prefix }}atex">
+        <option value="">Seleccione ATEX</option>
+        <option value="SI" {% if values.get('atex','')|upper in ['SI', 'SÍ'] %}selected{% endif %}>Sí</option>
+        <option value="NO" {% if values.get('atex','')|upper == 'NO' %}selected{% endif %}>No</option>
+      </select>
+    </label>
     {{ select_control(prefix ~ 'material_contacto', 'Material de contacto con el producto', technical_options.get('material_contacto', []), values.get('material_contacto',''), 'Seleccione material') }}
     {{ select_control(prefix ~ 'voltaje_potencia', 'Voltaje de potencia', technical_options.get('voltaje_potencia', []), values.get('voltaje_potencia',''), 'Seleccione voltaje') }}
   </div>

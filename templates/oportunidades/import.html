@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Subida masiva OD · {{ app_name }}{% endblock %}
+{% block title %}Carga masiva de proyectos · {{ app_name }}{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/oportunidades.css') }}">{% endblock %}
 
 {% block content %}
@@ -7,13 +7,30 @@
   <div class="od-page-head">
     <div>
       <span class="page-eyebrow">OPORTUNIDADES DE PROYECTO</span>
-      <h2>Subida masiva</h2>
-      <p>Analice el Excel antes de modificar la base. La importación completa campos vacíos y conserva la información ya registrada.</p>
+      <h2>Agregar / actualizar desde Excel</h2>
+      <p>Use la plantilla oficial con las 28 columnas en el mismo orden de SISTEMAS. Revise el resultado antes de confirmar.</p>
     </div>
     <div class="od-head-actions">
       <a class="btn outline" href="{{ url_for('oportunidades.index') }}">← Volver</a>
     </div>
   </div>
+
+  {% if validation_errors %}
+  <section class="od-import-card" role="alert">
+    <h3>No se guardó ningún proyecto · {{ validation_errors|length }} errores</h3>
+    <p>Corrija todas las filas indicadas y vuelva a analizar el Excel.</p>
+    <div class="od-import-table-wrap">
+      <table class="od-import-table">
+        <thead><tr><th>Fila de Excel</th><th>Columna</th><th>Campo</th><th>Valor recibido</th><th>Motivo</th></tr></thead>
+        <tbody>{% for error in validation_errors %}<tr>
+          <td>{{ error.row }}</td><td>{{ error.column }}</td><td>{{ error.field }}</td>
+          <td>{{ error.value or '(vacío)' }}</td><td>{{ error.reason }}</td>
+        </tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    {% if import_payload %}<a class="btn outline" href="{{ url_for('oportunidades.import_page') }}">Analizar otro archivo</a>{% endif %}
+  </section>
+  {% endif %}
 
   {% if not import_payload %}
   <section class="od-import-card">
@@ -21,20 +38,27 @@
       <div class="od-import-icon">XL</div>
       <div>
         <h3>Plantilla de proyectos A–AB</h3>
-        <p>El formato actual usa la hoja <b>SISTEMAS</b> con las columnas A–AB. Si el archivo también contiene <b>EQUIPOS</b>, se importan como información complementaria; no es obligatorio.</p>
+        <p>Descargue la plantilla oficial. No cambie los nombres ni el orden de las columnas A–AB. Esta carga procesa la hoja <b>SISTEMAS</b>; las otras hojas no se importan.</p>
       </div>
     </div>
+    <p><a class="btn outline" href="{{ url_for('oportunidades.import_template') }}">Descargar plantilla oficial</a></p>
     <form method="post" action="{{ url_for('oportunidades.import_analyze') }}" enctype="multipart/form-data" class="od-import-form">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <label for="import-mode"><b>¿Qué desea hacer?</b></label>
+      <select id="import-mode" name="import_mode" required>
+        <option value="add" {% if selected_mode != 'update' %}selected{% endif %}>Agregar proyectos nuevos</option>
+        <option value="update" {% if selected_mode == 'update' %}selected{% endif %}>Actualizar proyectos existentes</option>
+      </select>
+      <p>Al agregar, proyecto y cliente son obligatorios. Los demás campos son opcionales. Al actualizar, las celdas vacías conservan el dato actual; un subsistema nuevo se agrega al proyecto existente.</p>
       <label class="od-dropzone">
         <input type="file" name="archivo_excel" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
         <span class="od-drop-main">Seleccione el archivo <b>.xlsx</b></span>
         <small>Máximo 25 MB.</small>
       </label>
       <div class="od-import-rules">
-        <div><strong>1</strong><span>Se reconocen Proyecto, datos A–Q y criterios técnicos R–AB.</span></div>
-        <div><strong>2</strong><span>Los sufijos A, B, C… se convierten en grupos técnicos del mismo proyecto.</span></div>
-        <div><strong>3</strong><span>Solo al confirmar se modifica la base de datos.</span></div>
+        <div><strong>1</strong><span>Se comprueban las 28 columnas, sus formatos y los valores de los catálogos de Datos.</span></div>
+        <div><strong>2</strong><span>Una fila por subsistema: 3876A y 3876B pertenecen al mismo proyecto y se procesan por separado.</span></div>
+        <div><strong>3</strong><span>Si hay un error, se indica fila, columna y motivo. Ninguna fila se guarda hasta corregirlo.</span></div>
       </div>
       <div class="od-modal-actions"><button class="btn primary" type="submit">Analizar Excel</button></div>
     </form>
@@ -58,8 +82,8 @@
   <section class="od-import-safety">
     <div class="od-import-shield">✓</div>
     <div>
-      <strong>Modo seguro de combinación</strong>
-      <p><b>Proyecto</b> identifica la oportunidad. Si ya existe, los valores actuales se conservan y el Excel solo completa campos que estén vacíos. Los grupos, puntos y equipos que ya existen no se duplican al cargar nuevamente el mismo archivo.</p>
+      <strong>{{ "Agregar proyectos" if import_payload.import_mode == "add" else "Actualizar proyectos" }}</strong>
+      <p>{% if import_payload.import_mode == 'add' %}Se crearán los proyectos nuevos. Los proyectos existentes no se modifican.{% else %}Los valores no vacíos reemplazan los datos del proyecto y del subsistema indicado. Los vacíos conservan el dato actual. Cliente, industria y fecha de inicio son datos generales del proyecto; la fecha usa la más temprana del Excel. Origen y destino actualizan el primer punto y conservan sus cantidades, alturas y puntos adicionales.{% endif %}</p>
     </div>
   </section>
 
@@ -67,7 +91,7 @@
     <div class="od-form-section-head"><div><strong>Comparación con la base actual</strong><small>Lo que ocurrirá si confirma ahora.</small></div></div>
     <div class="od-import-compare-grid">
       <div class="create"><strong>{{ comparison.new_opportunities }}</strong><span>Proyectos nuevos</span></div>
-      <div class="merge"><strong>{{ comparison.existing_opportunities }}</strong><span>Proyectos a completar</span></div>
+      <div class="merge"><strong>{{ comparison.existing_opportunities }}</strong><span>Proyectos a actualizar</span></div>
       <div class="create"><strong>{{ comparison.new_subsystems }}</strong><span>Grupos nuevos</span></div>
       <div class="merge"><strong>{{ comparison.existing_subsystems }}</strong><span>Grupos existentes</span></div>
     </div>
@@ -107,6 +131,20 @@
     </div>
   </section>
 
+  {% if import_payload.import_mode == 'update' and comparison.changes %}
+  <section class="od-import-preview">
+    <h3>Valores que se actualizarán</h3>
+    <div class="od-import-table-wrap"><table class="od-import-table">
+      <thead><tr><th>Proyecto</th><th>Subsistema</th><th>Campo</th><th>Actual</th><th>Excel</th></tr></thead>
+      <tbody>{% for change in comparison.changes %}<tr>
+        <td>{{ change.project }}</td><td>{{ change.subsystem or 'General' }}</td><td>{{ change.field }}</td>
+        <td>{{ change.before or '(vacío)' }}</td><td>{{ change.after }}</td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  {% endif %}
+
+  {% if not validation_errors %}
   <div class="od-import-confirmbar">
     <div>
       <strong>¿Confirmar importación?</strong>
@@ -123,6 +161,7 @@
       </form>
     </div>
   </div>
+  {% endif %}
   {% endif %}
 </div>
 {% endblock %}

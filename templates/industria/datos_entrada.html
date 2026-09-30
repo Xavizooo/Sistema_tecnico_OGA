@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}DATOS DE ENTRADA · Datos · OGA{% endblock %}
+{% block title %}{{ section.title }} · Datos · OGA{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}?v=20260930-all-systems">
 {% endblock %}
 {% block content %}
 <div class="industry-shell data-entry-shell">
-  <div class="industry-breadcrumb"><a href="{{ url_for('industria.industria_index') }}">Datos</a><span>›</span><strong>DATOS DE ENTRADA</strong></div>
+  <div class="industry-breadcrumb"><a href="{{ url_for('industria.industria_index') }}">Datos</a><span>›</span><strong>{{ section.title }}</strong></div>
 
   <div class="industry-hero compact">
     <div>
       <span class="workspace-eyebrow">PROYECTOS · DATOS</span>
-      <h1>DATOS DE ENTRADA</h1>
+      <h1>{{ section.title }}</h1>
       <p>{{ section.description }}</p>
     </div>
     <div class="industry-counter"><strong>{{ total_rows }}</strong><span>registros totales</span></div>
@@ -34,7 +34,7 @@
             <button class="data-entry-menu-button" type="button" aria-label="Opciones de {{ field.label }}" aria-expanded="false" data-entry-menu-button>☰</button>
             <div class="data-entry-menu-panel" role="menu">
               <button type="button" role="menuitem" data-open-modal="cbBulk_{{ field.key }}">Subida masiva</button>
-              <a role="menuitem" href="{{ url_for('industria.industria_cb_export', field_key=field.key) }}">Exportar Excel</a>
+              <a role="menuitem" href="{{ url_for('industria.industria_' ~ catalog_prefix ~ '_export', field_key=field.key) }}">Exportar Excel</a>
             </div>
           </div>
         </div>
@@ -64,9 +64,9 @@
                     data-cb-edit
                     data-field-label="{{ field.label|e }}"
                     data-field-value="{{ (row.get(field.key) or '')|e }}"
-                    data-edit-url="{{ url_for('industria.industria_cb_edit', field_key=field.key, row_id=row.id) }}"
+                    data-edit-url="{{ url_for('industria.industria_' ~ catalog_prefix ~ '_edit', field_key=field.key, row_id=row.id) }}"
                   >Editar</button>
-                  <form method="post" action="{{ url_for('industria.industria_cb_delete', field_key=field.key, row_id=row.id) }}" onsubmit="return confirm('¿Eliminar este registro de {{ field.label|e }}?');">
+                  <form method="post" action="{{ url_for('industria.industria_' ~ catalog_prefix ~ '_delete', field_key=field.key, row_id=row.id) }}" onsubmit="return confirm('¿Eliminar este registro de {{ field.label|e }}?');">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                     <button class="icon-action delete" type="submit">Eliminar</button>
                   </form>
@@ -93,10 +93,10 @@
       <div><span class="workspace-eyebrow">DATOS DE ENTRADA</span><h3>Agregar registro</h3><p class="modal-copy">{{ field.label }}</p></div>
       <button type="button" class="modal-x" data-close-modal>×</button>
     </div>
-    <form method="post" action="{{ url_for('industria.industria_cb_save', field_key=field.key) }}" class="industry-form-grid">
+    <form method="post" action="{{ url_for('industria.industria_' ~ catalog_prefix ~ '_save', field_key=field.key) }}" class="industry-form-grid">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
       <label class="span-2">{{ field.label }}
-        <input name="value" autocomplete="off" {% if field.kind == 'number' %}inputmode="decimal"{% endif %} required>
+        <input name="value" autocomplete="off" {% if field.kind == 'number' %}inputmode="decimal"{% elif field.kind == 'date' %}type="date"{% endif %} required>
       </label>
       <div class="form-actions span-all">
         <button class="btn outline" type="button" data-close-modal>Cancelar</button>
@@ -112,8 +112,8 @@
       <div><span class="workspace-eyebrow">EXCEL</span><h3>Subida masiva</h3><p class="modal-copy">{{ field.label }}</p></div>
       <button type="button" class="modal-x" data-close-modal>×</button>
     </div>
-    <p class="modal-copy">Acepta un Excel de una sola columna con el encabezado <strong>{{ field.label }}</strong> y también reconoce la columna correspondiente del <strong>CB_MATRIZ.xlsx</strong> histórico.</p>
-    <form method="post" enctype="multipart/form-data" action="{{ url_for('industria.industria_cb_bulk', field_key=field.key) }}" class="bulk-form">
+    <p class="modal-copy">Acepta un Excel de una sola columna con el encabezado <strong>{{ field.label }}</strong> y también reconoce la columna correspondiente de <strong>{{ 'SISTEMAS.xlsx' if section.slug == 'sistemas' else 'CB_MATRIZ.xlsx' }}</strong>.</p>
+    <form method="post" enctype="multipart/form-data" action="{{ url_for('industria.industria_' ~ catalog_prefix ~ '_bulk', field_key=field.key) }}" class="bulk-form">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
       <label class="file-drop">Archivo Excel<input type="file" name="archivo" accept=".xlsx,.xlsm" required></label>
       <label>Modo de carga

@@ -27,8 +27,8 @@
       <div class="od-kpi"><strong>{{ od_stats.total }}</strong><span>Oportunidades</span></div>
       <div class="od-kpi"><strong>{{ od_stats.subsistemas }}</strong><span>Grupos técnicos</span></div>
       {% if current_user and current_user.is_admin %}
-      <a class="btn outline od-phase2" href="/oportunidades-proyecto/importar">Subida masiva</a>
-      <button class="btn primary" id="odNewButton" type="button">+ Nueva OD</button>
+      <a class="btn outline od-phase2" href="/oportunidades-proyecto/importar">Agregar / actualizar desde Excel</a>
+      <button class="btn primary" id="odNewButton" type="button">+ Nuevo Proyecto</button>
       {% endif %}
     </div>
   </div>
@@ -36,7 +36,7 @@
   <div class="od-search-card">
     <div class="od-search-box">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-      <input id="odSearch" value="{{ query }}" autocomplete="off" placeholder="Buscar en todos los datos del proyecto">
+      <input id="odSearch" value="{{ query }}" autocomplete="off" placeholder="Buscar proyecto o subsistema: 3876, 3876A, 3805A1">
       <button id="odClearSearch" type="button" title="Limpiar búsqueda libre">×</button>
     </div>
 
@@ -75,8 +75,8 @@
       </div>
       <div class="od-list" id="odList" role="rowgroup">
         {% for od in opportunities %}
-        <button class="od-list-row {% if selected and selected.id == od.id %}active{% endif %}" type="button" data-id="{{ od.id }}" role="row">
-          <span class="od-cell-proyecto" data-label="Proyecto"><strong>{{ od.proyecto }}</strong></span>
+        <button class="od-list-row {% if selected and selected.id == od.id %}active{% endif %}" type="button" data-id="{{ od.id }}" data-subsystem-id="{{ od.selected_subsystem_id or '' }}" role="row">
+          <span class="od-cell-proyecto" data-label="Proyecto"><strong>{{ od.proyecto_display or od.proyecto }}</strong></span>
           <span class="od-cell-cliente" data-label="Cliente">{{ od.cliente or '—' }}</span>
           <span class="od-cell-inicio" data-label="Inicio">{{ od.fecha_inicio or '—' }}</span>
           <span class="od-cell-material" data-label="Material a Transportar">{% if od.material_group %}{{ od.material_group }} · {% endif %}{{ od.material_transportado or '—' }}</span>
@@ -108,7 +108,7 @@
 {% if current_user and current_user.is_admin %}
 <div class="od-modal-backdrop hidden" id="odNewModal" role="dialog" aria-modal="true" aria-labelledby="odNewTitle">
   <div class="od-modal od-modal-xl">
-    <div class="od-modal-head"><div><span class="od-kicker">NUEVA OPORTUNIDAD</span><h3 id="odNewTitle">Crear OD</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
+    <div class="od-modal-head"><div><span class="od-kicker">NUEVO PROYECTO</span><h3 id="odNewTitle">Crear proyecto</h3></div><button type="button" class="od-modal-close" data-close-modal>×</button></div>
     <form method="post" action="{{ url_for('oportunidades.create') }}" enctype="multipart/form-data" class="od-modal-body">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
       <div class="od-form-section od-form-section-blue">
@@ -122,7 +122,7 @@
           <label>Tipo de industria
             <select name="industria"><option value="">Seleccione industria</option>{% for option in technical_options.get('industria', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select>
           </label>
-          <label class="wide-2">Equipo responsable<select name="responsables" multiple size="4">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select><small>Dato interno de OGA; no modifica las columnas A–AB.</small></label>
+          <label class="wide-2">Ingeniero responsable<select name="responsables" multiple size="4">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select><small>Dato interno de OGA; no modifica las columnas A–AB.</small></label>
         </div>
       </div>
       {{ subsystem_fields('sub_', {'nombre':'Principal'}, technical_options) }}
@@ -135,7 +135,7 @@
           <label>Imagen<input type="file" name="imagen_inicial" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"></label>
         </div>
       </div>
-      <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Crear oportunidad</button></div>
+      <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Crear proyecto</button></div>
     </form>
   </div>
 </div>
@@ -152,7 +152,7 @@
           <label>Cliente<select name="cliente" required><option value="">Seleccione cliente</option>{% for option in technical_options.get('cliente', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select></label>
           <label>Inicio<input type="date" name="fecha_inicio"></label>
           <label>Tipo de industria<select name="industria"><option value="">Seleccione industria</option>{% for option in technical_options.get('industria', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select></label>
-          <label class="wide-2">Equipo responsable<select name="responsables" multiple size="5">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select></label>
+          <label class="wide-2">Ingeniero responsable<select name="responsables" multiple size="5">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select></label>
         </div>
       </div>
       <div class="od-modal-actions"><button type="button" class="btn outline" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar todos los cambios</button></div>
@@ -208,4 +208,4 @@
 </div>
 {% endblock %}
 
-{% block scripts %}<script src="{{ url_for('static', filename='js/oportunidades.js') }}?v=20260928-od-material-exacto"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/oportunidades.js') }}?v=20260930-subsystems-form"></script>{% endblock %}

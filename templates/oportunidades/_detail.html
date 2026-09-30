@@ -7,8 +7,8 @@
 <div class="od-detail-shell" data-opportunity-id="{{ opportunity.id }}">
   <div class="od-detail-head od-detail-head-new">
     <div class="od-detail-title-block">
-      <span class="od-kicker">OD · PROYECTO {{ opportunity.proyecto }}</span>
-      <h2>Proyecto {{ opportunity.proyecto }}</h2>
+      <span class="od-kicker">PROYECTO {{ opportunity.proyecto_display or opportunity.proyecto }}</span>
+      <h2>Proyecto {{ opportunity.proyecto_display or opportunity.proyecto }}</h2>
       <p>{{ opportunity.cliente or 'Sin cliente registrado.' }}</p>
     </div>
     <div class="od-detail-actions od-detail-actions-top">

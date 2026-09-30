@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ section.title }} · Datos · OGA{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}?v=20260930-points-flow">
 {% endblock %}
 {% block content %}
 <div class="industry-shell">
@@ -11,7 +11,7 @@
     <div class="industry-actions">
       <a class="btn outline" href="{{ url_for('industria.industria_export_excel', slug=section.slug) }}">Exportar Excel</a>
       <button class="btn outline" type="button" data-open-modal="bulkModal">Subida masiva</button>
-      <button class="btn primary" type="button" data-open-modal="createModal">Agregar registro</button>
+      {% if section.slug != 'puntos-origen' %}<button class="btn primary" type="button" data-open-modal="createModal">Agregar registro</button>{% endif %}
     </div>
   </div>
 
@@ -27,36 +27,29 @@
   <div class="industry-table-card">
     <div class="industry-table-scroll">
       {% if section.slug == 'puntos-origen' %}
-      <table class="industry-table points-origin-table">
-        <thead>
-          <tr>
-            <th>Puntos de origen<small>PO_01</small></th>
-            <th class="point-actions-col">Acciones origen</th>
-            <th>Puntos de destino<small>PO_02</small></th>
-            <th class="point-actions-col">Acciones destino</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for row in rows %}
-          <tr>
-            <td>{{ row.get('tipo_origen') or '—' }}</td>
-            <td>
-              <div class="row-actions">
-                <button class="icon-action edit" type="button" data-field-edit data-field-label="Punto de origen" data-field-value="{{ row.get('tipo_origen') or '' }}" data-edit-url="{{ url_for('industria.industria_field_edit', slug=section.slug, row_id=row.id, field_key='tipo_origen') }}">Editar</button>
-                <form method="post" action="{{ url_for('industria.industria_field_delete', slug=section.slug, row_id=row.id, field_key='tipo_origen') }}" onsubmit="return confirm('¿Eliminar este punto de origen?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="icon-action delete" type="submit">Eliminar</button></form>
-              </div>
-            </td>
-            <td>{{ row.get('tipo_destino') or '—' }}</td>
-            <td>
-              <div class="row-actions">
-                <button class="icon-action edit" type="button" data-field-edit data-field-label="Punto de destino" data-field-value="{{ row.get('tipo_destino') or '' }}" data-edit-url="{{ url_for('industria.industria_field_edit', slug=section.slug, row_id=row.id, field_key='tipo_destino') }}">Editar</button>
-                <form method="post" action="{{ url_for('industria.industria_field_delete', slug=section.slug, row_id=row.id, field_key='tipo_destino') }}" onsubmit="return confirm('¿Eliminar este punto de destino?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="icon-action delete" type="submit">Eliminar</button></form>
-              </div>
-            </td>
-          </tr>
-        {% else %}<tr><td colspan="4" class="empty-state">Aún no hay registros. Puedes agregarlos manualmente o usar Subida masiva.</td></tr>{% endfor %}
-        </tbody>
-      </table>
+      <div class="data-entry-grid points-catalog-grid">
+      {% for key, label, code in [('tipo_origen', 'Puntos de origen', 'PO_01'), ('tipo_destino', 'Puntos de destino', 'PO_02')] %}
+      <section class="data-entry-card">
+        <div class="data-entry-card-head">
+          <h2>{{ label }}</h2>
+          <button class="btn primary" type="button" data-open-modal="createPoint_{{ key }}">+ Agregar</button>
+        </div>
+        <div class="data-entry-table-scroll">
+          <table class="industry-table points-origin-table" data-point-table="{{ key }}">
+            <thead><tr><th>{{ label }}<small>{{ code }}</small></th><th>Acciones</th></tr></thead>
+            <tbody>
+            {% for row in rows if row.get(key) %}
+              <tr><td>{{ row.get(key) }}</td><td><div class="row-actions">
+                <button class="icon-action edit" type="button" data-field-edit data-field-label="{{ label }}" data-field-value="{{ row.get(key) }}" data-edit-url="{{ url_for('industria.industria_field_edit', slug=section.slug, row_id=row.id, field_key=key) }}">Editar</button>
+                <form method="post" action="{{ url_for('industria.industria_field_delete', slug=section.slug, row_id=row.id, field_key=key) }}" onsubmit="return confirm('¿Eliminar este punto?');"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="icon-action delete" type="submit">Eliminar</button></form>
+              </div></td></tr>
+            {% else %}<tr><td colspan="2" class="empty-state">Sin registros en {{ label|lower }}.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {% endfor %}
+      </div>
       {% else %}
       <table class="industry-table wide-table">
         <thead><tr>{% for f in section.fields %}<th title="{{ f.code }}">{{ f.label }}{% if f.code %}<small>{{ f.code }}</small>{% endif %}</th>{% endfor %}<th class="actions-col">Acciones</th></tr></thead>
@@ -95,7 +88,20 @@
   {% endfor %}
 {% endmacro %}
 
+{% if section.slug == 'puntos-origen' %}
+{% for key, label in [('tipo_origen', 'Punto de origen'), ('tipo_destino', 'Punto de destino')] %}
+<div class="oga-modal hidden" id="createPoint_{{ key }}" aria-hidden="true"><div class="oga-modal-card">
+  <div class="oga-modal-head"><h3>Agregar {{ label|lower }}</h3><button type="button" class="modal-x" data-close-modal>×</button></div>
+  <form method="post" action="{{ url_for('industria.industria_save', slug=section.slug) }}" class="industry-form-grid">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <label class="span-2">{{ label }}<input name="{{ key }}" required></label>
+    <div class="form-actions span-all"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar</button></div>
+  </form>
+</div></div>
+{% endfor %}
+{% else %}
 <div class="oga-modal hidden" id="createModal" aria-hidden="true"><div class="oga-modal-card xwide"><div class="oga-modal-head"><div><span class="workspace-eyebrow">{{ section.title|upper }}</span><h3>Agregar registro</h3></div><button type="button" class="modal-x" data-close-modal>×</button></div><form method="post" action="{{ url_for('industria.industria_save', slug=section.slug) }}" class="industry-form-grid dynamic"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">{{ render_fields() }}<div class="form-actions span-all"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar registro</button></div></form></div></div>
+{% endif %}
 
 {% if section.slug == 'puntos-origen' %}
 <div class="oga-modal hidden" id="fieldEditModal" aria-hidden="true"><div class="oga-modal-card"><div class="oga-modal-head"><div><span class="workspace-eyebrow">{{ section.title|upper }}</span><h3 id="fieldEditTitle">Editar punto</h3></div><button type="button" class="modal-x" data-close-modal>×</button></div><form method="post" id="pointFieldEditForm" class="industry-form-grid"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><label class="span-2" id="pointFieldEditLabel">Valor<input name="value" id="pointFieldEditValue" autocomplete="off"></label><div class="form-actions span-all"><button class="btn outline" type="button" data-close-modal>Cancelar</button><button class="btn primary" type="submit">Guardar cambios</button></div></form></div></div>

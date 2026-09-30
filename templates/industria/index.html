@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Datos · OGA{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/industria.css') }}?v=20260930-all-systems">
 {% endblock %}
 {% block content %}
 <div class="industry-shell">
@@ -13,6 +13,28 @@
     </div>
     <a class="btn outline" href="{{ url_for('clientes.index') }}">Ir a Clientes</a>
   </div>
+
+  {% if system_fields %}
+  <details class="industry-table-card">
+    <summary style="padding:16px;cursor:pointer">Dónde consultar los 28 campos de SISTEMAS</summary>
+    <div class="industry-table-scroll">
+      <table class="industry-table">
+        <thead><tr><th>Campo</th><th>Catálogo</th></tr></thead>
+        <tbody>
+        {% for field in system_fields %}
+          <tr><td>{{ field.label }}</td><td>
+            {% if field.section == 'clientes' %}
+            <a href="{{ url_for('clientes.index') }}">Clientes{% if field.field == 'tipo_industria' %} · Tipo de industria{% endif %}</a>
+            {% else %}
+            <a href="{{ url_for('industria.industria_section', slug=field.section) }}">{{ sections[field.section].title }}</a>
+            {% endif %}
+          </td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+  {% endif %}
 
   <div class="industry-module-grid">
     {% for slug, section in sections.items() %}
