@@ -796,7 +796,7 @@
 
 /* Puntos de origen/destino: dos listas simples con acciones independientes. */
 .industry-table.points-origin-table {
-    min-width: 760px;
+    min-width: 340px;
 }
 
 .points-origin-table th:nth-child(1),
@@ -819,7 +819,7 @@
 
 .data-entry-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
     align-items: start
 }

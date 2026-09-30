@@ -98,9 +98,8 @@
         <a class="{% if request.endpoint == 'oportunidades.index' %}active{% endif %}"
           href="{{ url_for('oportunidades.index') }}">Lista de Proyectos</a>
         {% if current_user and current_user.is_admin %}
-        <a href="{{ url_for('oportunidades.index') }}#nueva-od" data-od-sidebar-new>Nueva OD</a>
-        <a class="{% if request.endpoint and request.endpoint.startswith('oportunidades.import_') %}active{% endif %}"
-          href="/oportunidades-proyecto/importar">Subida masiva</a>
+        <a href="{{ url_for('oportunidades.index') }}#nueva-od" data-od-sidebar-new>Nuevo Proyecto</a>
+        
         {% endif %}
 
         <details class="side-subgroup" {% if request.endpoint and request.endpoint.startswith('industria.') %}open{% endif %}>
@@ -116,7 +115,7 @@
             <a class="{% if request.endpoint == 'industria.industria_section' and request.view_args and request.view_args.get('slug') == 'ciudades' %}active{% endif %}"
               href="{{ url_for('industria.industria_section', slug='ciudades') }}">Ciudades</a>
             <a class="{% if request.endpoint == 'industria.industria_section' and request.view_args and request.view_args.get('slug') == 'materiales' %}active{% endif %}"
-              href="{{ url_for('industria.industria_section', slug='materiales') }}">Tipos de material</a>
+              href="{{ url_for('industria.industria_section', slug='materiales') }}">Material a Transportar</a>
             <a class="{% if request.endpoint == 'industria.industria_section' and request.view_args and request.view_args.get('slug') == 'cb-matriz' %}active{% endif %}"
               href="{{ url_for('industria.industria_section', slug='cb-matriz') }}">Datos de entrada</a>
             <a class="{% if request.endpoint == 'industria.industria_section' and request.view_args and request.view_args.get('slug') == 'codigo-equipos' %}active{% endif %}"
@@ -138,6 +137,8 @@
               href="{{ url_for('clientes.index', view='lista') }}">Lista de clientes</a>
           </div>
         </details>
+        <a class="{% if request.endpoint and request.endpoint.startswith('oportunidades.import_') %}active{% endif %}"
+          href="/oportunidades-proyecto/importar">Subida masiva</a>
       </div>
     </details>
 
