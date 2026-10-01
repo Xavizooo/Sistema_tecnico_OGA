@@ -10,7 +10,7 @@ from pathlib import Path
 from werkzeug.utils import secure_filename
 from typing import Any, Dict, List
 
-from flask import Blueprint, current_app, jsonify, render_template, request, send_from_directory, url_for
+from flask import Blueprint, redirect, current_app, jsonify, render_template, request, send_from_directory, url_for
 
 from .services import (
     STAGE_COLORS,
@@ -598,6 +598,7 @@ def dashboard_data(
 
 @bp.get("/")
 def index():
+    if request.args.get('view')=='designers': return redirect(url_for('reportes.team'))
     return render_template("index.html", app_name="PROYECTOS DISEÑO MECÁNICO", project_design_page=True)
 
 
@@ -639,6 +640,7 @@ def list_designers():
 
 @bp.post("/api/designers")
 def create_designer():
+    return fail('Los diseñadores se administran únicamente en Equipo de Diseño.',409)
     data = payload()
     name = str(data.get("nombre", "")).strip()
     if not name:
@@ -664,10 +666,16 @@ def create_designer():
 
 @bp.put("/api/designers/<row_id>")
 def update_designer(row_id: str):
+    return fail('Los diseñadores se administran únicamente en Equipo de Diseño.',409)
     current = storage.get("designers", row_id)
     if not current:
         return fail("Diseñador no encontrado.", 404)
-    current.update(payload())
+    changes=payload()
+    from reportes.db import profiles
+    linked=next((p for p in profiles() if p['designer_id']==row_id),None)
+    if linked and any(k in changes and str(changes[k])!=str(current.get(k,'')) for k in ['hora_entrada','hora_salida','almuerzo_inicio','almuerzo_fin','descansos','dias_laborales']):
+        return fail('Este diseñador tiene un perfil vinculado. Actualice su horario en Jornada y reportes → Diseñadores y horarios.',409)
+    current.update(changes)
     current["id"] = row_id
     if designer_daily_hours(current) <= 0:
         raise ValueError("El horario del diseñador no genera horas laborables válidas.")
@@ -677,6 +685,10 @@ def update_designer(row_id: str):
 
 @bp.delete("/api/designers/<row_id>")
 def delete_designer(row_id: str):
+    return fail('Los diseñadores se administran únicamente en Equipo de Diseño.',409)
+    from reportes.db import profiles
+    if any(p['designer_id']==row_id for p in profiles()):
+        return fail('Este diseñador está vinculado a una cuenta. Desactive la cuenta desde Jornada y reportes para conservar la trazabilidad.',409)
     current = storage.get("designers", row_id)
     if not current:
         return fail("Diseñador no encontrado.", 404)

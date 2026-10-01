@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 from openpyxl import load_workbook
 
 from auth_store import STATUS_ACTIVE, audit_event, list_users
+from industria import SECTIONS as INDUSTRIA_SECTIONS, _load as load_industry_catalog, ensure_systems_catalogs
 from .db import (
     ATTACHMENT_IMAGE, ATTACHMENT_OFFER, DATA_DIR, FILES_DIR, STATUSES, SUBSYSTEM_FIELDS, VISIBLE_TECH_FIELDS,
     add_equipment, add_point, bulk_import_payload, create_attachment, create_opportunity, create_subsystem,
@@ -22,9 +23,11 @@ from .db import (
     advanced_filter_fields, filter_value_suggestions, soft_delete_attachment, soft_delete_opportunity,
     soft_delete_subsystem, stats, update_opportunity, update_opportunity_with_visible_technical,
     update_subsystem, update_visible_subsystem, set_primary_point,
+    subsystem_suffix,
 )
 from .import_excel import delete_stage, load_stage, parse_workbook, save_stage
 from .search import parse_advanced_filters, parse_query
+from .bulk_projects import BulkValidationError, parse_projects, template_bytes, validate_targets, preview_changes
 
 bp = Blueprint("oportunidades", __name__, url_prefix="/oportunidades-proyecto")
 
@@ -270,11 +273,12 @@ def _material_details_map() -> dict[str, dict[str, str]]:
     return result
 
 def _technical_catalog_options() -> dict[str, list[str]]:
-    """Catálogos vivos usados por Nueva OD y edición técnica.
+    """Catálogos vivos usados por Nueva Nuevo Proyecto y edición técnica.
 
     Cada selector lee directamente los archivos de Proyectos > Datos, por lo
     que cualquier cambio en esos catálogos se refleja sin duplicar listas.
     """
+    ensure_systems_catalogs()
     return {
         "cliente": _client_values("nombre"),
         "industria": _client_values("tipo_industria"),
@@ -287,12 +291,10 @@ def _technical_catalog_options() -> dict[str, list[str]]:
         "punto_destino": _catalog_values(
             "TIPOS_DE_PUNTOS_DE_ORIGEN.xlsx", ("Tipo de punto de destino", "Puntos de destino"),
         ),
-        "tipo_flujo": _catalog_values(
-            "CB_MATRIZ.xlsx", ("Tipo de flujo",),
-        ),
-        "atex": _catalog_values(
-            "CB_MATRIZ.xlsx", ("ATEX",),
-        ),
+        "tipo_flujo": sorted({str(row.get("tipo_flujo") or "").strip()
+                              for row in load_industry_catalog(INDUSTRIA_SECTIONS["cb-matriz"])
+                              if str(row.get("tipo_flujo") or "").strip()}, key=str.casefold),
+        "atex": ["SI", "NO"],
         "material_contacto": _catalog_values(
             "CB_MATRIZ.xlsx", ("Material en contacto con producto", "Material de contacto con el producto"),
         ),
@@ -403,6 +405,19 @@ def _decorate_detail(detail: dict | None) -> dict | None:
     return detail
 
 
+def _scoped_detail(detail: dict | None, subsystem_id: int | None) -> dict | None:
+    if not detail or not subsystem_id:
+        return detail
+    selected = [subsystem for subsystem in detail.get("subsystems", [])
+                if int(subsystem["id"]) == subsystem_id]
+    if not selected:
+        abort(404)
+    detail["subsystems"] = selected
+    detail["selected_subsystem_id"] = subsystem_id
+    detail["proyecto_display"] = str(detail["proyecto"]) + subsystem_suffix(selected[0]["nombre"])
+    return detail
+
+
 def _safe_attachment_path(relative_path: str) -> Path:
     candidate = (DATA_DIR / str(relative_path or "")).resolve()
     root = DATA_DIR.resolve()
@@ -479,7 +494,11 @@ def index():
     search_result = search_opportunities_advanced(parse_query(query), active_filters, limit=500)
     rows = search_result["rows"]
     selected_id = request.args.get("od", type=int)
-    detail = _decorate_detail(get_opportunity_detail(selected_id)) if selected_id else None
+    selected_subsystem = request.args.get("subsystem", type=int)
+    if selected_id and not selected_subsystem:
+        selected_row = next((row for row in rows if int(row["id"]) == selected_id), {})
+        selected_subsystem = selected_row.get("selected_subsystem_id")
+    detail = _decorate_detail(_scoped_detail(get_opportunity_detail(selected_id), selected_subsystem)) if selected_id else None
     return render_template(
         "oportunidades/index.html",
         opportunities=rows,
@@ -511,6 +530,14 @@ def import_page():
     )
 
 
+@bp.get("/importar/plantilla")
+@_admin_required
+def import_template():
+    return send_file(template_bytes(), as_attachment=True,
+                     download_name="PLANTILLA_SISTEMAS_PROYECTOS.xlsx",
+                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
 @bp.post("/importar/analizar")
 @_admin_required
 def import_analyze():
@@ -530,9 +557,22 @@ def import_analyze():
         stream.seek(position)
         if size <= 0 or size > MAX_IMPORT_BYTES:
             raise ValueError("El Excel está vacío o supera el límite de 25 MB.")
-        payload = parse_workbook(stream, filename)
+        ensure_database()
+        catalogs = _technical_catalog_options()
+        catalogs.pop("tipo_equipo", None)
+        catalogs["atex"] = sorted({"SI", "NO"} | {
+            str(row.get("atex") or "").strip()
+            for row in load_industry_catalog(INDUSTRIA_SECTIONS["sistemas"])
+            if str(row.get("atex") or "").strip()
+        })
+        payload = parse_projects(stream, filename, request.form.get("import_mode"), catalogs)
         token = save_stage(payload, _user().get("id"))
         return redirect(url_for("oportunidades.import_preview", token=token))
+    except BulkValidationError as exc:
+        return render_template("oportunidades/import.html", opportunities_page=True,
+                               import_payload=None, comparison=None, import_token=None,
+                               validation_errors=exc.errors,
+                               selected_mode=request.form.get("import_mode", "add")), 400
     except Exception as exc:
         audit_event("ANALIZAR CARGUE MASIVO", "OPORTUNIDADES DE PROYECTO", str(exc), "ERROR", _user(), _client_ip())
         g.audit_logged = True
@@ -545,16 +585,19 @@ def import_analyze():
 def import_preview(token: str):
     try:
         payload = load_stage(token, _user().get("id"))
+        validation_errors = validate_targets(payload)
     except PermissionError:
         abort(403)
     except Exception as exc:
         flash(str(exc), "error")
         return redirect(url_for("oportunidades.import_page"))
     comparison = preview_bulk_import(payload)
+    comparison["changes"] = preview_changes(payload, comparison)
     return render_template(
         "oportunidades/import.html",
         opportunities_page=True,
         import_payload=payload,
+        validation_errors=validation_errors,
         comparison=comparison,
         import_token=token,
     )
@@ -565,6 +608,9 @@ def import_preview(token: str):
 def import_confirm(token: str):
     try:
         payload = load_stage(token, _user().get("id"))
+        errors = validate_targets(payload)
+        if errors:
+            raise BulkValidationError(errors)
         result = bulk_import_payload(payload, _user())
         source = str(payload.get("source_filename") or "Excel")
         detail = (
@@ -578,8 +624,8 @@ def import_confirm(token: str):
         delete_stage(token, _user().get("id"))
         flash(
             "Carga masiva completada: "
-            f"{result['oportunidades_creadas']} oportunidades nuevas, "
-            f"{result['oportunidades_combinadas']} existentes revisadas, "
+            f"{result['oportunidades_creadas']} proyectos nuevos, "
+            f"{result['oportunidades_combinadas']} proyectos actualizados, "
             f"{result['subsistemas_creados']} subsistemas, "
             f"{result['entradas_agregadas']} entradas, "
             f"{result['salidas_agregadas']} salidas y "
@@ -632,7 +678,7 @@ def api_filter_values():
 
 @bp.get("/api/<int:opportunity_id>/detalle")
 def api_detail_html(opportunity_id: int):
-    detail = _decorate_detail(get_opportunity_detail(opportunity_id))
+    detail = _decorate_detail(_scoped_detail(get_opportunity_detail(opportunity_id), request.args.get("subsystem", type=int)))
     if not detail:
         return jsonify({"ok": False, "error": "Oportunidad no encontrada."}), 404
     html = render_template("oportunidades/_detail.html", opportunity=detail)
@@ -691,7 +737,7 @@ def create():
         if warnings:
             flash("La OD se creó, pero hubo archivos que no pudieron guardarse: " + " | ".join(warnings), "error")
         else:
-            flash("Oportunidad creada correctamente.", "ok")
+            flash("Proyecto creado correctamente.", "ok")
         return redirect(url_for("oportunidades.index", od=opportunity_id))
     except Exception as exc:
         audit_event("CREAR OPORTUNIDAD", "OPORTUNIDADES DE PROYECTO", str(exc), "ERROR", _user(), _client_ip())

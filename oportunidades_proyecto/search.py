@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shlex
 from typing import Iterable
 
@@ -15,6 +16,8 @@ def parse_query(query: str) -> list[tuple[str | None, str]]:
       material:azucar flujo:5000
     """
     text = str(query or "").strip()
+    # Permite 3876A y 3876 A sin consumir palabras completas del buscador.
+    text = re.sub(r"\b(\d+)\s+([a-zA-Z]{1,2}\d*)\b", r"\1\2", text)
     if not text:
         return []
     try:

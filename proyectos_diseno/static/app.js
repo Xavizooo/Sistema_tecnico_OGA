@@ -33,6 +33,7 @@
   };
 
   async function api(url, options = {}) {
+    if (APP_ROOT?.dataset.readonly === "true" && !["GET","HEAD"].includes((options.method || "GET").toUpperCase())) throw new Error("Su perfil tiene acceso de consulta. Solicite el cambio al Jefe de Diseño.");
     const opts = { ...options, headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN, ...(options.headers || {}) } };
     const response = await fetch(moduleUrl(url), opts);
     let body;

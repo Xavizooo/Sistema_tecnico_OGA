@@ -1,0 +1,130 @@
+{
+  "version": "0.19.1",
+  "bases_compatibles": [
+    "0.18.8",
+    "0.19.0"
+  ],
+  "tipo": "Actualización acumulativa sin datos",
+  "archivos": [
+    {
+      "ruta": "INICIAR.py",
+      "sha256": "e0c7326706e82186e324034cd8670e21df48081a701977f05bcb77de40fbc85f"
+    },
+    {
+      "ruta": "LEEME_ACTUALIZACION_ROLES_REPORTES.txt",
+      "sha256": "aa267f92760bcd67f6045e12e8d74643540623e43e38e3b727a3bea3d041cd3c"
+    },
+    {
+      "ruta": "README.txt",
+      "sha256": "43d724abd4e2099277e6a4c54127e03a86a2c60c12b28ebe38e65e7a907942c5"
+    },
+    {
+      "ruta": "VALIDAR_ROLES_REPORTES.py",
+      "sha256": "e36ecae907861d631b91fe2a9f2d63d6f044db0eacfeb5065f4ba215fab8577c"
+    },
+    {
+      "ruta": "app.py",
+      "sha256": "e183a3e271c13186780c23bda9debd768812e723609fa69cb9a84f260c630ff4"
+    },
+    {
+      "ruta": "asistente_oga/engine.py",
+      "sha256": "760b145d8b1a357c713360d53c026d44dc843d46eaa1f8f2c6f6a609b34f5311"
+    },
+    {
+      "ruta": "asistente_oga/local_engine.py",
+      "sha256": "37e6552d46b364ef96e127d5ec3d0c0ab1e99625568e7e198716145918c7a7ad"
+    },
+    {
+      "ruta": "asistente_oga/routes.py",
+      "sha256": "8f70c2594b609453725c1e0136d6278ae065e146b671dde54053aa177c9350f8"
+    },
+    {
+      "ruta": "auth_store.py",
+      "sha256": "00aa95f457c817832691ecb8d54e8d3968d2a22fb22a9147b350c26698e3178a"
+    },
+    {
+      "ruta": "documentacion/VERIFICACION_ROLES_REPORTES.txt",
+      "sha256": "ad83b1e56d79092978aadd04b680c053eaf1b7bf5a18ac633da9ab901ac9d94b"
+    },
+    {
+      "ruta": "permisos.py",
+      "sha256": "a4d7a9805372dd9187b1af640ada87e96057ff6c101f1e2ba7ed348d8153fcef"
+    },
+    {
+      "ruta": "proyectos_diseno/routes.py",
+      "sha256": "9a2ce1928639e884b9a7aa024d565bc418888537a92170e3a43b11cbc9089bd4"
+    },
+    {
+      "ruta": "proyectos_diseno/services.py",
+      "sha256": "8536f3e2ef5617ebc425699981f30819ea114160568729cf35fb9a8e22f4eea0"
+    },
+    {
+      "ruta": "proyectos_diseno/static/app.js",
+      "sha256": "43c5db4bf9d9ff6ca4ce6f9936fc9849918329ec4ae795366bbd43932a4ec5a8"
+    },
+    {
+      "ruta": "proyectos_diseno/storage.py",
+      "sha256": "8e8853f1f14ca1588bee3ed3d4c28f0c13ebc2098bab8018bbf2b58c70f8d144"
+    },
+    {
+      "ruta": "proyectos_diseno/templates/index.html",
+      "sha256": "fd46f814e2ac00d6b525f9442d1b5b4cc5465a2c8ce15fa4a02b87c68d94a47e"
+    },
+    {
+      "ruta": "reportes/__init__.py",
+      "sha256": "eaa35776c11bb669aa5a1daf8a3707ecf7a8a1a95ea7949b9f2559c47c5a3cb3"
+    },
+    {
+      "ruta": "reportes/db.py",
+      "sha256": "136df20386c161b9fe03b20c716fba7aeb5cc4ebbe17973bdd2a148cf48207b6"
+    },
+    {
+      "ruta": "reportes/routes.py",
+      "sha256": "194a1ad551fb9884f1fb03246f2c8f138a4918505e6dc5d979b24828d9d01daa"
+    },
+    {
+      "ruta": "static/css/reportes.css",
+      "sha256": "7202e5136c903c6846d0506eba3958ae5f18dbaf61d2e87acad3e42d7084d23f"
+    },
+    {
+      "ruta": "templates/_header.html",
+      "sha256": "517e570577ef65a3fdcf12f6bf243d380ae15da0192e607202eda774bb36cd54"
+    },
+    {
+      "ruta": "templates/admin_users.html",
+      "sha256": "6e935b182c4efcdbf8d757ab3abbbc562d9204947bae5a16fee4c57ae87ece65"
+    },
+    {
+      "ruta": "templates/base.html",
+      "sha256": "7a991f0c60c6b893339aa87ade9ac6c451c5e8f8d29e6e0bbc2da1bdc3fb7b09"
+    },
+    {
+      "ruta": "templates/inicio.html",
+      "sha256": "27e6cc3a480a5ed12ae67e564f8a5b4cd08a0bcd72c77688b3e534da71fd8ef6"
+    },
+    {
+      "ruta": "templates/reportes/asignaciones.html",
+      "sha256": "e06454ebd469721dd7b599b20514166e2e00f071f4e9ddcf01338856b06938f2"
+    },
+    {
+      "ruta": "templates/reportes/base.html",
+      "sha256": "43944ddd0ba5a933261f75bbc9c7b86cc27d4cdf91fdedf321745394c220146e"
+    },
+    {
+      "ruta": "templates/reportes/equipo.html",
+      "sha256": "7e28ec1ca154ccd50e0e3dae63098149531adca477ed6076a5016f1b7f339f13"
+    },
+    {
+      "ruta": "templates/reportes/mis_reportes.html",
+      "sha256": "8f190a221a71dff81c16ae9fa9f43f94adcafd5f1a3a916365e367c0a09d20e5"
+    },
+    {
+      "ruta": "templates/reportes/tablero.html",
+      "sha256": "44ebaac1a8aa7929fd6458bf7507972b6937ddc56b35ee9cb1cd62a4d08ed93d"
+    },
+    {
+      "ruta": "tests/test_reportes_roles.py",
+      "sha256": "655a516bc6ceb57240b2979fe54214799fa2b91a19959e82f445001918499698"
+    }
+  ]
+}

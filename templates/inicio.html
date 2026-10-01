@@ -28,7 +28,9 @@
         <span class="welcome-icon">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.2 5.7.8-4.1 4 .9 5.7-5.1-2.7-5.1 2.7.9-5.7-4.1-4 5.7-.8z"/></svg>
         </span>
-        <h2>¡Bienvenido a tu espacio de trabajo!</h2>
+        <h2>¡Bienvenido, {{ current_user.name }}!</h2>
+        <p><strong>{{ current_user.role }}</strong></p>
+        <a class="btn primary" href="{{ url_for('reportes.dashboard' if current_user.is_admin or current_user.is_chief else 'reportes.index') }}">{{ 'VER TABLERO DEL EQUIPO' if current_user.is_admin or current_user.is_chief else 'REPORTAR MI JORNADA' }}</a>
         <p>Utiliza el menú lateral para navegar entre Generador de RQ, Revisor de Planos, Biblioteca, Proyectos Diseño y Capacitaciones.</p>
         <div class="welcome-callout">
           <strong>Comienza tu jornada productiva</strong>

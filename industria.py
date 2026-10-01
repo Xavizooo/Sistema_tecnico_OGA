@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import math
+import json
 import os
+from decimal import Decimal, InvalidOperation
+from datetime import date, datetime
 from io import BytesIO
 import re
 import tempfile
@@ -28,6 +31,8 @@ bp = Blueprint("industria", __name__)
 def _text(value: Any) -> str:
     if value is None:
         return ""
+    if isinstance(value, (date, datetime)):
+        return value.strftime("%Y-%m-%d")
     if isinstance(value, float) and value.is_integer():
         return str(int(value))
     return str(value).strip()
@@ -60,13 +65,32 @@ class Section:
 
 
 SECTIONS: dict[str, Section] = {
+    "sistemas": Section(
+        slug="sistemas",
+        title="Otros datos de SISTEMAS",
+        sheet="DATOS SISTEMAS",
+        filename="DATOS_SISTEMAS.xlsx",
+        source_start_row=2,
+        description="Proyecto, inicio, flujo, distancias, curvas y valores históricos de ATEX. Los demás campos reutilizan sus catálogos actuales.",
+        fields=(
+            Field("proyecto", "Proyecto", "A"),
+            Field("inicio", "Inicio", "C", "date"),
+            Field("flujo_kg_h", "Flujo en KG/Hora", "G", "number"),
+            Field("distancia_horizontal_m", "Distancia Horizontal de Transporte (m)", "H", "number"),
+            Field("distancia_vertical_m", "Distancia Vertical de Transporte (m)", "I", "number"),
+            Field("curvas_90", "Cantidad de curvas de tubería x 90 grados", "J", "number"),
+            Field("distancia_unidad_soplado_m", "Distancia Unidad de Soplado (m)", "K", "number"),
+            Field("curvas_unidad_soplado", "Curvas Tubería Unidad de Soplado / Vacío (Ud)", "L", "number"),
+            Field("atex", "ATEX (histórico)", "O"),
+        ),
+    ),
     "puntos-origen": Section(
         slug="puntos-origen",
-        title="Tipos de puntos de origen",
+        title="Puntos de origen y destino",
         sheet="TIPOS DE PUNTOS DE ORIGEN",
         filename="TIPOS_DE_PUNTOS_DE_ORIGEN.xlsx",
         source_start_row=2,
-        description="Catálogo independiente de puntos de origen y puntos de destino.",
+        description="Administre los puntos de origen y de destino en tablas separadas.",
         fields=(
             Field("tipo_origen", "Puntos de origen", "PO_01", source_col=1),
             Field("tipo_destino", "Puntos de destino", "PO_02", source_col=4),
@@ -91,7 +115,7 @@ SECTIONS: dict[str, Section] = {
     ),
     "materiales": Section(
         slug="materiales",
-        title="Tipos de material",
+        title="Materiales a transportar",
         sheet="TIPOS DE MATERIALES",
         filename="TIPOS_DE_MATERIALES.xlsx",
         source_start_row=3,
@@ -121,11 +145,12 @@ SECTIONS: dict[str, Section] = {
         sheet="CB_MATRIZ",
         filename="CB_MATRIZ.xlsx",
         source_start_row=2,
-        description="Catálogos independientes para voltaje de potencia y materiales de entrada del sistema.",
+        description="Catálogos de voltaje, materiales y tipo de flujo utilizados al crear proyectos.",
         fields=(
             Field("voltaje", "Voltaje De Potencia", "CB_OD_A1", "number", 2),
             Field("material_contacto", "Material en contacto con producto", "CB_OD_A2", source_col=3),
             Field("material_estructura", "Material estructuras", "CB_OD_A3", source_col=4),
+            Field("tipo_flujo", "Tipo de flujo", "CB_OD_N"),
         ),
     ),
     "codigo-equipos": Section(
@@ -191,21 +216,115 @@ CS_FIELD_UNITS = {
 }
 
 
-CB_INPUT_KEYS = {"voltaje", "material_contacto", "material_estructura"}
+CB_INPUT_KEYS = {"voltaje", "material_contacto", "material_estructura", "tipo_flujo"}
 CB_LEGACY_HEADERS = {
     "voltaje": ("Voltaje De Potencia", "Voltaje de potencia (V)", "Voltaje de potencia"),
     "material_contacto": ("Material en contacto con producto",),
     "material_estructura": ("Material estructuras", "Material estructura"),
+    "tipo_flujo": ("Tipo de flujo",),
+    "atex": ("ATEX", "ATEX (histórico)"),
 }
 CB_EXPORT_NAMES = {
     "voltaje": "DATOS_ENTRADA_VOLTAJE_DE_POTENCIA.xlsx",
     "material_contacto": "DATOS_ENTRADA_MATERIAL_CONTACTO_PRODUCTO.xlsx",
     "material_estructura": "DATOS_ENTRADA_MATERIAL_ESTRUCTURAS.xlsx",
+    "tipo_flujo": "DATOS_ENTRADA_TIPO_DE_FLUJO.xlsx",
 }
 
 
 def _path(section: Section) -> Path:
     return DATA_DIR / section.filename
+
+
+def _catalog_value_key(value: Any, kind: str = "text") -> str:
+    if kind == "number":
+        try:
+            number = Decimal(_text(value).replace(",", "."))
+            if number.is_finite():
+                return "n:" + format(number.normalize(), "f")
+        except InvalidOperation:
+            pass
+    return _norm(value)
+
+
+def ensure_systems_catalogs() -> None:
+    """Agrega una sola vez los valores faltantes del SISTEMAS suministrado.
+
+    Los datos actuales son prioritarios: no se sustituyen fichas, filas ni IDs.
+    El registro de versión permite eliminar o editar valores importados sin que
+    reaparezcan en la siguiente visita. Una instalación interrumpida puede
+    repetirse porque cada adición se verifica por campo y valor.
+    """
+    source = BASE_DIR / "documentacion" / "catalogos_sistemas_20260930.json"
+    if not source.exists():
+        return
+    marker = DATA_DIR / "SISTEMAS_CATALOGOS_IMPORTADOS.json"
+    with _LOCK:
+        payload = json.loads(source.read_text(encoding="utf-8"))
+        if marker.exists():
+            previous = json.loads(marker.read_text(encoding="utf-8"))
+            if previous.get("version") == payload["version"]:
+                return
+        results = []
+        grouped: dict[str, list[dict]] = {}
+        for item in payload["fields"]:
+            grouped.setdefault(item["section"], []).append(item)
+        for slug, fields in grouped.items():
+            if slug == "clientes":
+                client_path = DATA_DIR.parent / "CLIENTES" / "clientes.json"
+                rows = json.loads(client_path.read_text(encoding="utf-8-sig")) if client_path.exists() else []
+                if not isinstance(rows, list):
+                    raise ValueError("El archivo de Clientes no contiene una lista válida.")
+                existing = {_catalog_value_key(row.get("nombre")) for row in rows}
+                added = 0
+                for item in fields:
+                    # El archivo suministrado no contiene tipos de industria.
+                    # Los clientes se completan por nombre, conservando fichas
+                    # existentes y sin inventar datos fiscales o de ubicación.
+                    if item["field"] != "nombre":
+                        continue
+                    for value in item["values"]:
+                        key = _catalog_value_key(value)
+                        if key in existing:
+                            continue
+                        rows.append({"id": uuid.uuid4().hex, "nombre": value,
+                                     "pais": "", "ciudad": "", "nota": "Importado de SISTEMAS(1).xlsx",
+                                     "nit": "", "tipo_industria": ""})
+                        existing.add(key)
+                        added += 1
+                if added:
+                    client_path.parent.mkdir(parents=True, exist_ok=True)
+                    temp = client_path.with_suffix(".sistemas.tmp")
+                    temp.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+                    os.replace(temp, client_path)
+                results.append({"section": slug, "added": added})
+                continue
+            section = SECTIONS[slug]
+            rows = _load(section)
+            changed = False
+            for item in fields:
+                key = item["field"]
+                existing = {_catalog_value_key(row.get(key), item["kind"])
+                            for row in rows if _text(row.get(key))}
+                added = 0
+                for value in item["values"]:
+                    identity = _catalog_value_key(value, item["kind"])
+                    if identity in existing:
+                        continue
+                    row = {field.key: "" for field in section.fields}
+                    row.update({key: value, "id": uuid.uuid4().hex})
+                    rows.append(row)
+                    existing.add(identity)
+                    added += 1
+                changed = changed or bool(added)
+                results.append({"section": slug, "field": key, "added": added})
+            if changed:
+                _atomic_save(section, rows)
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        temp = marker.with_suffix(".tmp")
+        temp.write_text(json.dumps({"version": payload["version"], "source": payload["source"],
+                                    "results": results}, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(temp, marker)
 
 
 def _atomic_save(section: Section, rows: list[dict[str, str]]) -> None:
@@ -254,7 +373,7 @@ def _load(section: Section) -> list[dict[str, str]]:
         # tabla. Al leer un archivo histórico (donde los tres valores compartían
         # fila con muchas columnas adicionales) se separan automáticamente sin
         # inventar datos y sin tocar el archivo hasta el siguiente guardado.
-        if section.slug == "cb-matriz":
+        if section.slug in {"cb-matriz", "sistemas"}:
             wb = load_workbook(path, read_only=True, data_only=True)
             try:
                 ws = wb[section.sheet] if section.sheet in wb.sheetnames else wb.active
@@ -285,6 +404,15 @@ def _load(section: Section) -> list[dict[str, str]]:
                         row = {f.key: "" for f in section.fields}
                         row[field_key] = value
                         row["id"] = base_id if pos == 0 and base_id else uuid.uuid4().hex
+                        rows.append(row)
+
+                # Recupera el catálogo faltante en libros anteriores a esta
+                # revisión. Si la columna ya existe, respeta incluso una lista
+                # vacía que el usuario haya decidido guardar.
+                if "tipo_flujo" in field_indices and field_indices["tipo_flujo"] is None:
+                    for value in ("BACHE", "CONTINUO"):
+                        row = {f.key: "" for f in section.fields}
+                        row.update(tipo_flujo=value, id=uuid.uuid4().hex)
                         rows.append(row)
 
                 _ROWS_CACHE[section.slug] = (
@@ -361,7 +489,7 @@ def _is_allowed_upload(filename: str) -> bool:
 
 
 def _cb_field(section: Section, field_key: str) -> Field | None:
-    if section.slug != "cb-matriz" or field_key not in CB_INPUT_KEYS:
+    if section.slug not in {"cb-matriz", "sistemas"}:
         return None
     return next((field for field in section.fields if field.key == field_key), None)
 
@@ -668,22 +796,27 @@ def _proximity(rows: list[dict[str, str]], field: str, target: float) -> dict[st
 def register_industria_routes(bp) -> None:
     @bp.route("/industria", methods=["GET"], endpoint="industria_index")
     def industria_index():
+        ensure_systems_catalogs()
         counts = {slug: len(_load(section)) for slug, section in SECTIONS.items()}
+        source = BASE_DIR / "documentacion" / "catalogos_sistemas_20260930.json"
+        system_fields = json.loads(source.read_text(encoding="utf-8"))["fields"] if source.exists() else []
         return render_template(
             "industria/index.html",
             sections=SECTIONS,
             counts=counts,
+            system_fields=system_fields,
             industria_page=True,
             meta={},
         )
 
     @bp.route("/industria/<slug>", methods=["GET"], endpoint="industria_section")
     def industria_section(slug: str):
+        ensure_systems_catalogs()
         section = SECTIONS.get(slug)
         if not section:
             return redirect(url_for("industria.industria_index"))
 
-        if slug == "cb-matriz":
+        if slug in {"cb-matriz", "sistemas"}:
             all_rows = _load(section)
             input_tables = []
             for field in section.fields:
@@ -693,6 +826,7 @@ def register_industria_routes(bp) -> None:
                 "industria/datos_entrada.html",
                 section=section,
                 input_tables=input_tables,
+                catalog_prefix="sistemas" if slug == "sistemas" else "cb",
                 total_rows=len(all_rows),
                 industria_page=True,
                 meta={},
@@ -802,19 +936,20 @@ def register_industria_routes(bp) -> None:
         methods=["POST"],
         endpoint="industria_cb_save",
     )
-    def industria_cb_save(field_key: str):
-        section = SECTIONS["cb-matriz"]
+    def industria_cb_save(field_key: str, catalog_slug: str = "cb-matriz"):
+        ensure_systems_catalogs()
+        section = SECTIONS[catalog_slug]
         field = _cb_field(section, field_key)
         if field is None:
-            return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+            return redirect(url_for("industria.industria_section", slug=catalog_slug))
         value = _text(request.form.get("value"))
         if not value:
             flash("Completa el valor antes de guardar.", "error")
-            return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+            return redirect(url_for("industria.industria_section", slug=catalog_slug))
 
         with _LOCK:
             rows = _load(section)
-            if any(_norm(row.get(field_key)) == _norm(value) for row in rows if _text(row.get(field_key))):
+            if any(_catalog_value_key(row.get(field_key), field.kind) == _catalog_value_key(value, field.kind) for row in rows if _text(row.get(field_key))):
                 flash(f"El valor ya existe en {field.label}.", "error")
             else:
                 new_row = {f.key: "" for f in section.fields}
@@ -823,22 +958,23 @@ def register_industria_routes(bp) -> None:
                 rows.append(new_row)
                 _atomic_save(section, rows)
                 flash("Registro agregado correctamente.", "success")
-        return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+        return redirect(url_for("industria.industria_section", slug=catalog_slug))
 
     @bp.route(
         "/industria/cb-matriz/<field_key>/<row_id>/editar",
         methods=["POST"],
         endpoint="industria_cb_edit",
     )
-    def industria_cb_edit(field_key: str, row_id: str):
-        section = SECTIONS["cb-matriz"]
+    def industria_cb_edit(field_key: str, row_id: str, catalog_slug: str = "cb-matriz"):
+        ensure_systems_catalogs()
+        section = SECTIONS[catalog_slug]
         field = _cb_field(section, field_key)
         if field is None:
-            return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+            return redirect(url_for("industria.industria_section", slug=catalog_slug))
         value = _text(request.form.get("value"))
         if not value:
             flash("El valor no puede quedar vacío.", "error")
-            return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+            return redirect(url_for("industria.industria_section", slug=catalog_slug))
 
         with _LOCK:
             rows = _load(section)
@@ -846,7 +982,7 @@ def register_industria_routes(bp) -> None:
             if target is None:
                 flash("No se encontró el registro.", "error")
             elif any(
-                row.get("id") != row_id and _norm(row.get(field_key)) == _norm(value)
+                row.get("id") != row_id and _catalog_value_key(row.get(field_key), field.kind) == _catalog_value_key(value, field.kind)
                 for row in rows
                 if _text(row.get(field_key))
             ):
@@ -857,18 +993,19 @@ def register_industria_routes(bp) -> None:
                 target[field_key] = value
                 _atomic_save(section, rows)
                 flash("Registro actualizado.", "success")
-        return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+        return redirect(url_for("industria.industria_section", slug=catalog_slug))
 
     @bp.route(
         "/industria/cb-matriz/<field_key>/<row_id>/eliminar",
         methods=["POST"],
         endpoint="industria_cb_delete",
     )
-    def industria_cb_delete(field_key: str, row_id: str):
-        section = SECTIONS["cb-matriz"]
+    def industria_cb_delete(field_key: str, row_id: str, catalog_slug: str = "cb-matriz"):
+        ensure_systems_catalogs()
+        section = SECTIONS[catalog_slug]
         field = _cb_field(section, field_key)
         if field is None:
-            return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+            return redirect(url_for("industria.industria_section", slug=catalog_slug))
 
         with _LOCK:
             rows = _load(section)
@@ -881,23 +1018,24 @@ def register_industria_routes(bp) -> None:
             else:
                 _atomic_save(section, new_rows)
                 flash("Registro eliminado.", "success")
-        return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+        return redirect(url_for("industria.industria_section", slug=catalog_slug))
 
     @bp.route(
         "/industria/cb-matriz/<field_key>/subida-masiva",
         methods=["POST"],
         endpoint="industria_cb_bulk",
     )
-    def industria_cb_bulk(field_key: str):
-        section = SECTIONS["cb-matriz"]
+    def industria_cb_bulk(field_key: str, catalog_slug: str = "cb-matriz"):
+        ensure_systems_catalogs()
+        section = SECTIONS[catalog_slug]
         field = _cb_field(section, field_key)
         if field is None:
-            return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+            return redirect(url_for("industria.industria_section", slug=catalog_slug))
         archivo = request.files.get("archivo")
         mode = request.form.get("mode", "replace")
         if not archivo or not archivo.filename:
             flash("Selecciona un archivo Excel.", "error")
-            return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+            return redirect(url_for("industria.industria_section", slug=catalog_slug))
 
         try:
             incoming_values = _parse_cb_single_field(section, field_key, archivo)
@@ -907,7 +1045,7 @@ def register_industria_routes(bp) -> None:
             unique_values: list[str] = []
             seen: set[str] = set()
             for value in incoming_values:
-                key = _norm(value)
+                key = _catalog_value_key(value, field.kind)
                 if key and key not in seen:
                     seen.add(key)
                     unique_values.append(value)
@@ -915,16 +1053,16 @@ def register_industria_routes(bp) -> None:
             with _LOCK:
                 rows = _load(section)
                 if mode == "merge":
-                    existing = {_norm(row.get(field_key)) for row in rows if _text(row.get(field_key))}
+                    existing = {_catalog_value_key(row.get(field_key), field.kind) for row in rows if _text(row.get(field_key))}
                     added = 0
                     for value in unique_values:
-                        if _norm(value) in existing:
+                        if _catalog_value_key(value, field.kind) in existing:
                             continue
                         new_row = {f.key: "" for f in section.fields}
                         new_row[field_key] = value
                         new_row["id"] = uuid.uuid4().hex
                         rows.append(new_row)
-                        existing.add(_norm(value))
+                        existing.add(_catalog_value_key(value, field.kind))
                         added += 1
                     _atomic_save(section, rows)
                     flash(f"Carga completada: se agregaron {added} registro(s) a {field.label}.", "success")
@@ -940,24 +1078,25 @@ def register_industria_routes(bp) -> None:
         except Exception as exc:
             flash(f"No fue posible importar {field.label}: {exc}", "error")
 
-        return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+        return redirect(url_for("industria.industria_section", slug=catalog_slug))
 
     @bp.route(
         "/industria/cb-matriz/<field_key>/exportar-excel",
         methods=["GET"],
         endpoint="industria_cb_export",
     )
-    def industria_cb_export(field_key: str):
-        section = SECTIONS["cb-matriz"]
+    def industria_cb_export(field_key: str, catalog_slug: str = "cb-matriz"):
+        ensure_systems_catalogs()
+        section = SECTIONS[catalog_slug]
         field = _cb_field(section, field_key)
         if field is None:
-            return redirect(url_for("industria.industria_section", slug="cb-matriz"))
+            return redirect(url_for("industria.industria_section", slug=catalog_slug))
 
         rows = [row for row in _load(section) if _text(row.get(field_key))]
         output = BytesIO()
         wb = Workbook()
         ws = wb.active
-        ws.title = field.label[:31]
+        ws.title = re.sub(r"[\\/*?:\[\]]", "-", field.label)[:31]
         ws.append([field.label])
         for row in rows:
             ws.append([_text(row.get(field_key))])
@@ -969,9 +1108,29 @@ def register_industria_routes(bp) -> None:
         return send_file(
             output,
             as_attachment=True,
-            download_name=CB_EXPORT_NAMES[field_key],
+            download_name=CB_EXPORT_NAMES.get(field_key, f"DATOS_SISTEMAS_{field_key.upper()}.xlsx"),
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+
+    @bp.post("/industria/sistemas/<field_key>/guardar", endpoint="industria_sistemas_save")
+    def industria_sistemas_save(field_key: str):
+        return industria_cb_save(field_key, catalog_slug="sistemas")
+
+    @bp.post("/industria/sistemas/<field_key>/<row_id>/editar", endpoint="industria_sistemas_edit")
+    def industria_sistemas_edit(field_key: str, row_id: str):
+        return industria_cb_edit(field_key, row_id, catalog_slug="sistemas")
+
+    @bp.post("/industria/sistemas/<field_key>/<row_id>/eliminar", endpoint="industria_sistemas_delete")
+    def industria_sistemas_delete(field_key: str, row_id: str):
+        return industria_cb_delete(field_key, row_id, catalog_slug="sistemas")
+
+    @bp.post("/industria/sistemas/<field_key>/subida-masiva", endpoint="industria_sistemas_bulk")
+    def industria_sistemas_bulk(field_key: str):
+        return industria_cb_bulk(field_key, catalog_slug="sistemas")
+
+    @bp.get("/industria/sistemas/<field_key>/exportar-excel", endpoint="industria_sistemas_export")
+    def industria_sistemas_export(field_key: str):
+        return industria_cb_export(field_key, catalog_slug="sistemas")
 
     @bp.route("/industria/<slug>/guardar", methods=["POST"], endpoint="industria_save")
     def industria_save(slug: str):

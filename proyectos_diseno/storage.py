@@ -22,7 +22,7 @@ DATASETS: Dict[str, Dict[str, Any]] = {
         "id_field": "id",
         "columns": [
             "id", "nombre", "color", "costo_mensual_empresa", "hora_entrada",
-            "hora_salida", "almuerzo_inicio", "almuerzo_fin", "activo",
+            "hora_salida", "almuerzo_inicio", "almuerzo_fin", "activo", "descansos", "dias_laborales",
         ],
     },
     "pmps": {

@@ -27,7 +27,7 @@ from storage import (
     get_work_dir, set_user_scope, migrate_legacy_data_to_current_user
 )
 from auth_store import (
-    AUDIT_FILE, ROLE_ADMIN, ROLE_COLLABORATOR, STATUS_ACTIVE, STATUS_DISABLED,
+    AUDIT_FILE, ROLE_ADMIN, ROLE_CHIEF, ROLE_COLLABORATOR, migrate_roles, STATUS_ACTIVE, STATUS_DISABLED,
     ensure_security_storage, get_app_secret, has_users, list_users, get_user_by_id,
     create_user, create_initial_admin, authenticate, reset_password, change_role,
     set_user_status, unlock_user,
@@ -46,9 +46,12 @@ from oportunidades_proyecto import bp as oportunidades_bp, ensure_database as en
 from asistente_oga import bp as asistente_oga_bp
 from clientes import bp as clientes_bp
 from industria import bp as industria_bp
+from reportes import bp as reportes_bp
+from reportes.db import ensure_database as ensure_reportes_database
+from permisos import enforce_permissions, can_access, allowed_modules, navigation
 
 APP_NAME = "SISTEMA TECNICO"
-APP_REV = "0.18.8"
+APP_REV = "0.19.1"
 
 ensure_security_storage()
 app = Flask(__name__)
@@ -71,6 +74,7 @@ app.register_blueprint(oportunidades_bp)
 app.register_blueprint(asistente_oga_bp)
 app.register_blueprint(clientes_bp)
 app.register_blueprint(industria_bp)
+app.register_blueprint(reportes_bp)
 
 LOGIN_WINDOW_SECONDS = 15 * 60
 LOGIN_IP_LIMIT = 25
@@ -173,6 +177,8 @@ def enforce_security():
                 return jsonify({"ok": False, "error": "La sesión de seguridad venció. Recargue la página."}), 400
             abort(400, description="La sesión de seguridad venció. Recargue la página.")
 
+
+app.before_request(enforce_permissions)
 
 AUDIT_ENDPOINTS = {
     "biblioteca.create_equipo": ("CREAR EQUIPO", "BIBLIOTECA"),
@@ -311,6 +317,8 @@ def init_app_data():
     ensure_dirs(include_user=False)
     ensure_simple_workbooks()
     ensure_security_storage()
+    migrate_roles()
+    ensure_reportes_database()
     ensure_capacitaciones_database()
     ensure_capacitaciones_worker()
     ensure_oportunidades_database()
@@ -339,6 +347,8 @@ def ctx(**kwargs):
         meta=meta,
         current_user=user,
         csrf_token=csrf_token(),
+        can_access=can_access,
+        navigation_groups=navigation() if user else [],
         **kwargs,
     )
 

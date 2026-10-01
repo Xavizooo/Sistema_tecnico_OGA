@@ -456,7 +456,7 @@ def answer(message: str, context: dict[str, Any] | None = None) -> dict[str, Any
 
     # V 17.5.2: antes de asumir que toda pregunta pertenece a Oportunidades,
     # el motor local enruta consultas de solo lectura a los demas modulos OGA.
-    universal = answer_universal(text, context or {})
+    universal = None if (context or {}).get("_restricted_od") else answer_universal(text, context or {})
     if universal is not None:
         return universal
 

@@ -36,6 +36,9 @@ def answer(message: str, context: dict[str, Any] | None = None, history: list[di
     if MUTATION_PATTERN.search(normalize(text)):
         return _read_only_denial()
 
+    if (context or {}).get("_is_designer"):
+        return restricted_answer(text, context or {}, history or [])
+
     status = provider_status()
     # La IA avanzada de esta revision conserva herramientas de Oportunidades.
     # Si esa base no existe, usamos el motor local transversal en vez de bloquear
@@ -79,3 +82,26 @@ def capabilities() -> dict[str, Any]:
         "tools": tools,
         "stats": stats(),
     }
+
+
+def restricted_answer(text, context, history):
+    """Un diseñador consulta solo una fuente autorizada, sin búsqueda transversal."""
+    from . import universal_readonly as u
+    allowed = set(context.get('_allowed_modules', []))
+    module = u._module_detect(text, context)
+    mapping = {'diseno': 'proyectos', 'lista_maestra': 'rq', 'rq': 'rq', 'planos': 'planos',
+        'biblioteca': 'biblioteca', 'capacitaciones': 'capacitaciones', 'calendario': 'rq', 'backups': 'rq'}
+    calls = {'diseno': lambda: u._design_answer(text), 'lista_maestra': lambda: u._master_answer(text),
+        'rq': lambda: u._rq_answer(text, context), 'planos': lambda: u._planos_answer(text, context),
+        'biblioteca': lambda: u._library_answer(text), 'capacitaciones': lambda: u._training_answer(text),
+        'calendario': lambda: u._calendar_answer(text), 'backups': lambda: u._backups_answer(context)}
+    if module in mapping and mapping[module] in allowed: return calls[module]()
+    if module is None and 'oportunidades' in allowed and any(w in normalize(text).split() for w in ['od','oportunidad','oportunidades','radicado','oferta','ofertas']):
+        status = provider_status()
+        if status.get('configured') and database_ready():
+            try: return run_agent(text, context, history, execute_tool)
+            except ProviderError: pass
+        return local_answer(text, {**context, '_restricted_od': True})
+    return {'ok': True, 'mode': 'READ_ONLY', 'answer':
+      'Consulta limitada a tus módulos autorizados. Indica el módulo en tu pregunta (por ejemplo: Biblioteca, RQ, Planos u Oportunidades). Las consultas de usuarios y auditoría requieren al Desarrollador.',
+      'cards': [], 'sources': [], 'engine': 'Consulta con permisos'}

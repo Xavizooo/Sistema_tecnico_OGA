@@ -225,6 +225,14 @@ PROJECT_MATRIX_HEADERS = {
 }
 
 
+def _split_project_subsystem(value):
+    # El parser estricto también utiliza esta división al construir el payload.
+    match = re.fullmatch(r"(\d+)\s*([A-Za-z]{1,2}\d*)?", _cell_text(value))
+    if not match:
+        return "", ""
+    return match[1], "Principal" + (" " + match[2].upper() if match[2] else "")
+
+
 def _parse_project_matrix_workbook(workbook, source_filename: str) -> dict[str, Any]:
     """Lee la plantilla SISTEMAS A:AB usada actualmente por OGA.
 

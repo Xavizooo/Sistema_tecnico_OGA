@@ -3,9 +3,11 @@
 {% block body_class %} project-design-page{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('proyectos_diseno.static', filename='style.css') }}">
+{% if current_user.is_designer %}<style>#projectDesignApp #syncExcelBtn,#projectDesignApp #backupBtn,#projectDesignApp #newProjectTopBtn,#projectDesignApp .row-actions,#projectDesignApp #detailFooter{display:none!important}</style>{% endif %}
 {% endblock %}
 {% block content %}
 <div id="projectDesignApp" class="project-design-app"
+     data-readonly="{{ 'false' if current_user.is_admin or current_user.is_chief else 'true' }}"
      data-base-url="{{ url_for('proyectos_diseno.index') }}"
      data-csrf-token="{{ csrf_token }}"
      data-initial-view="{{ request.args.get('view', 'dashboard') }}"
@@ -17,6 +19,7 @@
       <p>Control gráfico de proyectos, capacidad, avance y costos planificados.</p>
     </div>
     <div class="project-heading-actions">
+      {% if current_user.is_admin or current_user.is_chief %}<a class="btn outline" href="{{ url_for('reportes.tasks') }}">ACTIVIDADES Y REPORTES</a>{% endif %}
       <button class="btn outline small" id="syncExcelBtn" type="button">ACTUALIZAR DESDE EXCEL</button>
       <button class="btn outline small" id="backupBtn" type="button">CREAR RESPALDO</button>
       <button class="btn primary" id="newProjectTopBtn" type="button">+ CREAR PROYECTO</button>

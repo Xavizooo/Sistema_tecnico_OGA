@@ -1,0 +1,37 @@
+{% extends 'reportes/base.html' %}
+{% block report_title %}Mi jornada{% endblock %}
+{% block report_subtitle %}Registra qué hiciste, cuánto tiempo dedicaste y qué necesitas para continuar.{% endblock %}
+{% block report_content %}
+<form class="report-filters" method="get"><label>Consultar jornada<input type="date" name="fecha" value="{{ selected_day }}" max="{{ today }}" required></label><button class="btn outline">Consultar</button></form>
+{% if not profile %}
+<div class="report-card report-empty"><h3>Tu horario aún no está configurado</h3><p>El Jefe de Diseño debe vincular tu cuenta, indicar tu jornada, descansos y mínimo de reportes. Después podrás reportar tu trabajo.</p>{% if current_user.is_admin or current_user.is_chief %}<a class="btn primary" href="{{ url_for('reportes.team') }}">Configurar diseñadores</a>{% endif %}</div>
+{% else %}
+<div class="report-stat-grid">
+  <div class="report-stat"><strong>{{ '%.2f'|format(summary.expected/60) }} h</strong><span>Jornada neta esperada</span></div>
+  <div class="report-stat"><strong>{{ '%.2f'|format(summary.actual/60) }} h</strong><span>Horas registradas vigentes</span></div>
+  <div class="report-stat"><strong>{{ summary.count }} / {{ summary.minimum }}</strong><span>Reportes / mínimo diario</span></div>
+  <div class="report-stat"><strong>{{ '%.2f'|format(summary.missing/60) }} h</strong><span>Horas pendientes de registrar</span></div>
+</div>
+<div class="report-grid">
+<article class="report-card"><h3>Registrar trabajo</h3><span class="report-badge {{ summary.status|replace(' ','-') }}">{{ summary.status }}</span>
+<div class="report-callout">{% set jornada=summary.profile or profile %}Horario: <strong>{{ jornada.start }}–{{ jornada.end }}</strong>.<br>Descansos: {% for a,b in jornada.breaks %}{{ a }}–{{ b }}{% if not loop.last %}, {% endif %}{% else %}sin descansos{% endfor %}.<br>Se descuentan automáticamente del intervalo. No se aceptan horas futuras ni superpuestas.</div>
+<form class="report-form" method="post" action="{{ url_for('reportes.submit') }}">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+<label>Fecha de trabajo<input type="date" name="day" value="{{ selected_day }}" max="{{ today }}" required></label>
+<div class="report-pair"><label>Inicio<input type="time" name="start" required></label><label>Fin<input type="time" name="end" required></label></div>
+<label>Actividad<select name="assignment_id" id="reportAssignment"><option value="">Trabajo general / apoyo</option>{% for task in assignments if task.status=='ACTIVA' and not task.source_completed %}<option value="{{ task.id }}">{{ task.title }}{% if task.project_label %} · {{ task.project_label }}{% endif %}</option>{% endfor %}</select></label>
+<label id="progressField" hidden>Avance acumulado de la actividad (%)<input name="progress" type="number" min="0" max="100" step="0.1" placeholder="Ej. 60"><small>Porcentaje total alcanzado, no el porcentaje trabajado en este intervalo.</small></label>
+<label>¿Qué hiciste?<textarea name="description" minlength="10" maxlength="4000" required placeholder="Describe la actividad y el resultado obtenido."></textarea></label>
+<label>Bloqueos o apoyo requerido<textarea name="blocker" maxlength="2000" placeholder="Ej. pendiente aprobación del plano general."></textarea></label>
+<button class="btn primary" type="submit">ENVIAR REPORTE</button>
+<small class="report-muted">Los reportes enviados se conservan. Si el jefe devuelve uno, presenta un nuevo reporte corregido. Puedes registrar hasta 31 días hacia atrás desde la vigencia de tu perfil.</small>
+</form>
+</article>
+<div><article class="report-card"><h3>Reportes de {{ selected_day }}</h3>
+{% for r in reports %}<div class="report-task-row"><div class="report-actions"><span class="report-badge {{ r.status }}">{{ r.status }}</span><strong>{{ time_label(r.start_minute) }}–{{ time_label(r.end_minute) }} · {{ '%.2f'|format(r.minutes/60) }} h netas</strong></div><p class="report-task-title">{{ r.task_title or 'Trabajo general / apoyo' }}{% if r.progress is not none %} · avance {{ r.progress }}%{% endif %}</p><p class="report-task-note">{{ r.description }}</p>{% if r.blocker %}<div class="report-callout"><strong>Bloqueo:</strong> {{ r.blocker }}</div>{% endif %}{% if r.review_note %}<div class="report-callout"><strong>Jefe de Diseño:</strong> {{ r.review_note }}</div>{% endif %}{% if r.status=='DEVUELTO' %}<small class="report-muted">Este reporte no suma horas ni cumplimiento. Presenta la corrección en un nuevo reporte.</small>{% endif %}</div>{% else %}<div class="report-empty">Todavía no tienes reportes para esta fecha.</div>{% endfor %}
+</article>
+<article class="report-card"><h3>Avance de mis asignaciones</h3>{% for task in assignments if task.status=='ACTIVA' and not task.source_completed %}<div class="report-task-row"><strong>{{ task.title }}</strong><span class="report-subtitle">{{ task.project_label or 'Sin proyecto vinculado' }}</span><div class="report-progress"><span style="width:{{ task.progress }}%"></span></div><div class="report-task-meta"><span>Reportado: {{ task.progress }}%</span><span>Esperado: {{ task.expected_progress }}%</span><span>Entrega: {{ task.due_date }}</span></div><span class="report-badge {{ task.trend|replace(' ','-') }}">{{ task.trend }}</span></div>{% else %}<p class="report-muted">El jefe todavía no te ha asignado trabajo.</p>{% endfor %}<p class="report-muted">El avance es declarado en los reportes; se compara con las fechas planificadas de la actividad.</p></article></div>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script>const assignment=document.getElementById('reportAssignment');if(assignment){const field=document.getElementById('progressField');function toggleProgress(){field.hidden=!assignment.value;field.querySelector('input').required=!!assignment.value;}assignment.addEventListener('change',toggleProgress);toggleProgress();}</script>{% endblock %}

@@ -12,6 +12,7 @@ import hashlib
 import os
 import re
 import secrets
+import shutil
 import threading
 import uuid
 
@@ -28,9 +29,15 @@ USERS_FILE = SECURITY_DIR / "USUARIOS.xlsx"
 AUDIT_FILE = SECURITY_DIR / "AUDITORIA.xlsx"
 SECRET_FILE = SECURITY_DIR / ".app_secret"
 
-ROLE_ADMIN = "ADMINISTRADOR"
-ROLE_COLLABORATOR = "COLABORADOR"
-VALID_ROLES = {ROLE_ADMIN, ROLE_COLLABORATOR}
+ROLE_ADMIN = "DESARROLLADOR"
+ROLE_CHIEF = "JEFE DE DISEÑO"
+ROLE_COLLABORATOR = "DISEÑADOR"
+VALID_ROLES = {ROLE_ADMIN, ROLE_CHIEF, ROLE_COLLABORATOR}
+ROLE_ALIASES = {"ADMINISTRADOR": ROLE_ADMIN, "COLABORADOR": ROLE_COLLABORATOR}
+
+def normalize_role(value):
+    role = str(value or ROLE_COLLABORATOR).upper()
+    return ROLE_ALIASES.get(role, role)
 STATUS_ACTIVE = "ACTIVO"
 STATUS_DISABLED = "DESACTIVADO"
 
@@ -216,6 +223,7 @@ def _load_user_rows():
                 continue
             row = {headers[index]: values_row[index] if index < len(values_row) else "" for index in range(len(headers))}
             row["USUARIO"] = normalize_username(row.get("USUARIO"))
+            row["ROL"] = normalize_role(row.get("ROL"))
             row["INTENTOS_FALLIDOS"] = int(row.get("INTENTOS_FALLIDOS") or 0)
             row["SESSION_VERSION"] = int(row.get("SESSION_VERSION") or 1)
             rows.append(row)
@@ -232,14 +240,16 @@ def _public_user(row):
         "id": str(row.get("ID") or ""),
         "username": normalize_username(row.get("USUARIO")),
         "name": str(row.get("NOMBRE") or "").strip(),
-        "role": str(row.get("ROL") or ROLE_COLLABORATOR),
+        "role": normalize_role(row.get("ROL")),
         "status": str(row.get("ESTADO") or STATUS_DISABLED),
         "last_login": str(row.get("ULTIMO_INGRESO") or ""),
         "created_at": str(row.get("CREADO_EN") or ""),
         "created_by": str(row.get("CREADO_POR") or ""),
         "locked_until": _timestamp(blocked_until) if blocked_until and blocked_until > _now() else "",
         "session_version": int(row.get("SESSION_VERSION") or 1),
-        "is_admin": str(row.get("ROL")) == ROLE_ADMIN,
+        "is_admin": normalize_role(row.get("ROL")) == ROLE_ADMIN,
+        "is_chief": normalize_role(row.get("ROL")) == ROLE_CHIEF,
+        "is_designer": normalize_role(row.get("ROL")) == ROLE_COLLABORATOR,
         "is_active": str(row.get("ESTADO")) == STATUS_ACTIVE,
     }
 
@@ -277,7 +287,7 @@ def create_user(username, name, password, role, created_by):
             raise ValueError("El nombre no puede superar 100 caracteres ni contener caracteres de control.")
         if name.lstrip().startswith(("=", "+", "-", "@")):
             raise ValueError("El nombre contiene un inicio no permitido.")
-        role = str(role or ROLE_COLLABORATOR).upper()
+        role = normalize_role(role)
         if role not in VALID_ROLES:
             raise ValueError("Rol no válido.")
         password = validate_password(password, username)
@@ -402,7 +412,7 @@ def _active_admin_count(rows):
 
 def change_role(user_id, role):
     with _LOCK:
-        role = str(role or "").upper()
+        role = normalize_role(role) if role else ""
         if role not in VALID_ROLES:
             raise ValueError("Rol no válido.")
         rows = _load_user_rows()
@@ -439,7 +449,17 @@ def set_user_status(user_id, status):
             row["BLOQUEADO_HASTA"] = ""
         row["ACTUALIZADO_EN"] = _timestamp()
         _write_user_rows(rows)
-        return _public_user(row)
+        result=_public_user(row)
+        # El estado de la cuenta se refleja en el único registro del diseñador.
+        from reportes.db import get_profile
+        profile=get_profile(user_id)
+        if profile and profile['designer_id']:
+            from proyectos_diseno.routes import storage
+            designer=storage.get('designers',profile['designer_id'])
+            if designer:
+                designer['activo']=status==STATUS_ACTIVE
+                storage.upsert('designers',designer)
+        return result
 
 
 def unlock_user(user_id):
@@ -512,3 +532,21 @@ def audit_rows(limit=500, query=""):
             rows = [row for row in rows if query in " ".join(str(value or "") for value in row.values()).casefold()]
         safe_limit = max(1, min(int(limit or 500), 5000))
         return rows[:safe_limit]
+
+
+def migrate_roles():
+    """Actualiza nombres sin cambiar IDs, claves, estados ni versiones de sesión."""
+    with _LOCK:
+        ensure_security_storage()
+        wb = load_workbook(USERS_FILE, read_only=True, data_only=True)
+        try:
+            raw = list(wb['USUARIOS'].iter_rows(values_only=True))
+            headers = list(raw[0]); idx = headers.index('ROL')
+            changed = any(len(r) > idx and r[idx] in ROLE_ALIASES for r in raw[1:])
+        finally:
+            wb.close()
+        if changed:
+            backup = SECURITY_DIR / 'USUARIOS_ANTES_ROLES_019.xlsx'
+            if not backup.exists(): shutil.copy2(USERS_FILE, backup)
+            _write_user_rows(_load_user_rows())
+        return changed

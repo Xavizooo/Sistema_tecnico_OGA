@@ -1,0 +1,34 @@
+test_accepts_inventor_length_variants (test_engine_linear_rules.LengthParsingTests.test_accepts_inventor_length_variants) ... ok
+test_legacy_round_fallback_is_restricted_to_round_stock (test_engine_linear_rules.LengthParsingTests.test_legacy_round_fallback_is_restricted_to_round_stock) ... ok
+test_incompatible_linear_rule_does_not_erase_unit_quantity (test_engine_linear_rules.RuleTests.test_incompatible_linear_rule_does_not_erase_unit_quantity) ... ok
+test_round_uses_length_plus_five_mm_and_returns_meters (test_engine_linear_rules.RuleTests.test_round_uses_length_plus_five_mm_and_returns_meters) ... ok
+test_rule_inference_requires_meter_unit (test_engine_linear_rules.RuleTests.test_rule_inference_requires_meter_unit) ... ok
+test_sheet_equivalent_is_rounded_only_once (test_engine_linear_rules.RuleTests.test_sheet_equivalent_is_rounded_only_once) ... ok
+test_tube_uses_length_plus_ten_mm_per_piece (test_engine_linear_rules.RuleTests.test_tube_uses_length_plus_ten_mm_per_piece) ... ok
+test_all_new_views_and_export_render (test_reportes_roles.RolesReportsTests.test_all_new_views_and_export_render) ... ok
+test_assistant_cannot_bypass_module_permissions (test_reportes_roles.RolesReportsTests.test_assistant_cannot_bypass_module_permissions) ... ok
+test_chief_can_assign_review_and_designer_submit_through_routes (test_reportes_roles.RolesReportsTests.test_chief_can_assign_review_and_designer_submit_through_routes) ... ok
+test_chief_cannot_promote_accounts_or_other_team (test_reportes_roles.RolesReportsTests.test_chief_cannot_promote_accounts_or_other_team) ... ok
+test_concurrent_overlapping_reports_only_one_saved (test_reportes_roles.RolesReportsTests.test_concurrent_overlapping_reports_only_one_saved) ... ok
+test_cross_user_assignment_and_csrf (test_reportes_roles.RolesReportsTests.test_cross_user_assignment_and_csrf) ... ok
+test_future_break_only_off_hours_and_weekend (test_reportes_roles.RolesReportsTests.test_future_break_only_off_hours_and_weekend) ... ok
+test_legacy_role_migration_keeps_credentials (test_reportes_roles.RolesReportsTests.test_legacy_role_migration_keeps_credentials) ... ok
+test_new_designer_created_by_chief_has_profile_and_board_link (test_reportes_roles.RolesReportsTests.test_new_designer_created_by_chief_has_profile_and_board_link) ... ok
+test_profile_conflict_and_owner (test_reportes_roles.RolesReportsTests.test_profile_conflict_and_owner) ... ok
+test_profile_snapshot_preserves_reported_day (test_reportes_roles.RolesReportsTests.test_profile_snapshot_preserves_reported_day) ... ok
+test_project_activities_single_source_and_review_updates_board (test_reportes_roles.RolesReportsTests.test_project_activities_single_source_and_review_updates_board) ... ok
+test_report_net_time_overlap_and_complete_day (test_reportes_roles.RolesReportsTests.test_report_net_time_overlap_and_complete_day) ... ok
+test_retroactive_progress_between_milestones (test_reportes_roles.RolesReportsTests.test_retroactive_progress_between_milestones) ... ok
+test_review_return_and_replacement (test_reportes_roles.RolesReportsTests.test_review_return_and_replacement) ... ok
+test_roles_and_last_developer (test_reportes_roles.RolesReportsTests.test_roles_and_last_developer) ... ok
+test_schedule_multiple_breaks_and_validation (test_reportes_roles.RolesReportsTests.test_schedule_multiple_breaks_and_validation) ... ok
+test_server_permissions_and_visible_navigation (test_reportes_roles.RolesReportsTests.test_server_permissions_and_visible_navigation) ... ok
+test_task_advance_lag_and_completion (test_reportes_roles.RolesReportsTests.test_task_advance_lag_and_completion) ... ok
+test_unified_equipment_routes_and_existing_designers (test_reportes_roles.RolesReportsTests.test_unified_equipment_routes_and_existing_designers) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 2.122s
+
+OK
+
+Actualización 0.19.1: equipo único, bloqueo de administración duplicada y sincronización de actividades, revisión y devolución; preservación del ID de asignaciones previas coincidentes. Pruebas aisladas. Sin validación Windows o revisión visual completa en navegador.

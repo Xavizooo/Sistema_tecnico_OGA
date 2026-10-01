@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import Blueprint, jsonify, render_template, request, g
 
 from .engine import answer, capabilities
+from permisos import allowed_modules
 from .readonly import stats
 
 bp = Blueprint("asistente_oga", __name__, url_prefix="/asistente-oga")
@@ -24,6 +25,8 @@ def _safe_history(raw) -> list[dict[str, str]]:
 
 @bp.get("/")
 def index():
+    if getattr(g, "current_user", {}).get("is_designer"):
+        return render_template("asistente/index.html", assistant_page=True, assistant_stats={}, assistant_capabilities={"read_only": True}, assistant_provider={})
     caps = capabilities()
     return render_template(
         "asistente/index.html",
@@ -46,6 +49,8 @@ def consult():
     context["_user_id"] = str(current_user.get("id") or "")
     context["_username"] = str(current_user.get("username") or "")
     context["_is_admin"] = bool(current_user.get("is_admin"))
+    context["_is_designer"] = bool(current_user.get("is_designer"))
+    context["_allowed_modules"] = sorted(allowed_modules(current_user))
     history = _safe_history(payload.get("history"))
     if len(message) > 4000:
         return jsonify({"ok": False, "error": "La consulta supera el limite de 4000 caracteres."}), 400
@@ -56,4 +61,6 @@ def consult():
 
 @bp.get("/capacidades")
 def capability_manifest():
+    if getattr(g, "current_user", {}).get("is_designer"):
+        return jsonify({"ok": True, "read_only": True, "allowed_modules": sorted(allowed_modules()), "mutations_available": False})
     return jsonify({"ok": True, **capabilities()})

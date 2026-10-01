@@ -17,6 +17,7 @@
   const projectTableShell = document.getElementById('odProjectTableShell');
 
   let currentId = Number(document.querySelector('.od-list-row.active')?.dataset.id || 0);
+  let currentSubsystemId = Number(document.querySelector('.od-list-row.active')?.dataset.subsystemId || 0);
   let debounceTimer = null;
   let requestSerial = 0;
   let currentData = null;
@@ -69,6 +70,7 @@
     if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
     if (payload.length) url.searchParams.set('f', JSON.stringify(payload)); else url.searchParams.delete('f');
     if (id) url.searchParams.set('od', id); else url.searchParams.delete('od');
+    if (id && currentSubsystemId) url.searchParams.set('subsystem', currentSubsystemId); else url.searchParams.delete('subsystem');
     history.replaceState({}, '', url);
   }
 
@@ -82,6 +84,7 @@
     detailBackdrop?.classList.add('hidden');
     list?.querySelectorAll('.od-list-row').forEach(row => row.classList.remove('active'));
     currentId = 0;
+    currentSubsystemId = 0;
     currentData = null;
     if (updateUrl) updateBrowserUrl(searchInput?.value.trim() || '', 0);
   }
@@ -179,8 +182,8 @@
       return;
     }
     list.innerHTML = rows.map(row => `
-      <button class="od-list-row ${Number(row.id) === currentId ? 'active' : ''}" type="button" data-id="${Number(row.id)}" role="row">
-        <span class="od-cell-proyecto" data-label="Proyecto"><strong>${escapeHtml(row.proyecto || '—')}</strong></span>
+      <button class="od-list-row ${Number(row.id) === currentId && Number(row.selected_subsystem_id || 0) === currentSubsystemId ? 'active' : ''}" type="button" data-id="${Number(row.id)}" data-subsystem-id="${Number(row.selected_subsystem_id || 0)}" role="row">
+        <span class="od-cell-proyecto" data-label="Proyecto"><strong>${escapeHtml(row.proyecto_display || row.proyecto || '—')}</strong></span>
         <span class="od-cell-cliente" data-label="Cliente">${escapeHtml(row.cliente || '—')}</span>
         <span class="od-cell-inicio" data-label="Inicio">${escapeHtml(row.fecha_inicio || '—')}</span>
         <span class="od-cell-material" data-label="Material a Transportar">${row.material_group ? `${escapeHtml(row.material_group)} · ` : ''}${escapeHtml(row.material_transportado || '—')}</span>
@@ -195,7 +198,7 @@
         <span data-label="Material de contacto con el producto">${escapeHtml(row.material_contacto || '—')}</span>
       </button>`).join('');
 
-    if (currentId && !rows.some(row => Number(row.id) === currentId)) closeDetail(false);
+    if (currentId && !rows.some(row => Number(row.id) === currentId && Number(row.selected_subsystem_id || 0) === currentSubsystemId)) closeDetail(false);
   }
 
   function renderFilterChips() {
@@ -265,16 +268,20 @@
     debounceTimer = setTimeout(search, 260);
   }
 
-  async function selectOpportunity(id) {
+  async function selectOpportunity(id, subsystemId = 0) {
     if (!id) return;
     currentId = id;
+    currentSubsystemId = subsystemId;
     currentData = null;
-    list.querySelectorAll('.od-list-row').forEach(row => row.classList.toggle('active', Number(row.dataset.id) === id));
+    list.querySelectorAll('.od-list-row').forEach(row => row.classList.toggle('active', Number(row.dataset.id) === id && Number(row.dataset.subsystemId || 0) === subsystemId));
     showDetailDrawer();
     detail.innerHTML = '<div class="od-loading">Cargando oportunidad...</div>';
     try {
-      const response = await fetch(urlForId(app.dataset.detailUrlTemplate, id), {headers:{'Accept':'application/json'}});
+      const detailUrl = new URL(urlForId(app.dataset.detailUrlTemplate, id), window.location.origin);
+      if (subsystemId) detailUrl.searchParams.set('subsystem', subsystemId);
+      const response = await fetch(detailUrl, {headers:{'Accept':'application/json'}});
       const data = await response.json();
+      if (currentId !== id || currentSubsystemId !== subsystemId) return;
       if (!data.ok) throw new Error(data.error || 'No disponible');
       detail.innerHTML = data.html;
       detail.scrollTop = 0;
@@ -562,7 +569,7 @@
 
   list.addEventListener('click', event => {
     const row = event.target.closest('.od-list-row');
-    if (row) selectOpportunity(Number(row.dataset.id));
+    if (row) selectOpportunity(Number(row.dataset.id), Number(row.dataset.subsystemId || 0));
   });
   searchInput.addEventListener('input', scheduleSearch);
   clearButton.addEventListener('click', () => { searchInput.value = ''; searchInput.focus(); search(); });

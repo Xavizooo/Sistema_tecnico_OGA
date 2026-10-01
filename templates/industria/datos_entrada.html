@@ -28,16 +28,6 @@
           </div>
           <span class="data-entry-count" data-count-for="{{ field.key }}">{{ table.rows|length }}</span>
         </div>
-        <div class="data-entry-head-actions">
-          <button class="btn primary data-entry-add" type="button" data-open-modal="cbCreate_{{ field.key }}">Agregar registro</button>
-          <div class="data-entry-menu">
-            <button class="data-entry-menu-button" type="button" aria-label="Opciones de {{ field.label }}" aria-expanded="false" data-entry-menu-button>☰</button>
-            <div class="data-entry-menu-panel" role="menu">
-              <button type="button" role="menuitem" data-open-modal="cbBulk_{{ field.key }}">Subida masiva</button>
-              <a role="menuitem" href="{{ url_for('industria.industria_' ~ catalog_prefix ~ '_export', field_key=field.key) }}">Exportar Excel</a>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="data-entry-search-wrap">

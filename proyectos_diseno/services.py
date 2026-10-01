@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
@@ -61,6 +62,10 @@ def parse_time_minutes(value: str | None) -> int:
 def designer_daily_hours(designer: Dict[str, Any]) -> float:
     start = parse_time_minutes(designer.get("hora_entrada"))
     end = parse_time_minutes(designer.get("hora_salida"))
+    if designer.get("descansos"):
+        breaks = json.loads(str(designer["descansos"]))
+        total = end - start - sum(max(0, parse_time_minutes(b)-parse_time_minutes(a)) for a,b in breaks)
+        return round(max(total, 0) / 60, 2)
     lunch_start = parse_time_minutes(designer.get("almuerzo_inicio"))
     lunch_end = parse_time_minutes(designer.get("almuerzo_fin"))
     total = end - start

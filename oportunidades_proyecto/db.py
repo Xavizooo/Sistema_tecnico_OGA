@@ -1217,30 +1217,56 @@ def search_opportunities(tokens: list[tuple[str | None, str]], limit: int = 200)
 
 
 def _numeric_filter_values(
-    conn: sqlite3.Connection, opportunity_ids: list[int], field: str
+    conn: sqlite3.Connection, opportunity_ids: list[int], field: str,
+    scoped_subsystems: dict[int, int] | None = None,
 ) -> dict[int, list[tuple[float, str]]]:
-    if not opportunity_ids:
-        return {}
-    marks = ",".join("?" for _ in opportunity_ids)
-    sql = (
-        f"SELECT opportunity_id,value_display FROM search_index "
-        f"WHERE field=? AND opportunity_id IN ({marks})"
-    )
     values: dict[int, list[tuple[float, str]]] = {}
-    for row in conn.execute(sql, [field, *opportunity_ids]).fetchall():
-        number = parse_filter_number(row["value_display"])
-        if number is None:
-            continue
-        values.setdefault(int(row["opportunity_id"]), []).append((number, str(row["value_display"] or "")))
+    for oid, displays in _text_filter_values(conn, opportunity_ids, field, scoped_subsystems).items():
+        for display in displays:
+            number = parse_filter_number(display)
+            if number is not None:
+                values.setdefault(oid, []).append((number, display))
     return values
 
 
 def _text_filter_values(
-    conn: sqlite3.Connection, opportunity_ids: list[int], field: str
+    conn: sqlite3.Connection, opportunity_ids: list[int], field: str,
+    scoped_subsystems: dict[int, int] | None = None,
 ) -> dict[int, list[str]]:
     if not opportunity_ids:
         return {}
     marks = ",".join("?" for _ in opportunity_ids)
+    if scoped_subsystems:
+        column = {"subsistema": "nombre", "observaciones_tecnicas": "observaciones"}.get(field, field)
+        children = {
+            "entrada_tipo": ("entry_points", "tipo"), "entrada_cantidad": ("entry_points", "cantidad"),
+            "entrada_altura": ("entry_points", "restriccion_altura"),
+            "salida_tipo": ("exit_points", "tipo"), "salida_cantidad": ("exit_points", "cantidad"),
+            "salida_altura": ("exit_points", "restriccion_altura"),
+            "equipo_tipo": ("equipment", "tipo_equipo"), "equipo_referencia": ("equipment", "referencia"),
+            "equipo_cantidad": ("equipment", "cantidad"),
+        }
+        # Los campos generales siguen siendo del proyecto; los técnicos y
+        # relacionados se consultan únicamente en el subsistema elegido.
+        if field in children or field in {"subsistema", "observaciones_tecnicas"} or (
+            column in SUBSYSTEM_FIELDS and field not in {"nombre", "observaciones"}
+        ) or field.startswith(("oferta_", "imagen_")):
+            values: dict[int, list[str]] = {}
+            for oid in opportunity_ids:
+                sid = scoped_subsystems.get(oid)
+                if not sid:
+                    continue
+                if field in children:
+                    table, child_column = children[field]
+                    records = conn.execute(f"SELECT {child_column} FROM {table} WHERE subsystem_id=?", (sid,))
+                elif field.startswith(("oferta_", "imagen_")):
+                    kind = ATTACHMENT_OFFER if field.startswith("oferta_") else ATTACHMENT_IMAGE
+                    child_column = "titulo" if field.endswith("titulo") else "nombre_original"
+                    records = conn.execute(f"SELECT {child_column} FROM attachments WHERE subsystem_id=? AND tipo=? AND eliminado_en IS NULL", (sid, kind))
+                else:
+                    records = conn.execute(f"SELECT {column} FROM subsystems WHERE id=? AND eliminado_en IS NULL", (sid,))
+                values[oid] = [str(record[0]).strip() for record in records if str(record[0] or "").strip()]
+            return values
     sql = (
         f"SELECT opportunity_id,value_display FROM search_index "
         f"WHERE field=? AND opportunity_id IN ({marks}) AND TRIM(value_display)<>''"
@@ -1253,9 +1279,10 @@ def _text_filter_values(
     return values
 
 
-def _show_matching_material_group(rows: list[dict[str, Any]], requested: list[str]) -> None:
+def _show_matching_material_group(rows: list[dict[str, Any]], requested: list[str],
+                                  scoped_subsystems: dict[int, int] | None = None) -> None:
     """Muestra en el listado el subsistema que cumplió el filtro de material."""
-    if not rows or not requested:
+    if not rows or (not requested and not scoped_subsystems):
         return
     ids = [int(row["id"]) for row in rows]
     marks = ",".join("?" for _ in ids)
@@ -1278,10 +1305,12 @@ def _show_matching_material_group(rows: list[dict[str, Any]], requested: list[st
         by_opportunity.setdefault(int(subsystem["opportunity_id"]), []).append(subsystem)
     for row in rows:
         for subsystem in by_opportunity.get(int(row["id"]), []):
+            if scoped_subsystems and int(subsystem["id"]) != scoped_subsystems.get(int(row["id"])):
+                continue
             material = normalize_search(subsystem["material_transportado"])
             # Las condiciones pueden corresponder a grupos distintos del mismo
             # proyecto; la tabla muestra el grupo de la primera condición.
-            if normalize_search(requested[0]) not in material:
+            if requested and normalize_search(requested[0]) not in material:
                 continue
             for column in (
                 "material_transportado", "flujo_kg_h", "distancia_horizontal_m",
@@ -1290,7 +1319,39 @@ def _show_matching_material_group(rows: list[dict[str, Any]], requested: list[st
             ):
                 row[column] = subsystem[column]
             row["material_group"] = subsystem["nombre"] or "Principal"
+            if scoped_subsystems:
+                row["selected_subsystem_id"] = int(subsystem["id"])
+                row["proyecto_display"] = str(row["proyecto"]) + subsystem_suffix(subsystem["nombre"])
             break
+
+
+def subsystem_suffix(name: Any) -> str:
+    value = re.sub(r"^principal\b", "", normalize_search(name)).strip()
+    return re.sub(r"[^a-z0-9]", "", value).upper()
+
+
+def _subsystem_search_scope(tokens: list[tuple[str | None, str]]) -> tuple[list[tuple[str | None, str]], dict[int, int] | None]:
+    remaining: list[tuple[str | None, str]] = []
+    references: list[tuple[str, str]] = []
+    for field, value in tokens:
+        match = re.fullmatch(r"(\d+)\s*([a-z]{1,2}\d*)", normalize_search(value)) if field in {None, "proyecto"} else None
+        if match:
+            references.append((match[1], match[2].upper()))
+        else:
+            remaining.append((field, value))
+    if not references:
+        return remaining, None
+    scopes: list[dict[int, int]] = []
+    with connection() as conn:
+        for project, suffix in references:
+            records = conn.execute("""SELECT s.id,s.opportunity_id,s.nombre FROM subsystems s
+                JOIN opportunities o ON o.id=s.opportunity_id WHERE o.proyecto=?
+                AND o.eliminado_en IS NULL AND s.eliminado_en IS NULL ORDER BY s.id""", (project,))
+            scopes.append({int(row["opportunity_id"]): int(row["id"]) for row in records
+                           if subsystem_suffix(row["nombre"]) == suffix})
+    first = scopes[0]
+    return remaining, {oid: sid for oid, sid in first.items()
+                       if all(scope.get(oid) == sid for scope in scopes[1:])}
 
 
 def search_opportunities_advanced(
@@ -1324,7 +1385,11 @@ def search_opportunities_advanced(
 
     # La búsqueda libre superior conserva su semántica histórica. Los filtros
     # avanzados de texto se evalúan después para poder aplicar similitud.
-    rows = search_opportunities(list(tokens), limit=500)
+    remaining_tokens, scoped_subsystems = _subsystem_search_scope(list(tokens))
+    rows = search_opportunities(remaining_tokens, limit=500)
+    if scoped_subsystems is not None:
+        rows = [row for row in rows if int(row["id"]) in scoped_subsystems]
+        _show_matching_material_group(rows, [], scoped_subsystems)
     meta: dict[str, Any] = {
         "approximate": False,
         "predictive": False,
@@ -1337,7 +1402,7 @@ def search_opportunities_advanced(
         ids = [int(row["id"]) for row in rows]
         with connection() as conn:
             text_maps = {
-                definition["key"]: _text_filter_values(conn, ids, definition["key"])
+                definition["key"]: _text_filter_values(conn, ids, definition["key"], scoped_subsystems)
                 for _, definition in text_filters
             }
 
@@ -1403,7 +1468,7 @@ def search_opportunities_advanced(
 
         material_requests = [item["value"] for item, definition in text_filters
                              if definition["key"] == "material_transportado"]
-        _show_matching_material_group(rows, material_requests)
+        _show_matching_material_group(rows, material_requests, scoped_subsystems)
 
     candidate_total = len(rows)
     meta["candidate_total"] = candidate_total
@@ -1414,7 +1479,7 @@ def search_opportunities_advanced(
     ids = [int(row["id"]) for row in rows]
     with connection() as conn:
         value_maps = {
-            definition["key"]: _numeric_filter_values(conn, ids, definition["key"])
+            definition["key"]: _numeric_filter_values(conn, ids, definition["key"], scoped_subsystems)
             for _, definition, _ in numeric_filters
         }
 
@@ -1612,10 +1677,10 @@ def preview_bulk_import(payload: dict[str, Any]) -> dict[str, Any]:
                 new_count = len(staged_subsystems)
                 existing_count = 0
             else:
-                action = "COMBINAR"
+                action = "ACTUALIZAR" if payload.get("import_mode") == "update" else "COMBINAR"
                 existing_opportunities += 1
                 names = {
-                    normalize_search(row["nombre"])
+                    (subsystem_suffix(row["nombre"]) if payload.get("import_mode") else normalize_search(row["nombre"]))
                     for row in conn.execute(
                         "SELECT nombre FROM subsystems WHERE opportunity_id=? AND eliminado_en IS NULL",
                         (existing_id,),
@@ -1623,7 +1688,7 @@ def preview_bulk_import(payload: dict[str, Any]) -> dict[str, Any]:
                 }
                 existing_count = sum(
                     1 for subsystem in staged_subsystems
-                    if normalize_search((subsystem.get("data") or {}).get("nombre")) in names
+                    if (subsystem_suffix((subsystem.get("data") or {}).get("nombre")) if payload.get("import_mode") else normalize_search((subsystem.get("data") or {}).get("nombre"))) in names
                 )
                 new_count = len(staged_subsystems) - existing_count
             new_subsystems += new_count
@@ -1716,15 +1781,35 @@ def _fill_empty_fields_conn(
     return True
 
 
+def _apply_nonempty_fields_conn(conn, table, row_id, source, fields):
+    row = conn.execute(f"SELECT * FROM {table} WHERE id=?", (row_id,)).fetchone()
+    updates = {field: str(source.get(field) or "").strip() for field in fields
+               if str(source.get(field) or "").strip()
+               and str(source.get(field) or "").strip() != str(row[field] or "").strip()}
+    if updates:
+        _update(conn, table, row_id, updates)
+    return bool(updates)
+
+
+def _update_import_point(conn, table, subsystem_id, staged):
+    if not staged:
+        return False
+    current = conn.execute(f"SELECT id FROM {table} WHERE subsystem_id=? ORDER BY id LIMIT 1", (subsystem_id,)).fetchone()
+    if not current:
+        return False
+    # SISTEMAS tiene un solo tipo de punto. Conserva cantidad, altura y puntos secundarios.
+    _update(conn, table, int(current['id']), {'tipo': staged[0]['tipo']})
+    return True
+
+
 def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[str, int]:
     """Importa la previsualización en una sola transacción segura.
 
-    Reglas de combinación:
-    - Proyecto identifica la OD en la plantilla A–AB.
-    - Una OD existente conserva sus valores y solo completa campos vacíos.
-    - Un grupo técnico existente conserva sus valores y solo completa campos vacíos.
-    - Entradas, salidas y equipos se agregan únicamente si no existen todavía.
-    - Las ODs nuevas se crean sin responsables internos, porque el Excel no contiene esa información.
+    Agregar rechaza proyectos existentes. Actualizar reemplaza valores no vacíos
+    de cliente, industria, inicio y del subsistema seleccionado, conservando los
+    demás datos y los subsistemas ausentes del Excel. El modo histórico sin
+    import_mode sigue completando solo campos vacíos. Se revalidan los códigos
+    dentro de la transacción para impedir duplicados ante cargas simultáneas.
     """
     opportunities = list(payload.get("opportunities") or [])
     result = {
@@ -1739,10 +1824,18 @@ def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[s
         "equipos_agregados": 0,
         "equipos_omitidos": 0,
     }
+    mode = payload.get("import_mode")
+    if mode not in {None, "add", "update"}:
+        raise ValueError("Modo de importación inválido.")
     now = utcnow()
     with connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
         try:
+            if mode:
+                from .bulk_projects import validate_targets, BulkValidationError
+                errors = validate_targets(payload, conn)
+                if errors:
+                    raise BulkValidationError(errors)
             existing_map = {
                 _bulk_opportunity_key(row["radicado"], row["proyecto"]): int(row["id"])
                 for row in conn.execute(
@@ -1778,14 +1871,20 @@ def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[s
 
                 opportunity_changed = created_opportunity
                 if not created_opportunity:
-                    # La plantilla A:AB puede aportar datos que antes no existían en
-                    # la OD. Solo completamos celdas vacías para respetar ediciones.
-                    opportunity_changed = _fill_empty_fields_conn(
-                        conn, "opportunities", opportunity_id, data, OPPORTUNITY_FIELDS
-                    )
+                    # El modo elegido controla si se reemplazan valores no vacíos
+                    # o se conserva la combinación histórica de campos vacíos.
+                    if mode == "update":
+                        opportunity_changed = _apply_nonempty_fields_conn(
+                            conn, "opportunities", opportunity_id, data,
+                            ("cliente", "industria", "fecha_inicio"),
+                        )
+                    else:
+                        opportunity_changed = _fill_empty_fields_conn(
+                            conn, "opportunities", opportunity_id, data, OPPORTUNITY_FIELDS
+                        )
 
                 existing_subsystems = {
-                    normalize_search(row["nombre"]): int(row["id"])
+                    (subsystem_suffix(row["nombre"]) if mode else normalize_search(row["nombre"])): int(row["id"])
                     for row in conn.execute(
                         "SELECT id,nombre FROM subsystems WHERE opportunity_id=? AND eliminado_en IS NULL ORDER BY id",
                         (opportunity_id,),
@@ -1795,7 +1894,7 @@ def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[s
                 for staged_subsystem in item.get("subsystems") or []:
                     sub_data = _clean_dict(dict(staged_subsystem.get("data") or {}), SUBSYSTEM_FIELDS)
                     sub_data["nombre"] = sub_data["nombre"] or "Principal"
-                    sub_key = normalize_search(sub_data["nombre"])
+                    sub_key = subsystem_suffix(sub_data["nombre"]) if mode else normalize_search(sub_data["nombre"])
                     subsystem_id = existing_subsystems.get(sub_key)
                     if subsystem_id is None:
                         sub_values: dict[str, Any] = dict(sub_data)
@@ -1813,8 +1912,10 @@ def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[s
                         opportunity_changed = True
                     else:
                         result["subsistemas_existentes"] += 1
-                        if _fill_empty_fields_conn(
-                            conn, "subsystems", subsystem_id, sub_data, SUBSYSTEM_FIELDS
+                        apply_fields = _apply_nonempty_fields_conn if mode == "update" else _fill_empty_fields_conn
+                        if apply_fields(
+                            conn, "subsystems", subsystem_id, sub_data,
+                            tuple(field for field in SUBSYSTEM_FIELDS if field != "nombre"),
                         ):
                             conn.execute(
                                 "UPDATE subsystems SET actualizado_en=? WHERE id=?",
@@ -1822,10 +1923,19 @@ def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[s
                             )
                             opportunity_changed = True
 
+                    staged_entries = staged_subsystem.get("entry_points") or []
+                    staged_exits = staged_subsystem.get("exit_points") or []
+                    if mode == "update":
+                        if _update_import_point(conn, "entry_points", subsystem_id, staged_entries):
+                            staged_entries = []
+                            opportunity_changed = True
+                        if _update_import_point(conn, "exit_points", subsystem_id, staged_exits):
+                            staged_exits = []
+                            opportunity_changed = True
                     added, skipped = _insert_missing_multiset(
                         conn, "entry_points", subsystem_id,
                         ("tipo", "cantidad", "restriccion_altura"),
-                        staged_subsystem.get("entry_points") or [],
+                        staged_entries,
                     )
                     result["entradas_agregadas"] += added
                     result["entradas_omitidas"] += skipped
@@ -1834,7 +1944,7 @@ def bulk_import_payload(payload: dict[str, Any], user: dict[str, Any]) -> dict[s
                     added, skipped = _insert_missing_multiset(
                         conn, "exit_points", subsystem_id,
                         ("tipo", "cantidad", "restriccion_altura"),
-                        staged_subsystem.get("exit_points") or [],
+                        staged_exits,
                     )
                     result["salidas_agregadas"] += added
                     result["salidas_omitidas"] += skipped
