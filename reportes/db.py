@@ -70,6 +70,18 @@ def ensure_database():
             if name not in columns: c.execute(f'ALTER TABLE assignments ADD COLUMN {name} {definition}')
         c.execute("CREATE UNIQUE INDEX IF NOT EXISTS assignment_source ON assignments(source_id,user_id) WHERE source_id!=''")
         c.execute('CREATE TABLE IF NOT EXISTS project_completions(report_id TEXT PRIMARY KEY, source_id TEXT NOT NULL)')
+        report_columns={r['name'] for r in c.execute('PRAGMA table_info(reports)')}
+        if 'details' not in report_columns:
+            c.execute("ALTER TABLE reports ADD COLUMN details TEXT NOT NULL DEFAULT '{}'")
+        c.executescript("""
+        CREATE TABLE IF NOT EXISTS personal_tasks (
+          id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES profiles(user_id),
+          day TEXT NOT NULL, start_minute INTEGER NOT NULL, end_minute INTEGER NOT NULL,
+          description TEXT NOT NULL, assignment_id TEXT REFERENCES assignments(id),
+          details TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'PENDIENTE',
+          report_id TEXT REFERENCES reports(id), created_at TEXT NOT NULL);
+        CREATE INDEX IF NOT EXISTS personal_tasks_user_day ON personal_tasks(user_id,day);
+        """)
 
 def parse_day(value):
     try: return date.fromisoformat(str(value))
@@ -83,6 +95,10 @@ def time_minute(value):
     return h*60+m
 
 def time_label(minutes): return f'{int(minutes)//60:02}:{int(minutes)%60:02}'
+
+def duration_label(minutes):
+    total=max(0,int(round(minutes)))
+    return f'{total//60} h {total%60:02} min'
 
 def finite_number(value, label, low, high):
     try: n = float(value)
@@ -108,8 +124,7 @@ def validate_config(raw):
     if any(parsed[i][0] < parsed[i-1][1] for i in range(1,len(parsed))): raise ValueError('Los descansos no pueden superponerse.')
     daily = hi-lo-sum(b-a for a,b in parsed)
     if daily <= 0: raise ValueError('La jornada debe tener tiempo laboral disponible.')
-    minimum = finite_number(raw.get('minimum_reports',1), 'Mínimo de reportes',1,20)
-    if minimum != int(minimum): raise ValueError('El mínimo de reportes debe ser entero.')
+    minimum = 0
     weekdays = sorted(set(int(finite_number(x,'Día laboral',0,6)) for x in raw.get('weekdays',[0,1,2,3,4])))
     if not weekdays: raise ValueError('Seleccione al menos un día laboral.')
     from permisos import MODULES
@@ -225,20 +240,21 @@ def save_assignment(raw,actor,task_id=None):
     return task_id
 
 def submit_report(raw,user):
+    if user.get('is_chief') or user.get('role')=='JEFE DE DISEÑO': raise PermissionError('El Jefe de Diseño no envía reportes.')
     user_id=user['id']; day=parse_day(raw.get('day'))
     if day>today(): raise ValueError('No puede reportar una fecha futura.')
     if day<today()-timedelta(days=31): raise ValueError('Solo puede reportar dentro de los últimos 31 días.')
     a,b=time_minute(raw.get('start')),time_minute(raw.get('end'))
     if b<=a: raise ValueError('La hora final debe ser posterior a la inicial.')
     if day==today() and b>now().hour*60+now().minute: raise ValueError('No puede reportar horas que aún no han transcurrido.')
-    description=str(raw.get('description','')).strip(); blocker=str(raw.get('blocker','')).strip()
-    if not 10<=len(description)<=4000 or len(blocker)>2000: raise ValueError('Describa el trabajo con 10 a 4000 caracteres. Bloqueos: máximo 2000.')
+    description=str(raw.get('description') or raw.get('activity') or '').strip(); blocker=str(raw.get('blocker','')).strip()
+    if not 3<=len(description)<=4000 or len(blocker)>2000: raise ValueError('Actividad: entre 3 y 4000 caracteres. Bloqueos: máximo 2000.')
     task_id=str(raw.get('assignment_id','')) or None
     progress=finite_number(raw.get('progress'),'Avance acumulado',0,100) if task_id else None
     with connection() as c:
         c.execute('BEGIN IMMEDIATE')
         profile=_profile(c.execute('SELECT * FROM profiles WHERE user_id=?',(user_id,)).fetchone())
-        if not profile: raise ValueError('El Jefe de Diseño debe configurar primero su horario y mínimo de reportes.')
+        if not profile: raise ValueError('El Jefe de Diseño debe configurar primero su horario.')
         schedule=schedule_for(user_id,day,c)
         if not schedule: raise ValueError('No hay horario configurado para esa fecha.')
         if not is_workday(day,schedule): raise ValueError('La fecha no corresponde a un día laboral de su horario.')
@@ -252,16 +268,29 @@ def submit_report(raw,user):
             if task and task['source_id'] and task['source_completed']: raise ValueError('La actividad del proyecto ya está cumplida; registre apoyo como trabajo general.')
             if not task or task['status']!='ACTIVA': raise ValueError('La asignación no está activa o no le pertenece.')
             if day<parse_day(task['start_date']): raise ValueError('El reporte es anterior al inicio de la asignación.')
+            if raw.get('_complete_assigned') and c.execute("SELECT 1 FROM reports WHERE assignment_id=? AND status!='DEVUELTO' AND progress>=100",(task_id,)).fetchone():
+                raise ValueError('La tarea ya fue completada.')
             previous=c.execute("SELECT progress FROM reports WHERE assignment_id=? AND status!='DEVUELTO' AND (day<? OR (day=? AND end_minute<=?)) ORDER BY day DESC,end_minute DESC,created_at DESC LIMIT 1",
                                (task_id,day.isoformat(),day.isoformat(),b)).fetchone()
             following=c.execute("SELECT progress FROM reports WHERE assignment_id=? AND status!='DEVUELTO' AND (day>? OR (day=? AND end_minute>?)) ORDER BY day,end_minute,created_at LIMIT 1",
                                 (task_id,day.isoformat(),day.isoformat(),b)).fetchone()
             if previous and progress<float(previous['progress']): raise ValueError('El avance acumulado no puede ser menor que el reporte anterior.')
             if following and progress>float(following['progress']): raise ValueError('El avance acumulado no puede superar el reporte posterior de esa asignación.')
+        pending_id=str(raw.get('pending_id') or '')
+        if pending_id:
+            pending=c.execute('SELECT * FROM personal_tasks WHERE id=? AND user_id=?',(pending_id,user_id)).fetchone()
+            if not pending or pending['status']!='PENDIENTE':
+                raise ValueError('La tarea no le pertenece o ya fue completada.')
+            if pending['day']!=day.isoformat() or (pending['assignment_id'] or None)!=task_id:
+                raise ValueError('Conserve la fecha y la asignación de la tarea programada.')
+        details=report_details(raw)
         report_id=uuid.uuid4().hex
         c.execute('''INSERT INTO reports(id,user_id,day,start_minute,end_minute,minutes,description,blocker,assignment_id,progress,schedule,created_at)
           VALUES(?,?,?,?,?,?,?,?,?,?,?,?)''',
           (report_id,user_id,day.isoformat(),a,b,minutes,description,blocker,task_id,progress,json.dumps(schedule),timestamp()))
+        c.execute('UPDATE reports SET details=? WHERE id=?',(json.dumps(details,ensure_ascii=False),report_id))
+        if pending_id:
+            c.execute("UPDATE personal_tasks SET status='COMPLETADA',report_id=? WHERE id=?",(report_id,pending_id))
     return report_id
 
 def report(report_id):
@@ -298,16 +327,22 @@ def day_summary(user_id,day):
     with connection() as c:
         profile=schedule_for(user_id,day,c)
         rows=c.execute("SELECT * FROM reports WHERE user_id=? AND day=? AND status!='DEVUELTO'",(user_id,day.isoformat())).fetchall()
-    working=bool(profile and is_workday(day,profile)); expected=profile['daily_minutes'] if working else 0
-    minimum=profile['minimum_reports'] if working else 0
+    working=bool(profile and is_workday(day,profile)); expected=net_minutes(time_minute(profile['start']),time_minute(profile['end']),profile) if working else 0
+    minimum=0
     actual=sum(r['minutes'] for r in rows); count=len(rows)
+    if not working or day>today():elapsed=0
+    elif day<today():elapsed=expected
+    else:
+        cutoff=max(time_minute(profile['start']),min(now().hour*60+now().minute,time_minute(profile['end'])))
+        elapsed=net_minutes(time_minute(profile['start']),cutoff,profile)
     finished=day<today() or (day==today() and profile and now().hour*60+now().minute>=time_minute(profile['end']))
     if not profile: status='SIN HORARIO'
     elif not working: status='NO LABORAL'
-    elif count>=minimum and actual>=expected: status='CUMPLIDO'
+    elif actual>=expected: status='CUMPLIDO'
     elif finished: status='PENDIENTE'
     else: status='EN CURSO'
     return {'day':day.isoformat(),'expected':expected,'actual':actual,'missing':max(0,expected-actual),
+      'elapsed':elapsed,'unregistered_elapsed':max(0,elapsed-actual),'remaining_work':max(0,expected-elapsed),
       'count':count,'minimum':minimum,'missing_reports':max(0,minimum-count),'status':status,
       'profile':profile,'unreviewed':sum(r['status']=='ENVIADO' for r in rows)}
 
@@ -418,3 +453,87 @@ def sync_reviewed_activity(report_id,actor):
             activity.update(cumplida=False,fecha_cumplimiento='')
             storage.upsert('project_progress',activity)
     sync_project_activities()
+
+# Planificación personal: independiente de las asignaciones del jefe.
+def report_details(raw):
+    result={}
+    for key,label,limit in [('project','Proyecto',180),('equipment','Equipo',180),('equipment_number','Número de equipo',80),('activity','Actividad',180),('stage','Etapa',80),('workplace','Centro de trabajo',120)]:
+        value=str(raw.get(key) or '').strip()
+        if len(value)>limit: raise ValueError(f'{label}: máximo {limit} caracteres.')
+        result[key]=value
+    return result
+
+def personal_tasks(user_id,day):
+    with connection() as c:
+        rows=c.execute('''SELECT p.*,r.status AS report_status FROM personal_tasks p
+            LEFT JOIN reports r ON r.id=p.report_id
+            WHERE p.user_id=? AND p.day=? ORDER BY p.start_minute,p.created_at''',(user_id,day.isoformat())).fetchall()
+        return [{**dict(r),'details':json.loads(r['details'])} for r in rows]
+
+def plan_personal_task(raw,user):
+    if user.get('is_chief') or user.get('role')=='JEFE DE DISEÑO': raise PermissionError('El Jefe de Diseño no programa tareas personales.')
+    day=parse_day(raw.get('day')); a,b=time_minute(raw.get('start')),time_minute(raw.get('end'))
+    if day<today() or day>today()+timedelta(days=31): raise ValueError('Programe desde hoy hasta los próximos 31 días.')
+    if b<=a: raise ValueError('La hora final debe ser posterior a la inicial.')
+    description=str(raw.get('description') or raw.get('activity') or '').strip()
+    if not 3<=len(description)<=4000: raise ValueError('Actividad: entre 3 y 4000 caracteres.')
+    details=report_details(raw); task_id=str(raw.get('assignment_id') or '') or None
+    with connection() as c:
+        c.execute('BEGIN IMMEDIATE')
+        config=schedule_for(user['id'],day,c)
+        if not config: raise ValueError('El jefe debe configurar primero su horario.')
+        if not is_workday(day,config): raise ValueError('La fecha no corresponde a un día laboral.')
+        if a<time_minute(config['start']) or b>time_minute(config['end']) or not net_minutes(a,b,config):
+            raise ValueError('Programe dentro de la jornada y fuera de intervalos de solo descanso.')
+        if task_id:
+            assignment=c.execute('SELECT * FROM assignments WHERE id=? AND user_id=?',(task_id,user['id'])).fetchone()
+            if not assignment or assignment['status']!='ACTIVA' or assignment['source_completed']:
+                raise ValueError('Seleccione una asignación propia y activa.')
+            if day<parse_day(assignment['start_date']): raise ValueError('La tarea es anterior al inicio de la asignación.')
+        if c.execute("SELECT 1 FROM personal_tasks WHERE user_id=? AND day=? AND status='PENDIENTE' AND start_minute<? AND end_minute>?",(user['id'],day.isoformat(),b,a)).fetchone() or c.execute("SELECT 1 FROM reports WHERE user_id=? AND day=? AND status!='DEVUELTO' AND start_minute<? AND end_minute>?",(user['id'],day.isoformat(),b,a)).fetchone():
+            raise ValueError('El intervalo se superpone con otra tarea pendiente o reporte vigente.')
+        task_id_new=uuid.uuid4().hex
+        c.execute('''INSERT INTO personal_tasks(id,user_id,day,start_minute,end_minute,description,assignment_id,details,created_at)
+                     VALUES(?,?,?,?,?,?,?,?,?)''',(task_id_new,user['id'],day.isoformat(),a,b,description,task_id,json.dumps(details,ensure_ascii=False),timestamp()))
+    return task_id_new
+
+def cancel_personal_task(task_id,user):
+    with connection() as c:
+        c.execute('BEGIN IMMEDIATE')
+        changed=c.execute("UPDATE personal_tasks SET status='CANCELADA' WHERE id=? AND user_id=? AND status='PENDIENTE'",(task_id,user['id'])).rowcount
+        if not changed: raise ValueError('La tarea no le pertenece o ya no está pendiente.')
+
+def personal_analysis(user_id,start,end):
+    rows=[];day=start
+    while day<=end:
+        summary=day_summary(user_id,day)
+        summary['productivity']=round(summary['actual']/summary['expected']*100,1) if summary['expected'] else None
+        rows.append(summary);day+=timedelta(days=1)
+    actual=sum(r['actual'] for r in rows);expected=sum(r['expected'] for r in rows)
+    count=sum(r['count'] for r in rows);working=sum(r['expected']>0 for r in rows)
+    weeks={}
+    for row in rows:
+        day=parse_day(row['day']);monday=day-timedelta(days=day.weekday());key=monday.isoformat()
+        week=weeks.setdefault(key,{'start':key,'end':(monday+timedelta(days=6)).isoformat(),
+             'period_start':row['day'],'period_end':row['day'],'actual':0,'expected':0,'count':0,'working_days':0})
+        week['period_end']=row['day'];week['actual']+=row['actual'];week['expected']+=row['expected'];week['count']+=row['count'];week['working_days']+=row['expected']>0
+    for week in weeks.values():
+        week['productivity']=round(week['actual']/week['expected']*100,1) if week['expected'] else None
+        week['average']=round(week['count']/week['working_days'],2) if week['working_days'] else 0
+    # Una muestra por cada tarea vigente, sin reducir a totales diarios ni a extremos.
+    series=[];accumulated={}
+    reports=sorted(list_reports([user_id],start,end),key=lambda r:(r['day'],r['end_minute'],r['start_minute'],r['id']))
+    for report in reports:
+        if report['status']=='DEVUELTO':continue
+        config=json.loads(report['schedule']);day=report['day']
+        accumulated[day]=accumulated.get(day,0)+report['minutes']
+        available=net_minutes(time_minute(config['start']),report['end_minute'],config)
+        details=json.loads(report['details'])
+        series.append({'report_id':report['id'],'day':day,'time':time_label(report['end_minute']),
+             'label':day+' '+time_label(report['end_minute']),
+             'activity':details.get('activity') or report['task_title'] or report['description'],
+             'minutes':report['minutes'],'accumulated':accumulated[day],'elapsed':available,
+             'productivity':round(accumulated[day]/available*100,1) if available else None})
+    return {'days':rows,'weeks':list(weeks.values()),'series':series,'actual':actual,'expected':expected,'count':count,'working_days':working,
+            'average':round(count/working,2) if working else 0,
+            'productivity':round(actual/expected*100,1) if expected else None}

@@ -1,14 +1,16 @@
 {% extends 'base.html' %}
 {% block title %}Carga masiva de proyectos · {{ app_name }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/oportunidades.css') }}">{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/oportunidades.css') }}">{% endblock %}
 
 {% block content %}
 <div class="od-page od-import-page">
   <div class="od-page-head">
     <div>
-      <span class="page-eyebrow">OPORTUNIDADES DE PROYECTO</span>
+      <span class="page-eyebrow">PROYECTO</span>
       <h2>Agregar / actualizar desde Excel</h2>
-      <p>Use la plantilla oficial con las 28 columnas en el mismo orden de SISTEMAS. Revise el resultado antes de confirmar.</p>
+      <p>Use la plantilla oficial con las 28 columnas en el mismo orden de SISTEMAS. Revise el resultado antes de
+        confirmar.</p>
     </div>
     <div class="od-head-actions">
       <a class="btn outline" href="{{ url_for('oportunidades.index') }}">← Volver</a>
@@ -21,14 +23,26 @@
     <p>Corrija todas las filas indicadas y vuelva a analizar el Excel.</p>
     <div class="od-import-table-wrap">
       <table class="od-import-table">
-        <thead><tr><th>Fila de Excel</th><th>Columna</th><th>Campo</th><th>Valor recibido</th><th>Motivo</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Fila de Excel</th>
+            <th>Columna</th>
+            <th>Campo</th>
+            <th>Valor recibido</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
         <tbody>{% for error in validation_errors %}<tr>
-          <td>{{ error.row }}</td><td>{{ error.column }}</td><td>{{ error.field }}</td>
-          <td>{{ error.value or '(vacío)' }}</td><td>{{ error.reason }}</td>
-        </tr>{% endfor %}</tbody>
+            <td>{{ error.row }}</td>
+            <td>{{ error.column }}</td>
+            <td>{{ error.field }}</td>
+            <td>{{ error.value or '(vacío)' }}</td>
+            <td>{{ error.reason }}</td>
+          </tr>{% endfor %}</tbody>
       </table>
     </div>
-    {% if import_payload %}<a class="btn outline" href="{{ url_for('oportunidades.import_page') }}">Analizar otro archivo</a>{% endif %}
+    {% if import_payload %}<a class="btn outline" href="{{ url_for('oportunidades.import_page') }}">Analizar otro
+      archivo</a>{% endif %}
   </section>
   {% endif %}
 
@@ -38,27 +52,35 @@
       <div class="od-import-icon">XL</div>
       <div>
         <h3>Plantilla de proyectos A–AB</h3>
-        <p>Descargue la plantilla oficial. No cambie los nombres ni el orden de las columnas A–AB. Esta carga procesa la hoja <b>SISTEMAS</b>; las otras hojas no se importan.</p>
+        <p>Descargue la plantilla oficial. No cambie los nombres ni el orden de las columnas A–AB. Esta carga procesa la
+          hoja <b>SISTEMAS</b>; las otras hojas no se importan.</p>
       </div>
     </div>
     <p><a class="btn outline" href="{{ url_for('oportunidades.import_template') }}">Descargar plantilla oficial</a></p>
-    <form method="post" action="{{ url_for('oportunidades.import_analyze') }}" enctype="multipart/form-data" class="od-import-form">
+    <form method="post" action="{{ url_for('oportunidades.import_analyze') }}" enctype="multipart/form-data"
+      class="od-import-form">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
       <label for="import-mode"><b>¿Qué desea hacer?</b></label>
       <select id="import-mode" name="import_mode" required>
-        <option value="add" {% if selected_mode != 'update' %}selected{% endif %}>Agregar proyectos nuevos</option>
-        <option value="update" {% if selected_mode == 'update' %}selected{% endif %}>Actualizar proyectos existentes</option>
+        <option value="add" {% if selected_mode !='update' %}selected{% endif %}>Agregar proyectos nuevos</option>
+        <option value="update" {% if selected_mode=='update' %}selected{% endif %}>Actualizar proyectos existentes
+        </option>
       </select>
-      <p>Al agregar, proyecto y cliente son obligatorios. Los demás campos son opcionales. Al actualizar, las celdas vacías conservan el dato actual; un subsistema nuevo se agrega al proyecto existente.</p>
+      <p>Al agregar, proyecto y cliente son obligatorios. Los demás campos son opcionales. Al actualizar, las celdas
+        vacías conservan el dato actual; un subsistema nuevo se agrega al proyecto existente.</p>
       <label class="od-dropzone">
-        <input type="file" name="archivo_excel" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+        <input type="file" name="archivo_excel"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
         <span class="od-drop-main">Seleccione el archivo <b>.xlsx</b></span>
         <small>Máximo 25 MB.</small>
       </label>
       <div class="od-import-rules">
-        <div><strong>1</strong><span>Se comprueban las 28 columnas, sus formatos y los valores de los catálogos de Datos.</span></div>
-        <div><strong>2</strong><span>Una fila por subsistema: 3876A y 3876B pertenecen al mismo proyecto y se procesan por separado.</span></div>
-        <div><strong>3</strong><span>Si hay un error, se indica fila, columna y motivo. Ninguna fila se guarda hasta corregirlo.</span></div>
+        <div><strong>1</strong><span>Se comprueban las 28 columnas, sus formatos y los valores de los catálogos de
+            Datos.</span></div>
+        <div><strong>2</strong><span>Una fila por subsistema: 3876A y 3876B pertenecen al mismo proyecto y se procesan
+            por separado.</span></div>
+        <div><strong>3</strong><span>Si hay un error, se indica fila, columna y motivo. Ninguna fila se guarda hasta
+            corregirlo.</span></div>
       </div>
       <div class="od-modal-actions"><button class="btn primary" type="submit">Analizar Excel</button></div>
     </form>
@@ -71,27 +93,40 @@
   </section>
 
   <div class="od-import-kpis">
-    <div><strong>{{ s.oportunidades }}</strong><span>Proyectos</span><small>{{ s.radicados_unicos }} proyectos únicos</small></div>
+    <div><strong>{{ s.oportunidades }}</strong><span>Proyectos</span><small>{{ s.radicados_unicos }} proyectos
+        únicos</small></div>
     <div><strong>{{ s.subsistemas }}</strong><span>Grupos técnicos</span><small>desde SISTEMAS A–AB</small></div>
-    <div><strong>{{ s.entradas }}</strong><span>Puntos de ingreso</span><small>{{ s.filas_entradas }} valores leídos</small></div>
-    <div><strong>{{ s.salidas }}</strong><span>Puntos de salida</span><small>{{ s.filas_salidas }} valores leídos</small></div>
-    <div><strong>{{ s.equipos }}</strong><span>Equipos asociados</span><small>{{ s.filas_equipos }} filas leídas</small></div>
-    <div class="{% if s.no_asociados %}warn{% else %}ok{% endif %}"><strong>{{ s.no_asociados }}</strong><span>No asociados</span><small>{% if s.no_asociados %}revise advertencias{% else %}relaciones completas{% endif %}</small></div>
+    <div><strong>{{ s.entradas }}</strong><span>Puntos de ingreso</span><small>{{ s.filas_entradas }} valores
+        leídos</small></div>
+    <div><strong>{{ s.salidas }}</strong><span>Puntos de salida</span><small>{{ s.filas_salidas }} valores
+        leídos</small></div>
+    <div><strong>{{ s.equipos }}</strong><span>Equipos asociados</span><small>{{ s.filas_equipos }} filas leídas</small>
+    </div>
+    <div class="{% if s.no_asociados %}warn{% else %}ok{% endif %}"><strong>{{ s.no_asociados }}</strong><span>No
+        asociados</span><small>{% if s.no_asociados %}revise advertencias{% else %}relaciones completas{% endif
+        %}</small></div>
   </div>
 
   <section class="od-import-safety">
     <div class="od-import-shield">✓</div>
     <div>
       <strong>{{ "Agregar proyectos" if import_payload.import_mode == "add" else "Actualizar proyectos" }}</strong>
-      <p>{% if import_payload.import_mode == 'add' %}Se crearán los proyectos nuevos. Los proyectos existentes no se modifican.{% else %}Los valores no vacíos reemplazan los datos del proyecto y del subsistema indicado. Los vacíos conservan el dato actual. Cliente, industria y fecha de inicio son datos generales del proyecto; la fecha usa la más temprana del Excel. Origen y destino actualizan el primer punto y conservan sus cantidades, alturas y puntos adicionales.{% endif %}</p>
+      <p>{% if import_payload.import_mode == 'add' %}Se crearán los proyectos nuevos. Los proyectos existentes no se
+        modifican.{% else %}Los valores no vacíos reemplazan los datos del proyecto y del subsistema indicado. Los
+        vacíos conservan el dato actual. Cliente, Dato y fecha de inicio son datos generales del proyecto; la fecha
+        usa la más temprana del Excel. Origen y destino actualizan el primer punto y conservan sus cantidades, alturas y
+        puntos adicionales.{% endif %}</p>
     </div>
   </section>
 
   <section class="od-import-dbcheck">
-    <div class="od-form-section-head"><div><strong>Comparación con la base actual</strong><small>Lo que ocurrirá si confirma ahora.</small></div></div>
+    <div class="od-form-section-head">
+      <div><strong>Comparación con la base actual</strong><small>Lo que ocurrirá si confirma ahora.</small></div>
+    </div>
     <div class="od-import-compare-grid">
       <div class="create"><strong>{{ comparison.new_opportunities }}</strong><span>Proyectos nuevos</span></div>
-      <div class="merge"><strong>{{ comparison.existing_opportunities }}</strong><span>Proyectos a actualizar</span></div>
+      <div class="merge"><strong>{{ comparison.existing_opportunities }}</strong><span>Proyectos a actualizar</span>
+      </div>
       <div class="create"><strong>{{ comparison.new_subsystems }}</strong><span>Grupos nuevos</span></div>
       <div class="merge"><strong>{{ comparison.existing_subsystems }}</strong><span>Grupos existentes</span></div>
     </div>
@@ -110,22 +145,33 @@
 
   <section class="od-import-preview">
     <div class="od-form-section-head">
-      <div><strong>Previsualización de proyectos</strong><small>{{ comparison.rows|length }} proyectos. Los 28 campos A–AB se importan dentro de cada grupo técnico.</small></div>
+      <div><strong>Previsualización de proyectos</strong><small>{{ comparison.rows|length }} proyectos. Los 28 campos
+          A–AB se importan dentro de cada grupo técnico.</small></div>
     </div>
     <div class="od-import-table-wrap">
       <table class="od-import-table">
-        <thead><tr><th>Proyecto</th><th>Cliente</th><th>Inicio</th><th>Industria</th><th>Grupos técnicos</th><th>Acción</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Proyecto</th>
+            <th>Cliente</th>
+            <th>Inicio</th>
+            <th>Datos</th>
+            <th>Grupos técnicos</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
         <tbody>
-        {% for row in comparison.rows %}
+          {% for row in comparison.rows %}
           <tr>
             <td><b>{{ row.proyecto }}</b></td>
             <td>{{ row.cliente or '—' }}</td>
             <td>{{ row.fecha_inicio or '—' }}</td>
             <td>{{ row.industria or '—' }}</td>
-            <td>{{ row.subsistemas }}{% if row.subsistemas_existentes %}<small>{{ row.subsistemas_nuevos }} nuevos · {{ row.subsistemas_existentes }} existentes</small>{% endif %}</td>
+            <td>{{ row.subsistemas }}{% if row.subsistemas_existentes %}<small>{{ row.subsistemas_nuevos }} nuevos · {{
+                row.subsistemas_existentes }} existentes</small>{% endif %}</td>
             <td><span class="od-import-action {{ row.action|lower }}">{{ row.action }}</span></td>
           </tr>
-        {% endfor %}
+          {% endfor %}
         </tbody>
       </table>
     </div>
@@ -134,13 +180,26 @@
   {% if import_payload.import_mode == 'update' and comparison.changes %}
   <section class="od-import-preview">
     <h3>Valores que se actualizarán</h3>
-    <div class="od-import-table-wrap"><table class="od-import-table">
-      <thead><tr><th>Proyecto</th><th>Subsistema</th><th>Campo</th><th>Actual</th><th>Excel</th></tr></thead>
-      <tbody>{% for change in comparison.changes %}<tr>
-        <td>{{ change.project }}</td><td>{{ change.subsystem or 'General' }}</td><td>{{ change.field }}</td>
-        <td>{{ change.before or '(vacío)' }}</td><td>{{ change.after }}</td>
-      </tr>{% endfor %}</tbody>
-    </table></div>
+    <div class="od-import-table-wrap">
+      <table class="od-import-table">
+        <thead>
+          <tr>
+            <th>Proyecto</th>
+            <th>Subsistema</th>
+            <th>Campo</th>
+            <th>Actual</th>
+            <th>Excel</th>
+          </tr>
+        </thead>
+        <tbody>{% for change in comparison.changes %}<tr>
+            <td>{{ change.project }}</td>
+            <td>{{ change.subsystem or 'General' }}</td>
+            <td>{{ change.field }}</td>
+            <td>{{ change.before or '(vacío)' }}</td>
+            <td>{{ change.after }}</td>
+          </tr>{% endfor %}</tbody>
+      </table>
+    </div>
   </section>
   {% endif %}
 
@@ -148,14 +207,16 @@
   <div class="od-import-confirmbar">
     <div>
       <strong>¿Confirmar importación?</strong>
-      <span>La operación se ejecuta en una sola transacción SQLite. Si ocurre un error, no se aplican cambios parciales.</span>
+      <span>La operación se ejecuta en una sola transacción SQLite. Si ocurre un error, no se aplican cambios
+        parciales.</span>
     </div>
     <div class="od-import-confirm-actions">
       <form method="post" action="{{ url_for('oportunidades.import_cancel', token=import_token) }}">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
         <button class="btn outline" type="submit">Descartar</button>
       </form>
-      <form method="post" action="{{ url_for('oportunidades.import_confirm', token=import_token) }}" onsubmit="return confirm('¿Importar los proyectos previsualizados a la base de datos?');">
+      <form method="post" action="{{ url_for('oportunidades.import_confirm', token=import_token) }}"
+        onsubmit="return confirm('¿Importar los proyectos previsualizados a la base de datos?');">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
         <button class="btn primary" type="submit">Confirmar carga masiva</button>
       </form>

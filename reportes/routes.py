@@ -12,6 +12,16 @@ from . import db
 
 bp=Blueprint('reportes',__name__,url_prefix='/reportes')
 
+@bp.before_request
+def chief_reporting_permissions():
+    user=getattr(g,'current_user',None) or {}
+    if not (user.get('is_chief') or user.get('role')==ROLE_CHIEF): return
+    if request.endpoint=='reportes.index': return redirect(url_for('reportes.dashboard'))
+    if request.endpoint in {'reportes.submit','reportes.plan_personal','reportes.cancel_personal',
+                            'reportes.complete_assigned_task','reportes.my_excel'}:
+        abort(403,description='El Jefe de Diseño administra y revisa las tareas del equipo; no registra tareas personales.')
+
+
 def manager_required(view):
     @wraps(view)
     def wrapped(*args,**kwargs):
@@ -43,7 +53,7 @@ def _range():
 
 def _render(template,**context):
     return render_template(template,reportes_page=True,admin_page=True,modules=MODULES,
-      today=db.today().isoformat(),time_label=db.time_label,**context)
+      today=db.today().isoformat(),time_label=db.time_label,duration_label=db.duration_label,**context)
 
 @bp.get('/')
 def index():
@@ -51,13 +61,14 @@ def index():
     if request.args.get('fecha'):
         try:
             day=db.parse_day(request.args['fecha'])
-            if day>db.today(): raise ValueError('No puede consultar una jornada futura.')
+            if day>db.today()+timedelta(days=31): raise ValueError('Puede programar hasta 31 días hacia adelante.')
         except ValueError as e: abort(400,description=str(e))
     user=g.current_user
     db.sync_project_activities()
     return _render('reportes/mis_reportes.html',profile=db.get_profile(user['id']),
       summary=db.day_summary(user['id'],day),selected_day=day.isoformat(),
-      reports=db.list_reports([user['id']],day,day),assignments=db.assignments([user['id']],day))
+      reports=_my_report_rows(user['id'],day),assignments=_my_assignment_options(user['id'],day),
+      pending_tasks=db.personal_tasks(user['id'],day),analysis=_my_analysis(user['id']) if request.args.get('analizar') else None)
 
 @bp.post('/enviar')
 def submit():
@@ -65,7 +76,7 @@ def submit():
         db.sync_project_activities()
         report_id=db.submit_report(request.form,g.current_user)
         _audit('ENVIAR REPORTE',report_id)
-        flash('Reporte enviado al Jefe de Diseño.','ok')
+        flash('Tarea completada y enviada al Jefe de Diseño.','ok')
     except ValueError as e: flash(str(e),'error')
     return redirect(url_for('reportes.index',fecha=request.form.get('day') or db.today().isoformat()))
 
@@ -98,8 +109,11 @@ def team():
 def save_team():
     from proyectos_diseno.routes import storage
     actor=g.current_user; user_id=request.form.get('user_id','')
+    chosen_role=request.form.get('role') or ROLE_COLLABORATOR
+    if chosen_role not in {ROLE_COLLABORATOR,ROLE_CHIEF,ROLE_ADMIN}: abort(400)
+    if chosen_role!=ROLE_COLLABORATOR and not actor.get('is_admin'): abort(403)
     raw={'start':request.form.get('start'),'end':request.form.get('end'),'breaks':request.form.get('breaks',''),
-         'minimum_reports':request.form.get('minimum_reports'),'weekdays':request.form.getlist('weekdays'),
+         'minimum_reports':0,'weekdays':request.form.getlist('weekdays'),
          'modules':request.form.getlist('modules')}
     try:
         config=db.validate_config(raw)
@@ -124,13 +138,15 @@ def save_team():
             raise ValueError('Ese diseñador del tablero ya tiene otra cuenta vinculada.')
         if old and old['designer_id'] and designer_id!=old['designer_id']:
             raise ValueError('Conserve el vínculo actual del perfil con el diseñador del tablero.')
+        if not user_id and chosen_role!=ROLE_COLLABORATOR and not linked:
+            raise ValueError('Seleccione un diseñador existente para crear su cuenta con otro rol.')
         # Comprueba primero que el catálogo del tablero es accesible.
         storage.read('designers')
         if user_id:
             target=get_user_by_id(user_id)
             if not target or target['role']!=ROLE_COLLABORATOR: raise ValueError('Solo se configuran perfiles de Diseñador.')
         else:
-            target=create_user(request.form.get('username'),request.form.get('name'),request.form.get('password'),ROLE_COLLABORATOR,actor['username'])
+            target=create_user(request.form.get('username'),request.form.get('name'),request.form.get('password'),chosen_role,actor['username'])
             user_id=target['id']
         if not designer_id:
             matches=[d for d in storage.read('designers') if str(d.get('nombre','')).strip().casefold()==target['name'].strip().casefold()]
@@ -151,10 +167,12 @@ def save_team():
             storage.upsert('designers',designer)
         except OSError:
             flash('El perfil fue guardado, pero no se pudo sincronizar el tablero. Cierre los Excel abiertos y vuelva a guardar este perfil.','error')
-            return redirect(url_for('reportes.team',usuario=user_id))
+            return redirect(url_for('admin_users') if target['role']!=ROLE_COLLABORATOR else url_for('reportes.team',usuario=user_id))
         _audit('CONFIGURAR DISEÑADOR',f"{target['username']} · horario, reportes y módulos")
         db.sync_project_activities()
-        flash('Diseñador configurado y vinculado al tablero. Sus permisos se aplican en la siguiente solicitud.','ok')
+        flash('Cuenta configurada y vinculada al diseñador existente. Sus permisos se aplican según su rol.','ok')
+        if target['role']!=ROLE_COLLABORATOR:
+            return redirect(url_for('admin_users'))
     except PermissionError: abort(403)
     except ValueError as e: flash(str(e),'error')
     except OSError:
@@ -182,15 +200,14 @@ def tasks():
     db.sync_project_activities()
     manager=g.current_user.get('is_admin') or g.current_user.get('is_chief')
     users=_configured_users() if manager else [{'id':g.current_user['id'],'name':g.current_user['name']}]
-    items=db.assignments([u['id'] for u in users]); names={u['id']:u['name'] for u in users}
+    items=[task for task in db.assignments([u['id'] for u in users]) if not task['source_id']]
+    names={u['id']:u['name'] for u in users}
     selected=None
     if request.args.get('editar'):
         selected=next((t for t in items if t['id']==request.args['editar']),None)
         if not selected or not manager: abort(403)
         if selected.get('source_id'): return redirect(url_for('proyectos_diseno.index',view='projects',project_id=selected['project_id']))
-    from proyectos_diseno.routes import storage
-    projects=storage.read('projects') if manager else []
-    return _render('reportes/asignaciones.html',users=users,assignments=items,names=names,selected=selected,projects=projects,manager=manager)
+    return _render('reportes/asignaciones.html',users=users,assignments=items,names=names,selected=selected,manager=manager)
 
 @bp.post('/asignaciones/guardar')
 @manager_required
@@ -219,11 +236,33 @@ def dashboard():
         rows=[db.day_summary(user['id'],d) for d in days]
         summaries.append({'user':user,'days':rows,'expected':sum(r['expected'] for r in rows),'actual':sum(r['actual'] for r in rows),
           'pending_days':sum(r['status']=='PENDIENTE' for r in rows),'missing_reports':sum(r['missing_reports'] for r in rows if r['status']=='PENDIENTE')})
-    tasks=db.assignments(ids,end); reports=db.list_reports(ids,start,end)
+    tasks=[t for t in db.assignments(ids,end) if not t['source_id'] and db.parse_day(t['start_date'])<=end]
+    for task in tasks:
+        if task['status']=='CANCELADA': state='CANCELADA'
+        elif task['progress']>=100: state='COMPLETADA'
+        else:
+            due=db.parse_day(task['due_date']);profile=db.get_profile(task['user_id'])
+            closed=due<end or (due==end and (end<db.today() or db.now().hour*60+db.now().minute>=db.time_minute(profile['end'])))
+            state='ATRASADA' if closed else 'PENDIENTE'
+        task['task_state']=state
+    personal=[]
+    for user in users:
+        for day in days:
+            for task in db.personal_tasks(user['id'],day):
+                task['task_state']='POR CORREGIR' if task.get('report_status')=='DEVUELTO' else task['status']
+                task['net_minutes']=db.net_minutes(task['start_minute'],task['end_minute'],db.day_summary(user['id'],day)['profile'] or user['profile'])
+                personal.append(task)
+    reports=[{**r,'metadata':json.loads(r['details'])} for r in db.list_reports(ids,start,end)]
+    for summary in summaries:
+        summary['count']=sum(d['count'] for d in summary['days'])
+        summary['coverage']=round(summary['actual']/summary['expected']*100,1) if summary['expected'] else None
+        summary['personal_pending']=sum(t['user_id']==summary['user']['id'] and t['task_state'] in {'PENDIENTE','POR CORREGIR'} for t in personal)
+        summary['assigned_pending']=sum(t['user_id']==summary['user']['id'] and t['task_state'] in {'PENDIENTE','ATRASADA'} for t in tasks)
     return _render('reportes/tablero.html',users=_configured_users(),selected_user=filter_user,start=start.isoformat(),end=end.isoformat(),
-      summaries=summaries,assignments=tasks,reports=reports,names=names,
+      summaries=summaries,assignments=tasks,personal_tasks=personal,reports=reports,names=names,
       metrics={'expected':sum(s['expected'] for s in summaries),'actual':sum(s['actual'] for s in summaries),
-      'late':sum(t['trend']=='ATRASADA' for t in tasks),'ahead':sum(t['trend'] in {'ADELANTADA','TERMINADA ANTES'} for t in tasks),
+      'late':sum(t['task_state']=='ATRASADA' for t in tasks),'ahead':sum(t['task_state']=='COMPLETADA' and t['trend']=='TERMINADA ANTES' for t in tasks),
+      'pending':sum(t['task_state'] in {'PENDIENTE','ATRASADA'} for t in tasks)+sum(t['task_state'] in {'PENDIENTE','POR CORREGIR'} for t in personal),
       'unreviewed':sum(r['status']=='ENVIADO' for r in reports)})
 
 @bp.post('/<report_id>/revisar')
@@ -247,10 +286,139 @@ def export():
         users=[u for u in users if u['id']==wanted]
     names={u['id']:u['name'] for u in users}; reports=db.list_reports(list(names),start,end)
     out=StringIO(); writer=csv.writer(out,delimiter=';')
-    writer.writerow(['Fecha','Diseñador','Inicio','Fin','Horas netas','Asignación','Proyecto','Avance acumulado %','Trabajo realizado','Bloqueos','Estado','Observación jefe'])
+    writer.writerow(['Fecha','Diseñador','Inicio','Fin','Horas netas','Tarea','Proyecto','Equipo','Número de equipo','Etapa','Centro de trabajo','Bloqueos','Estado','Comentario jefe'])
     for r in reports:
+        metadata=json.loads(r['details'])
         values=[r['day'],names[r['user_id']],db.time_label(r['start_minute']),db.time_label(r['end_minute']),
-        f"{r['minutes']/60:.2f}".replace('.',','),r['task_title'] or '',r['project_label'] or '',r['progress'] if r['progress'] is not None else '',r['description'],r['blocker'],r['status'],r['review_note']]
+        f"{r['minutes']/60:.2f}".replace('.',','),metadata.get('activity') or r['task_title'] or r['description'],metadata.get('project') or r['project_label'] or '',metadata.get('equipment',''),metadata.get('equipment_number',''),metadata.get('stage',''),metadata.get('workplace',''),r['blocker'],r['status'],r['review_note']]
         writer.writerow([("'"+str(v)) if str(v).lstrip().startswith(('=','+','-','@')) else v for v in values])
     _audit('EXPORTAR REPORTES',f'{start} a {end}')
     return Response('\ufeff'+out.getvalue(),mimetype='text/csv; charset=utf-8',headers={'Content-Disposition':f'attachment; filename="REPORTES_{start}_{end}.csv"'})
+
+
+def _personal_range(user_id):
+    with db.connection() as c:
+        first=c.execute("SELECT MIN(day) FROM reports WHERE user_id=?",(user_id,)).fetchone()[0]
+        configured=c.execute("SELECT MIN(effective_date) FROM profile_history WHERE user_id=?",(user_id,)).fetchone()[0]
+    earliest=min([x for x in [first,configured] if x],default=db.today().isoformat())
+    start=db.parse_day(request.args.get('desde') or earliest)
+    end=db.parse_day(request.args.get('hasta') or db.today().isoformat())
+    if end<start or end>db.today() or (end-start).days>3660:
+        raise ValueError('Seleccione un día o rango válido, sin fechas futuras y hasta diez años.')
+    return start,end
+
+def _my_analysis(user_id):
+    try: start,end=_personal_range(user_id)
+    except ValueError as e: abort(400,description=str(e))
+    result=db.personal_analysis(user_id,start,end)
+    result.update(start=start.isoformat(),end=end.isoformat())
+    return result
+
+@bp.post('/mis-tareas/programar')
+def plan_personal():
+    try:
+        task_id=db.plan_personal_task(request.form,g.current_user)
+        _audit('PROGRAMAR TAREA PERSONAL',task_id)
+        flash('Actividad programada. Complétala cuando hayas realizado el trabajo.','ok')
+    except ValueError as e: flash(str(e),'error')
+    return redirect(url_for('reportes.index',fecha=request.form.get('day') or db.today().isoformat()))
+
+@bp.post('/mis-tareas/<task_id>/cancelar')
+def cancel_personal(task_id):
+    try:
+        db.cancel_personal_task(task_id,g.current_user)
+        _audit('CANCELAR TAREA PERSONAL',task_id);flash('Tarea cancelada.','ok')
+    except ValueError as e: flash(str(e),'error')
+    return redirect(url_for('reportes.index',fecha=request.form.get('day') or db.today().isoformat()))
+
+@bp.get('/mis-reportes/excel')
+def my_excel():
+    from io import BytesIO
+    from openpyxl import Workbook
+    from openpyxl.styles import Font,PatternFill,Alignment
+    from openpyxl.chart import LineChart,Reference
+    from flask import send_file
+    user=g.current_user
+    try: start,end=_personal_range(user['id'])
+    except ValueError as e: abort(400,description=str(e))
+    analysis=db.personal_analysis(user['id'],start,end)
+    reports=db.list_reports([user['id']],start,end)
+    workbook=Workbook();summary=workbook.active;summary.title='Resumen'
+    def safe(value):
+        if isinstance(value,str) and value.lstrip().startswith(('=','+','-','@')): return "'"+value
+        return value
+    summary.append(['Mis reportes',safe(user['name'])])
+    summary.append(['Desde',start]);summary.append(['Hasta',end])
+    summary.append(['Horas registradas vigentes',analysis['actual']/60])
+    summary.append(['Horas de jornada',analysis['expected']/60])
+    summary.append(['Tareas completadas vigentes',analysis['count']])
+    summary.append(['Días laborales del rango',analysis['working_days']])
+    summary.append(['Tareas promedio por día laboral',analysis['average']])
+    summary.append(['Cobertura de jornada',analysis['productivity']/100 if analysis['productivity'] is not None else None])
+    summary.append(['Cobertura = horas reportadas / horas de jornada. Incluye reportes enviados y revisados; excluye devueltos.'])
+    summary.append(['Fecha','Horas jornada','Horas reportadas','Tareas','Cobertura'])
+    for d in analysis['days']:
+        summary.append([db.parse_day(d['day']),d['expected']/60,d['actual']/60,d['count'],d['productivity']/100 if d['productivity'] is not None else None])
+    for row in summary.iter_rows(min_row=12):
+        row[0].number_format='dd/mm/yyyy';row[1].number_format=row[2].number_format='0.00';row[4].number_format='0.0%'
+    summary['B2'].number_format=summary['B3'].number_format='dd/mm/yyyy';summary['B9'].number_format='0.0%'
+    weekly=workbook.create_sheet('Semanal')
+    weekly.append(['Semana inicio','Semana fin','Datos desde','Datos hasta','Horas jornada','Horas reportadas','Tareas','Promedio diario','Cobertura'])
+    for w in analysis['weeks']:
+        weekly.append([db.parse_day(w['start']),db.parse_day(w['end']),db.parse_day(w['period_start']),db.parse_day(w['period_end']),w['expected']/60,w['actual']/60,w['count'],w['average'],w['productivity']/100 if w['productivity'] is not None else None])
+        for cell in weekly[weekly.max_row][:4]:cell.number_format='dd/mm/yyyy'
+        weekly.cell(weekly.max_row,9).number_format='0.0%'
+    trend=workbook.create_sheet('Tendencia')
+    trend.append(['Fecha y hora final','Actividad','Horas de tarea','Horas acumuladas del día','Cobertura hasta la tarea','Horas laborales transcurridas'])
+    for point in analysis['series']:
+        trend.append([point['label'],safe(point['activity']),point['minutes']/60,point['accumulated']/60,point['productivity']/100 if point['productivity'] is not None else None,point['elapsed']/60])
+        trend.cell(trend.max_row,5).number_format='0.0%'
+    if analysis['series']:
+        chart=LineChart();chart.title='Tendencia por tarea registrada';chart.y_axis.title='Cobertura hasta cada tarea';chart.x_axis.title='Fecha y hora final'
+        chart.add_data(Reference(trend,min_col=5,min_row=1,max_row=1+len(analysis['series'])),titles_from_data=True)
+        chart.set_categories(Reference(trend,min_col=1,min_row=2,max_row=1+len(analysis['series'])))
+        chart.series[0].marker.symbol='circle';chart.series[0].marker.size=5;chart.series[0].smooth=False
+        chart.display_blanks='gap';summary.add_chart(chart,'G2')
+    summary['A10']='Tablas: cobertura diaria/semanal sobre la jornada completa. Gráfica: cobertura acumulada hasta cada tarea. Excluye devoluciones.'
+    detail=workbook.create_sheet('Registro')
+    detail.append(['PROYECTO','EQUIPO','NO. EQUIPO','ACTIVIDAD','ETAPA','FECHA','HORA INICIO','HORA FINAL','TOTAL HORAS NETAS','CENTRO DE TRABAJO','BLOQUEOS','AVANCE (%)','ESTADO','OBSERVACIÓN DEL JEFE'])
+    for r in reversed(reports):
+        metadata=json.loads(r['details']);values=[metadata.get('project') or r['project_label'] or '',metadata.get('equipment',''),metadata.get('equipment_number',''),metadata.get('activity') or r['task_title'] or r['description'] or 'Trabajo general',metadata.get('stage',''),db.parse_day(r['day']),r['start_minute']/1440,r['end_minute']/1440,r['minutes']/60,metadata.get('workplace',''),r['blocker'],r['progress'],r['status'],r['review_note']]
+        detail.append([safe(v) for v in values]);n=detail.max_row
+        detail.cell(n,6).number_format='dd/mm/yyyy';detail.cell(n,7).number_format=detail.cell(n,8).number_format='hh:mm';detail.cell(n,9).number_format='0.00'
+    detail.freeze_panes='A2';detail.auto_filter.ref=detail.dimensions
+    for sheet,header in [(summary,11),(detail,1),(weekly,1),(trend,1)]:
+        for cell in sheet[header]:cell.font=Font(color='FFFFFF',bold=True);cell.fill=PatternFill('solid',fgColor='164B7A')
+        from openpyxl.utils import get_column_letter
+        for col in range(1,sheet.max_column+1):sheet.column_dimensions[get_column_letter(col)].width=24
+    summary.column_dimensions['A'].width=45
+    detail.column_dimensions['K'].width=55
+    for row in detail.iter_rows(min_row=2):
+        for cell in row:cell.alignment=Alignment(vertical='top',wrap_text=True)
+    buffer=BytesIO();workbook.save(buffer);buffer.seek(0)
+    return send_file(buffer,as_attachment=True,download_name=f'Mis_reportes_{start}_{end}.xlsx',mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+def _my_report_rows(user_id,day):
+    return [{**r,'metadata':json.loads(r['details'])} for r in db.list_reports([user_id],day,day)]
+
+def _my_assignment_options(user_id,day):
+    from proyectos_diseno.routes import storage
+    stages={str(r['id']):r.get('etapa','') for r in storage.read('project_progress')}
+    return [{**task,'stage_label':('ETAPA '+str(stages[task['source_id']])) if task['source_id'] in stages else ''}
+            for task in db.assignments([user_id],day)]
+
+
+@bp.post('/asignaciones/<task_id>/completar')
+def complete_assigned_task(task_id):
+    task=db.assignment(task_id)
+    if not task or task['user_id']!=g.current_user['id'] or task['source_id']: abort(403)
+    try:
+        raw={ 'day':request.form.get('day'),'start':request.form.get('start'),'end':request.form.get('end'),
+              'activity':task['title'],'description':task['title'],'assignment_id':task_id,'progress':100,
+              'blocker':request.form.get('blocker',''),'project':task['project_label'],'_complete_assigned':True }
+        report_id=db.submit_report(raw,g.current_user)
+        _audit('COMPLETAR TAREA ASIGNADA',report_id)
+        flash('Tarea completada. El trabajo está disponible para revisión del jefe.','ok')
+    except ValueError as e: flash(str(e),'error')
+    return redirect(url_for('reportes.tasks'))

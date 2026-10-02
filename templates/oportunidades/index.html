@@ -24,7 +24,7 @@
       <p>Consulta proyectos por información general, datos técnicos y elementos relacionados.</p>
     </div>
     <div class="od-head-actions">
-      <div class="od-kpi"><strong>{{ od_stats.total }}</strong><span>Oportunidades</span></div>
+      <div class="od-kpi"><strong>{{ od_stats.total }}</strong><span>Proyectos</span></div>
       <div class="od-kpi"><strong>{{ od_stats.subsistemas }}</strong><span>Grupos técnicos</span></div>
       {% if current_user and current_user.is_admin %}
       <a class="btn outline od-phase2" href="/oportunidades-proyecto/importar">Agregar / actualizar desde Excel</a>
@@ -71,7 +71,7 @@
     <div class="od-list-head"><strong id="odResultCount">{{ opportunities|length }} resultados</strong><span>Seleccione un proyecto para abrir el panel de detalle · ↕ Arrastre abajo para cambiar la altura</span></div>
     <div class="od-project-table">
       <div class="od-table-head" role="row">
-        <span>Proyecto</span><span>Cliente</span><span>Inicio</span><span>Material a Transportar</span><span>Punto de origen</span><span>Punto de destino</span><span>Flujo en KG/Hora</span><span>Distancia Horizontal de Transporte (m)</span><span>Distancia Vertical de Transporte (m)</span><span>Cantidad de curvas de tubería x 90 grados</span><span>Tipo de Industria</span><span>Tipo de Transporte</span><span>Material de contacto con el producto</span>
+        <span>Proyecto</span><span>Cliente</span><span>Inicio</span><span>Material a Transportar</span><span>Punto de origen</span><span>Punto de destino</span><span>Flujo en KG/Hora</span><span>Distancia Horizontal de Transporte (m)</span><span>Distancia Vertical de Transporte (m)</span><span>Cantidad de curvas de tubería x 90 grados</span><span>Tipo de Dato</span><span>Tipo de Transporte</span><span>Material de contacto con el producto</span>
       </div>
       <div class="od-list" id="odList" role="rowgroup">
         {% for od in opportunities %}
@@ -86,11 +86,11 @@
           <span data-label="Distancia Horizontal de Transporte (m)">{{ od.distancia_horizontal_m or '—' }}</span>
           <span data-label="Distancia Vertical de Transporte (m)">{{ od.distancia_vertical_m or '—' }}</span>
           <span data-label="Cantidad de curvas de tubería x 90 grados">{{ od.curvas_90 or '—' }}</span>
-          <span data-label="Tipo de Industria">{{ od.industria or '—' }}</span>
+          <span data-label="Tipo de Dato">{{ od.industria or '—' }}</span>
           <span class="od-cell-transporte" data-label="Tipo de Transporte">{{ od.tipo_transporte or '—' }}</span>
           <span data-label="Material de contacto con el producto">{{ od.material_contacto or '—' }}</span>
         </button>
-        {% else %}<div class="od-list-empty"><strong>No hay oportunidades</strong><p>Cree la primera OD o cambie la búsqueda.</p></div>{% endfor %}
+        {% else %}<div class="od-list-empty"><strong>No hay Proyectos</strong><p>Cree la primera OD o cambie la búsqueda.</p></div>{% endfor %}
       </div>
     </div>
   </div>
@@ -119,8 +119,8 @@
             <select name="cliente" required><option value="">Seleccione cliente</option>{% for option in technical_options.get('cliente', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select>
           </label>
           <label>Inicio<input type="date" name="fecha_inicio"></label>
-          <label>Tipo de industria
-            <select name="industria"><option value="">Seleccione industria</option>{% for option in technical_options.get('industria', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select>
+          <label>Tipo de Dato
+            <select name="industria"><option value="">Seleccione Dato</option>{% for option in technical_options.get('industria', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select>
           </label>
           <label class="wide-2">Ingeniero responsable<select name="responsables" multiple size="4">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select><small>Dato interno de OGA; no modifica las columnas A–AB.</small></label>
         </div>
@@ -151,7 +151,7 @@
           <label>Proyecto<input name="proyecto" required></label>
           <label>Cliente<select name="cliente" required><option value="">Seleccione cliente</option>{% for option in technical_options.get('cliente', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select></label>
           <label>Inicio<input type="date" name="fecha_inicio"></label>
-          <label>Tipo de industria<select name="industria"><option value="">Seleccione industria</option>{% for option in technical_options.get('industria', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select></label>
+          <label>Tipo de Dato<select name="industria"><option value="">Seleccione Dato</option>{% for option in technical_options.get('industria', []) %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select></label>
           <label class="wide-2">Ingeniero responsable<select name="responsables" multiple size="5">{% for user in active_users %}<option value="{{ user.id }}">{{ user.name }} · {{ user.username }}</option>{% endfor %}</select></label>
         </div>
       </div>

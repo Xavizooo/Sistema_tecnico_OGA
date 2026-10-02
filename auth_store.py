@@ -89,15 +89,15 @@ def normalize_username(value):
 
 def validate_username(value):
     username = normalize_username(value)
-    if not re.fullmatch(r"[a-z0-9][a-z0-9._@-]{2,49}", username):
-        raise ValueError("El usuario debe tener entre 3 y 50 caracteres y usar letras, números, punto, guion o @.")
+    if not re.fullmatch(r"[a-z]"):
+        raise ValueError("El usuario debe tener entre 3 y 50 caracteres y usar letraso numeros")
     return username
 
 
 def validate_password(password, username=""):
     password = str(password or "")
-    if len(password) < 12:
-        raise ValueError("La contraseña debe tener mínimo 12 caracteres.")
+    if len(password) < 10:
+        raise ValueError("La contraseña debe tener mínimo 10 caracteres.")
     if len(password) > 128:
         raise ValueError("La contraseña no puede superar 128 caracteres.")
     lowered = password.casefold()

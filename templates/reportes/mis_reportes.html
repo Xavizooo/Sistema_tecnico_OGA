@@ -1,37 +1,150 @@
 {% extends 'reportes/base.html' %}
-{% block report_title %}Mi jornada{% endblock %}
-{% block report_subtitle %}Registra qué hiciste, cuánto tiempo dedicaste y qué necesitas para continuar.{% endblock %}
+{% block report_title %}Mis tareas{% endblock %}
+{% block report_subtitle %}Programa tu jornada y completa el trabajo realizado.{% endblock %}
+{% macro fields(task=none) %}
+{% set meta=task.details if task else {} %}
+<div class="report-pair"><label>Proyecto<input name="project" maxlength="180" value="{{ meta.get('project','') }}"
+            placeholder="Número o nombre"></label><label>Equipo<input name="equipment" maxlength="180"
+            value="{{ meta.get('equipment','') }}"></label></div>
+<div class="report-pair"><label>Número de equipo<input name="equipment_number" maxlength="80"
+            value="{{ meta.get('equipment_number','') }}"></label><label>Centro de trabajo<input name="workplace"
+            maxlength="120" value="{{ meta.get('workplace','') }}"></label></div>
+
+{% if task %}<input type="hidden" name="assignment_id" value="{{ task.assignment_id or '' }}">{% endif %}
+<div class="report-pair"><label>Actividad<input name="activity" minlength="3" maxlength="180" required
+            value="{{ meta.get('activity') or (task.description if task else '') }}"
+            placeholder="Ej. Modelo 3D detallado"></label><label>Etapa<input name="stage" maxlength="80"
+            value="{{ meta.get('stage','') }}" placeholder="Si aplica"></label></div>
+<div class="report-pair"><label>Hora inicio<input type="time" name="start"
+            value="{{ time_label(task.start_minute) if task else '' }}" required></label><label>Hora final<input
+            type="time" name="end" value="{{ time_label(task.end_minute) if task else '' }}" required></label></div>
+<div class="report-callout">Total de horas netas: <output class="personal-net">—</output> <small>(calculado; descuenta
+        descansos)</small></div>
+
+{% endmacro %}
 {% block report_content %}
-<form class="report-filters" method="get"><label>Consultar jornada<input type="date" name="fecha" value="{{ selected_day }}" max="{{ today }}" required></label><button class="btn outline">Consultar</button></form>
-{% if not profile %}
-<div class="report-card report-empty"><h3>Tu horario aún no está configurado</h3><p>El Jefe de Diseño debe vincular tu cuenta, indicar tu jornada, descansos y mínimo de reportes. Después podrás reportar tu trabajo.</p>{% if current_user.is_admin or current_user.is_chief %}<a class="btn primary" href="{{ url_for('reportes.team') }}">Configurar diseñadores</a>{% endif %}</div>
-{% else %}
+<form class="report-filters" method="get"><label>Jornada<input type="date" name="fecha" value="{{ selected_day }}"
+            required></label><button class="btn outline">Consultar</button></form>
+{% if not profile %}<div class="report-card report-empty">
+    <h3>Tu horario aún no está configurado</h3>
+    <p>El Jefe de Diseño debe configurar tu jornada, descansos.</p>
+</div>{% else %}
 <div class="report-stat-grid">
-  <div class="report-stat"><strong>{{ '%.2f'|format(summary.expected/60) }} h</strong><span>Jornada neta esperada</span></div>
-  <div class="report-stat"><strong>{{ '%.2f'|format(summary.actual/60) }} h</strong><span>Horas registradas vigentes</span></div>
-  <div class="report-stat"><strong>{{ summary.count }} / {{ summary.minimum }}</strong><span>Reportes / mínimo diario</span></div>
-  <div class="report-stat"><strong>{{ '%.2f'|format(summary.missing/60) }} h</strong><span>Horas pendientes de registrar</span></div>
+    <div class="report-stat"><strong>{{ duration_label(summary.expected) }}</strong><span>Jornada neta esperada</span>
+    </div>
+    <div class="report-stat"><strong>{{ duration_label(summary.actual) }}</strong><span>Horas registradas
+            vigentes</span></div>
+    <div class="report-stat"><strong>{{ pending_tasks|selectattr('status','equalto','PENDIENTE')|list|length
+            }}</strong><span>Tareas pendientes</span></div>
+    <div class="report-stat"><strong>{{ duration_label(summary.unregistered_elapsed) }}</strong><span>Tiempo
+            transcurrido sin registrar</span><small class="report-muted">Falta por trabajar: {{
+            duration_label(summary.remaining_work) }}</small></div>
 </div>
+<article class="report-card">
+    <h3>Análisis y exportación</h3>
+    <form class="report-filters" method="get" id="myAnalysisForm"><input type="hidden" name="fecha"
+            value="{{ selected_day }}"><input type="hidden" name="analizar" value="1">
+        <label>Desde<input type="date" name="desde" max="{{ today }}"
+                value="{{ analysis.start if analysis else '' }}"></label><label>Hasta<input type="date" name="hasta"
+                max="{{ today }}" value="{{ analysis.end if analysis else '' }}"></label>
+        <button class="btn primary">Analizar información</button><button class="btn outline"
+            formaction="{{ url_for('reportes.my_excel') }}">Exportar Excel personalizado</button>
+        {% if selected_day<=today %}<a class="btn outline"
+            href="{{ url_for('reportes.my_excel',desde=selected_day,hasta=selected_day) }}">Excel de este día</a>{%
+            endif %}<a class="btn outline" href="{{ url_for('reportes.my_excel') }}">Excel de todo mi historial</a>
+    </form>
+    <p class="report-muted">Deja las fechas vacías para analizar todo tu historial. Para un solo día, usa la misma fecha
+        en ambos campos.</p>
+    {% if analysis %}
+    <div class="report-stat-grid">
+        <div class="report-stat"><strong>{{ duration_label(analysis.actual) }}</strong><span>Horas totales
+                vigentes</span></div>
+        <div class="report-stat"><strong>{{ analysis.count }}</strong><span>Tareas completadas vigentes</span></div>
+        <div class="report-stat"><strong>{{ analysis.average }}</strong><span>Tareas promedio por día laboral</span>
+        </div>
+        <div class="report-stat"><strong>{{ analysis.productivity if analysis.productivity is not none else '—' }}{% if
+                analysis.productivity is not none %}%{% endif %}</strong><span>Cobertura de jornada</span></div>
+    </div>
+    <h3>Tendencia por tarea registrada</h3>
+    <div style="overflow-x:auto"><svg id="personalChart" role="img"
+            aria-label="Gráfica de líneas multipuntos de cobertura hasta cada tarea" viewBox="0 0 900 280"
+            style="min-width:600px;width:100%;max-height:340px"></svg></div>
+
+
+    <p class="report-muted">La gráfica incluye {{ analysis.series|length }} punto(s): uno por tarea vigente, ordenado
+        por fecha y hora final. Cada punto compara las horas acumuladas del día con las horas laborales transcurridas
+        hasta esa tarea, descontando descansos. Pasa el cursor sobre cada punto para ver fecha, hora, actividad y valor.
+    </p>
+    <p class="report-muted">Cobertura = horas reportadas ÷ horas de jornada. Incluye enviados y revisados; excluye
+        devueltos. El promedio incluye los días laborales sin tareas. La jornada de hoy se compara con su duración
+        completa.</p>
+    {% endif %}
+</article>
+<p class="report-muted">Los tiempos se muestran en horas y minutos. La jornada neta descuenta los descansos. Lo
+    pendiente de registrar incluye solo el tiempo laboral ya transcurrido; el tiempo futuro aparece como falta por
+    trabajar.</p>
 <div class="report-grid">
-<article class="report-card"><h3>Registrar trabajo</h3><span class="report-badge {{ summary.status|replace(' ','-') }}">{{ summary.status }}</span>
-<div class="report-callout">{% set jornada=summary.profile or profile %}Horario: <strong>{{ jornada.start }}–{{ jornada.end }}</strong>.<br>Descansos: {% for a,b in jornada.breaks %}{{ a }}–{{ b }}{% if not loop.last %}, {% endif %}{% else %}sin descansos{% endfor %}.<br>Se descuentan automáticamente del intervalo. No se aceptan horas futuras ni superpuestas.</div>
-<form class="report-form" method="post" action="{{ url_for('reportes.submit') }}">
-<input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-<label>Fecha de trabajo<input type="date" name="day" value="{{ selected_day }}" max="{{ today }}" required></label>
-<div class="report-pair"><label>Inicio<input type="time" name="start" required></label><label>Fin<input type="time" name="end" required></label></div>
-<label>Actividad<select name="assignment_id" id="reportAssignment"><option value="">Trabajo general / apoyo</option>{% for task in assignments if task.status=='ACTIVA' and not task.source_completed %}<option value="{{ task.id }}">{{ task.title }}{% if task.project_label %} · {{ task.project_label }}{% endif %}</option>{% endfor %}</select></label>
-<label id="progressField" hidden>Avance acumulado de la actividad (%)<input name="progress" type="number" min="0" max="100" step="0.1" placeholder="Ej. 60"><small>Porcentaje total alcanzado, no el porcentaje trabajado en este intervalo.</small></label>
-<label>¿Qué hiciste?<textarea name="description" minlength="10" maxlength="4000" required placeholder="Describe la actividad y el resultado obtenido."></textarea></label>
-<label>Bloqueos o apoyo requerido<textarea name="blocker" maxlength="2000" placeholder="Ej. pendiente aprobación del plano general."></textarea></label>
-<button class="btn primary" type="submit">ENVIAR REPORTE</button>
-<small class="report-muted">Los reportes enviados se conservan. Si el jefe devuelve uno, presenta un nuevo reporte corregido. Puedes registrar hasta 31 días hacia atrás desde la vigencia de tu perfil.</small>
-</form>
-</article>
-<div><article class="report-card"><h3>Reportes de {{ selected_day }}</h3>
-{% for r in reports %}<div class="report-task-row"><div class="report-actions"><span class="report-badge {{ r.status }}">{{ r.status }}</span><strong>{{ time_label(r.start_minute) }}–{{ time_label(r.end_minute) }} · {{ '%.2f'|format(r.minutes/60) }} h netas</strong></div><p class="report-task-title">{{ r.task_title or 'Trabajo general / apoyo' }}{% if r.progress is not none %} · avance {{ r.progress }}%{% endif %}</p><p class="report-task-note">{{ r.description }}</p>{% if r.blocker %}<div class="report-callout"><strong>Bloqueo:</strong> {{ r.blocker }}</div>{% endif %}{% if r.review_note %}<div class="report-callout"><strong>Jefe de Diseño:</strong> {{ r.review_note }}</div>{% endif %}{% if r.status=='DEVUELTO' %}<small class="report-muted">Este reporte no suma horas ni cumplimiento. Presenta la corrección en un nuevo reporte.</small>{% endif %}</div>{% else %}<div class="report-empty">Todavía no tienes reportes para esta fecha.</div>{% endfor %}
-</article>
-<article class="report-card"><h3>Avance de mis asignaciones</h3>{% for task in assignments if task.status=='ACTIVA' and not task.source_completed %}<div class="report-task-row"><strong>{{ task.title }}</strong><span class="report-subtitle">{{ task.project_label or 'Sin proyecto vinculado' }}</span><div class="report-progress"><span style="width:{{ task.progress }}%"></span></div><div class="report-task-meta"><span>Reportado: {{ task.progress }}%</span><span>Esperado: {{ task.expected_progress }}%</span><span>Entrega: {{ task.due_date }}</span></div><span class="report-badge {{ task.trend|replace(' ','-') }}">{{ task.trend }}</span></div>{% else %}<p class="report-muted">El jefe todavía no te ha asignado trabajo.</p>{% endfor %}<p class="report-muted">El avance es declarado en los reportes; se compara con las fechas planificadas de la actividad.</p></article></div>
+    <article class="report-card">
+        <h3>Programar o registrar actividad</h3>
+        {% set jornada=summary.profile or profile %}<div class="report-callout">Horario: <strong>{{ jornada.start }}–{{
+                jornada.end }}</strong>. Descansos: {% for a,b in jornada.breaks %}{{ a }}–{{ b }} {% else %}sin
+            descansos{% endfor %}. Las horas netas se calculan automáticamente.</div>
+        <form class="report-form" method="post" action="{{ url_for('reportes.submit') }}"><input type="hidden"
+                name="_csrf_token" value="{{ csrf_token }}"><label>Fecha<input type="date" name="day"
+                    value="{{ selected_day }}" required></label>
+            {{ fields() }}
+
+            <label>Bloqueos / apoyo requerido<textarea name="blocker" maxlength="2000"></textarea></label>
+            <button class="btn outline" type="submit" formaction="{{ url_for('reportes.plan_personal') }}">Programar
+                tarea pendiente</button><button class="btn primary" type="submit">Completar tarea</button>
+            <small class="report-muted">Puedes programar la jornada antes de trabajar. Al enviar o completar un reporte,
+                las horas deben haber transcurrido y no superponerse con otro reporte vigenten.</small>
+        </form>
+    </article>
+    <div>
+        <article class="report-card">
+            <h3>Mis tareas del {{ selected_day }}</h3>
+            {% for task in pending_tasks %}<div class="report-task-row"><span class="report-badge">{{ task.status
+                    }}</span><strong>{{ time_label(task.start_minute) }}–{{ time_label(task.end_minute) }}</strong>
+                <p class="report-task-title">{{ task.details.get('activity') or task.description }}</p>
+                {% if task.status=='PENDIENTE' %}<details>
+                    <summary>Completar tarea</summary>
+                    <form class="report-form" method="post" action="{{ url_for('reportes.submit') }}"><input
+                            type="hidden" name="_csrf_token" value="{{ csrf_token }}"><input type="hidden"
+                            name="pending_id" value="{{ task.id }}"><input type="hidden" name="day"
+                            value="{{ selected_day }}">{{ fields(task) }}{% if task.assignment_id %}<label>Avance
+                            acumulado (%)<input name="progress" type="number" min="0" max="100" step="0.1"
+                                required></label>{% endif %}<label>Bloqueos<textarea name="blocker"
+                                maxlength="2000"></textarea></label><button class="btn primary">Completar
+                            tarea</button><small class="report-muted">Ajusta las horas al intervalo realmente
+                            trabajado.</small></form>
+                </details>
+                <form method="post" action="{{ url_for('reportes.cancel_personal',task_id=task.id) }}"><input
+                        type="hidden" name="_csrf_token" value="{{ csrf_token }}"><input type="hidden" name="day"
+                        value="{{ selected_day }}"><button class="btn outline">Cancelar tarea</button></form>{% elif
+                task.report_status=='DEVUELTO' %}<p class="report-muted">El jefe devolvió el reporte. Envía uno
+                    corregido desde el formulario; la devolución se conserva.</p>{% endif %}
+            </div>{% else %}<p class="report-muted">Aún no tienes tareas programadas para este día.</p>{% endfor %}
+        </article>
+    </div>
 </div>
 {% endif %}
 {% endblock %}
-{% block scripts %}<script>const assignment=document.getElementById('reportAssignment');if(assignment){const field=document.getElementById('progressField');function toggleProgress(){field.hidden=!assignment.value;field.querySelector('input').required=!!assignment.value;}assignment.addEventListener('change',toggleProgress);toggleProgress();}</script>{% endblock %}
+{% block scripts %}
+<script>
+    {% if profile %}
+    const breaks = {{ (summary.profile or profile).breaks | tojson }};
+    const minute = value => { if (!/^\d{2}:\d{2}$/.test(value)) return null; const [h, m] = value.split(':').map(Number); return h * 60 + m; };
+    document.querySelectorAll('.report-form').forEach(form => { const start = form.querySelector('[name=start]'), end = form.querySelector('[name=end]'), output = form.querySelector('.personal-net'); if (!start || !end || !output) return; const recalc = () => { const a = minute(start.value), b = minute(end.value); if (a === null || b === null || b <= a) { output.textContent = '—'; return; } let net = b - a; breaks.forEach(([lo, hi]) => net -= Math.max(0, Math.min(b, minute(hi)) - Math.max(a, minute(lo)))); const total = Math.max(0, net); output.textContent = Math.floor(total / 60) + ' h ' + String(total % 60).padStart(2, '0') + ' min'; }; start.addEventListener('input', recalc); end.addEventListener('input', recalc); recalc(); });
+    {% endif %}
+    {% if analysis %}
+    const chartDays = {{ analysis.series| map(attribute = 'label') | list | tojson }}, chartValues = {{ analysis.series | map(attribute = 'productivity') | list | tojson }}, chartActivities = {{ analysis.series | map(attribute = 'activity') | list | tojson }};
+    const svg = document.getElementById('personalChart'), ns = 'http://www.w3.org/2000/svg';
+    function node(tag, attrs, text) { let e = document.createElementNS(ns, tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); if (text !== undefined) e.textContent = text; svg.appendChild(e); return e; }
+    const max = Math.max(100, ...chartValues.filter(v => v !== null)), x = i => 65 + i * 800 / Math.max(1, chartValues.length - 1), y = v => 235 - v / max * 200;
+    for (let tick = 0; tick <= 4; tick++) { let v = max * tick / 4; node('line', { x1: 65, x2: 865, y1: y(v), y2: y(v), stroke: '#dce5ef' }); node('text', { x: 55, y: y(v) + 4, 'text-anchor': 'end', fill: '#526680', 'font-size': 12 }, Math.round(v) + '%'); }
+    let segment = []; function draw() { if (segment.length) node('polyline', { points: segment.join(' '), fill: 'none', stroke: '#1763a5', 'stroke-width': 2.5 }); segment = []; }
+    chartValues.forEach((v, i) => { if (v === null) { draw(); return; } segment.push(x(i) + ',' + y(v)); let dot = node('circle', { cx: x(i), cy: y(v), r: chartValues.length > 90 ? 1.5 : 3, fill: '#1763a5' }); let title = document.createElementNS(ns, 'title'); title.textContent = chartDays[i] + ': ' + v + '% · ' + chartActivities[i]; dot.appendChild(title); }); draw();
+    if (!chartDays.length) node('text', { x: 450, y: 135, 'text-anchor': 'middle', fill: '#526680', 'font-size': 16 }, 'Sin tareas vigentes para graficar.');
+    [...new Set([0, Math.floor((chartDays.length - 1) / 2), chartDays.length - 1])].filter(i => i >= 0 && i < chartDays.length).forEach(i => node('text', { x: x(i), y: 262, 'text-anchor': 'middle', fill: '#526680', 'font-size': 12 }, chartDays[i]));
+    {% endif %}</script>{% endblock %}

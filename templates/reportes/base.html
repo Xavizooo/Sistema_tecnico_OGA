@@ -1,10 +1,21 @@
 {% extends 'base.html' %}
 {% block title %}Jornada y reportes · OGA{% endblock %}
-{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/reportes.css') }}">{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/reportes.css') }}">{% endblock %}
 {% block content %}
 <div class="report-shell">
-  <div class="report-heading"><div><span class="report-eyebrow">DISEÑO MECÁNICO · OGA</span><h2>{% block report_title %}Jornada y reportes{% endblock %}</h2><p>{% block report_subtitle %}Horario, asignaciones y seguimiento del trabajo diario.{% endblock %}</p></div><span class="report-badge">{{ current_user.role }}</span></div>
-  <nav class="report-tabs"><a class="btn outline" href="{{ url_for('reportes.index') }}">Mis reportes</a><a class="btn outline" href="{{ url_for('reportes.tasks') }}">{{ 'Asignaciones' if current_user.is_admin or current_user.is_chief else 'Mi trabajo asignado' }}</a>{% if current_user.is_admin or current_user.is_chief %}<a class="btn outline" href="{{ url_for('reportes.dashboard') }}">Tablero del equipo</a><a class="btn outline" href="{{ url_for('reportes.team') }}">Equipo de Diseño</a>{% endif %}</nav>
+  <div class="report-heading">
+    <div><span class="report-eyebrow">DISEÑO MECÁNICO · OGA</span>
+      <h2>{% block report_title %}Jornada y reportes{% endblock %}</h2>
+      <p>{% block report_subtitle %}Horario, asignaciones y seguimiento del trabajo diario.{% endblock %}</p>
+    </div><span class="report-badge">{{ current_user.role }}</span>
+  </div>
+  <nav class="report-tabs">{% if not current_user.is_chief %}<a class="btn outline"
+      href="{{ url_for('reportes.index') }}">Mis Tareas</a>{% endif %}<a class="btn outline"
+      href="{{ url_for('reportes.tasks') }}">{{ 'Asignaciones' if current_user.is_admin or current_user.is_chief else
+      'Mi trabajo asignado' }}</a>{% if current_user.is_admin or current_user.is_chief %}<a class="btn outline"
+      href="{{ url_for('reportes.dashboard') }}">Tablero del equipo</a><a class="btn outline"
+      href="{{ url_for('reportes.team') }}">Equipo de Diseño</a>{% endif %}</nav>
   {% block report_content %}{% endblock %}
 </div>
 {% endblock %}

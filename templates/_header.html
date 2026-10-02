@@ -37,7 +37,7 @@
     {% if can_access('asistente') %}<a class="side-nav-link" href="{{ url_for('asistente_oga.index') }}"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18"/></svg><span>Asistente OGA</span></a>{% endif %}
     <span class="side-section-label">HERRAMIENTAS</span>
     {% for group in navigation_groups %}
-    <details class="side-nav-group" {% if (request.endpoint or '').startswith(group.links[0][0].split('.')[0]+'.') or group.module=='rq' and request.endpoint in ['rq','cargar','lm','valor','factory','calendario','historico','backups','repuestos'] %}open{% endif %}>
+    <details class="side-nav-group" {% set active_group = namespace(value=false) %}{% for endpoint,label,params in group.links %}{% if request.endpoint==endpoint or '.' in endpoint and (request.endpoint or '').startswith(endpoint.split('.')[0]+'.') %}{% set active_group.value=true %}{% endif %}{% endfor %}{% if active_group.value %}open{% endif %}>
       <summary><span class="summary-main"><span class="hamburger-icon" aria-hidden="true"><i></i><i></i><i></i></span><span>{{ group.label }}</span></span><svg class="side-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></summary>
       <div class="side-submenu">{% for endpoint,label,params in group.links %}<a href="{{ url_for(endpoint, **params) }}" class="{% if request.endpoint==endpoint and (not params or request.args.get('view')==params.get('view')) %}active{% endif %}">{{ label }}</a>{% endfor %}</div>
     </details>
@@ -78,14 +78,14 @@
     </button>
     <div class="topbar-title">
       <strong>OGA</strong>
-      <span>Generador de RQ · Revisor de Planos · Biblioteca · Proyectos · Clientes · Industria · Capacitaciones</span>
+      <span>Generador de RQ · Revisor de Planos · Biblioteca · Proyectos · Clientes · Datos · Capacitaciones</span>
     </div>
   </div>
   <div class="topbar-right">
     {% if request.endpoint and request.endpoint.startswith('industria.') %}<span
-      class="topbar-state ok"><i></i>Industria</span>{% elif request.endpoint and request.endpoint.startswith('clientes.') %}<span
+      class="topbar-state ok"><i></i>Datos</span>{% elif request.endpoint and request.endpoint.startswith('clientes.') %}<span
       class="topbar-state ok"><i></i>Clientes</span>{% elif request.endpoint and request.endpoint.startswith('oportunidades.') %}<span
-      class="topbar-state ok"><i></i>Oportunidades</span>{% elif request.endpoint and
+      class="topbar-state ok"><i></i>Proyectos</span>{% elif request.endpoint and
     request.endpoint.startswith('capacitaciones.') %}<span class="topbar-state ok"><i></i>Capacitaciones</span>{% elif
     request.endpoint and
     request.endpoint.startswith('proyectos_diseno.') %}<span class="topbar-state ok"><i></i>Proyectos </span>{%

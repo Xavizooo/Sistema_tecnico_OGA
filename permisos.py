@@ -3,8 +3,8 @@ from flask import abort, g, jsonify, request
 from auth_store import ROLE_ADMIN, ROLE_CHIEF
 
 MODULES = {
-    'proyectos': 'Seguimiento de Proyectos', 'oportunidades': 'Oportunidades',
-    'clientes': 'Clientes', 'industria': 'Industria', 'rq': 'Generador de RQ',
+    'proyectos': 'Seguimiento de Proyectos', 'oportunidades': 'Proyectos',
+    'clientes': 'Clientes', 'industria': 'Datos', 'rq': 'Generador de RQ',
     'planos': 'Revisor de Planos', 'biblioteca': 'Biblioteca',
     'capacitaciones': 'Capacitaciones', 'asistente': 'Asistente OGA',
 }
@@ -57,18 +57,30 @@ def navigation():
     groups = [
       ('reportes','Jornada y reportes', [('reportes.index','Mis reportes',{}),('reportes.tasks','Mis asignaciones',{})]),
       ('proyectos',MODULES['proyectos'], [('proyectos_diseno.index','Tablero',{'view':'dashboard'}),('proyectos_diseno.index','Proyectos',{'view':'projects'}),('proyectos_diseno.index','Histórico',{'view':'history'})]),
-      ('oportunidades',MODULES['oportunidades'], [('oportunidades.index','Lista de proyectos',{})]),
+      ('oportunidades',MODULES['oportunidades'], [('oportunidades.index','Lista de proyectos',{}),('industria.industria_index','Datos',{})]),
       ('clientes','Clientes',[('clientes.index','Directorio de clientes',{})]),
-      ('industria','Industria',[('industria.industria_index','Catálogos y datos',{})]),
       ('rq',MODULES['rq'], [(e,l,{}) for e,l in [('cargar','Cargar listas'),('factory','Lista Maestra'),('lm','Lista de materiales'),('rq','Requisiciones'),('repuestos','Repuestos'),('valor','Valor del proyecto'),('calendario','Calendario'),('historico','Histórico'),('backups','Copias de seguridad')]]),
       ('planos',MODULES['planos'], [('planos.planos_home','Revisión y distribución',{})]),
       ('biblioteca','Biblioteca',[('biblioteca.equipos','Biblioteca de equipos',{}),('biblioteca.buscador','Buscador de referencias',{}),('biblioteca.costos','Costos',{})]),
       ('capacitaciones','Capacitaciones',[('capacitaciones.index','Videos y capacitaciones',{})]),
     ]
     user = getattr(g,'current_user',None) or {}
+    if user.get('is_chief'):
+        groups[0][2][:]=[('reportes.dashboard','Tablero del equipo',{}),('reportes.tasks','Asignar tareas',{})]
     if user.get('is_admin') or user.get('is_chief'):
-        groups[0][2].extend([('reportes.dashboard','Tablero del equipo',{}),('reportes.tasks','Trabajo y actividades',{})])
+        if not user.get('is_chief'):
+            groups[0][2].extend([('reportes.dashboard','Tablero del equipo',{}),('reportes.tasks','Trabajo y actividades',{})])
         groups[1][2].extend([('proyectos_diseno.index',l,{'view':v}) for v,l in [('activities','Actividades'),('equipment','Equipos'),('additionals','Adicionales'),('holidays','Festivos')]])
     if user.get('is_admin') or user.get('is_chief'):
         groups.insert(0,('equipo','Equipo de Diseño',[('reportes.team','Personal, horarios y accesos',{})]))
-    return [{'module':m,'label':l,'links':links} for m,l,links in groups if can_access(m)]
+    result = []
+    for module, label, links in groups:
+        # Industria comparte el grupo de navegación, conserva su permiso propio.
+        if module == 'oportunidades':
+            links = [link for link in links if can_access(module_for(link[0]))]
+            if not links:
+                continue
+        elif not can_access(module):
+            continue
+        result.append({'module': module, 'label': label, 'links': links})
+    return result
