@@ -2,10 +2,160 @@
 {% block report_title %}Tablero del equipo{% endblock %}
 {% block report_subtitle %}Tareas del equipo, horas trabajadas y revisión del trabajo completado.{% endblock %}
 {% block report_content %}
-<form class="report-filters" method="get"><label>Desde<input type="date" name="desde" value="{{ start }}" max="{{ today }}" required></label><label>Hasta<input type="date" name="hasta" value="{{ end }}" max="{{ today }}" required></label><label>Diseñador<select name="usuario"><option value="">Todo mi equipo</option>{% for user in users %}<option value="{{ user.id }}" {% if selected_user==user.id %}selected{% endif %}>{{ user.name }}</option>{% endfor %}</select></label><button class="btn primary">Consultar</button><a class="btn outline" href="{{ url_for('reportes.export',desde=start,hasta=end,usuario=selected_user) }}">Exportar para Excel</a></form>
-<div class="report-stat-grid"><div class="report-stat"><strong>{{ '%.2f'|format(metrics.actual/60) }} h</strong><span>Trabajadas / {{ '%.2f'|format(metrics.expected/60) }} h de jornada</span></div><div class="report-stat"><strong>{{ metrics.pending }}</strong><span>Tareas pendientes</span></div><div class="report-stat"><strong>{{ metrics.late }}</strong><span>Tareas asignadas atrasadas</span></div><div class="report-stat"><strong>{{ metrics.unreviewed }}</strong><span>Tareas completadas por revisar</span></div></div>
-<article class="report-card"><h3>Jornada y tareas por diseñador</h3><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Diseñador</th><th>Horas trabajadas / jornada</th><th>Cobertura</th><th>Tareas completadas</th><th>Pendientes personales / asignadas</th><th>Detalle diario</th></tr></thead><tbody>{% for s in summaries %}<tr><td><strong>{{ s.user.name }}</strong></td><td>{{ '%.2f'|format(s.actual/60) }} / {{ '%.2f'|format(s.expected/60) }} h</td><td>{{ s.coverage if s.coverage is not none else '—' }}{% if s.coverage is not none %}%{% endif %}</td><td>{{ s.count }}</td><td>{{ s.personal_pending }} / {{ s.assigned_pending }}</td><td><details><summary>Ver jornadas</summary>{% for day in s.days %}<div class="report-task-meta"><strong>{{ day.day }}</strong><span>{{ '%.2f'|format(day.actual/60) }} / {{ '%.2f'|format(day.expected/60) }} h · {{ day.count }} tareas</span><span class="report-badge {{ day.status }}">{{ day.status }}</span></div>{% endfor %}</details></td></tr>{% else %}<tr><td colspan="6">Configura los diseñadores de tu equipo.</td></tr>{% endfor %}</tbody></table></div><p class="report-muted">La cobertura compara horas registradas vigentes con la jornada neta. Incluye tareas enviadas y revisadas; excluye devueltas. La jornada de hoy se compara con su duración completa. No hay mínimo de tareas.</p></article>
-<article class="report-card"><h3>Tareas asignadas por el jefe</h3><p class="report-muted">Estado al {{ end }}. Incluye tareas pendientes anteriores al rango. {{ metrics.ahead }} completada(s) antes de la fecha de entrega.</p><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Tarea / diseñador</th><th>Inicio / entrega</th><th>Horas acumuladas / estimadas</th><th>Estado</th><th>Entrega</th></tr></thead><tbody>{% for task in assignments %}<tr><td><strong>{{ task.title }}</strong><small>{{ names.get(task.user_id,'') }}</small><p>{{ task.description }}</p></td><td>{{ task.start_date }} → {{ task.due_date }}</td><td>{{ '%.2f'|format(task.actual_minutes/60) }} / {{ '%.2f'|format(task.planned_minutes/60) }} h</td><td><span class="report-badge {{ task.task_state }}">{{ task.task_state }}</span></td><td>{{ task.trend if task.task_state=='COMPLETADA' else ('Fecha vencida' if task.task_state=='ATRASADA' else ('Dentro del plazo' if task.task_state=='PENDIENTE' else '—')) }}</td></tr>{% else %}<tr><td colspan="5">Aún no has asignado tareas a este equipo.</td></tr>{% endfor %}</tbody></table></div><a class="btn outline" href="{{ url_for('reportes.tasks') }}">Asignar tareas</a></article>
-<article class="report-card"><h3>Tareas programadas por los diseñadores</h3><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Diseñador / día</th><th>Actividad</th><th>Horario previsto</th><th>Estado</th></tr></thead><tbody>{% for task in personal_tasks %}<tr><td>{{ names.get(task.user_id,'') }}<small>{{ task.day }}</small></td><td><strong>{{ task.details.get('activity') or task.description }}</strong><small>{{ task.details.get('project','') }} · {{ task.details.get('equipment','') }}</small></td><td>{{ time_label(task.start_minute) }}–{{ time_label(task.end_minute) }}<small>{{ '%.2f'|format(task.net_minutes/60) }} h netas previstas</small></td><td><span class="report-badge {{ task.task_state }}">{{ task.task_state }}</span></td></tr>{% else %}<tr><td colspan="4">Sin tareas programadas en este período.</td></tr>{% endfor %}</tbody></table></div><p class="report-muted">Las tareas pendientes no suman horas trabajadas. El horario previsto puede diferir del tiempo registrado al completarlas.</p></article>
-<article class="report-card"><h3>Tareas completadas y revisión</h3><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Diseñador / jornada</th><th>Actividad</th><th>Horario real / horas netas</th><th>Estado</th><th>Revisión del jefe</th></tr></thead><tbody>{% for r in reports %}<tr><td>{{ names.get(r.user_id,'') }}<small>{{ r.day }}</small></td><td><strong>{{ r.metadata.get('activity') or r.task_title or r.description }}</strong><small>{{ r.metadata.get('project') or r.project_label or '' }}</small>{% if r.metadata.get('equipment') %}<small>{{ r.metadata.equipment }} · {{ r.metadata.get('equipment_number','') }}</small>{% endif %}{% if r.metadata.get('stage') %}<small>{{ r.metadata.stage }}</small>{% endif %}{% if r.metadata.get('workplace') %}<small>{{ r.metadata.workplace }}</small>{% endif %}{% if r.blocker %}<div class="report-callout">{{ r.blocker }}</div>{% endif %}</td><td>{{ time_label(r.start_minute) }}–{{ time_label(r.end_minute) }}<small>{{ '%.2f'|format(r.minutes/60) }} h</small></td><td><span class="report-badge {{ r.status }}">{{ 'POR REVISAR' if r.status=='ENVIADO' else ('CONFORME' if r.status=='REVISADO' else 'POR CORREGIR') }}</span></td><td>{% if r.status!='DEVUELTO' %}<form class="report-review" method="post" action="{{ url_for('reportes.review',report_id=r.id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ r.version }}"><input type="hidden" name="desde" value="{{ start }}"><input type="hidden" name="hasta" value="{{ end }}"><input type="hidden" name="usuario" value="{{ selected_user }}"><select name="status" required><option value="REVISADO">Conforme</option><option value="DEVUELTO">Devolver para corrección</option></select><textarea name="review_note" maxlength="2000" placeholder="Comentario o motivo de devolución">{{ r.review_note }}</textarea><button class="btn outline small">Guardar revisión</button></form>{% else %}<p>{{ r.review_note }}</p><small>No suma horas. El diseñador debe corregir la tarea.</small>{% endif %}</td></tr>{% else %}<tr><td colspan="5">No hay tareas completadas en este período.</td></tr>{% endfor %}</tbody></table></div></article>
+<form class="report-filters" method="get"><label>Desde<input type="date" name="desde" value="{{ start }}"
+            max="{{ today }}" required></label><label>Hasta<input type="date" name="hasta" value="{{ end }}"
+            max="{{ today }}" required></label><label>Diseñador<select name="usuario">
+            <option value="">Todo mi equipo</option>{% for user in users %}<option value="{{ user.id }}" {% if
+                selected_user==user.id %}selected{% endif %}>{{ user.name }}</option>{% endfor %}
+        </select></label><button class="btn primary">Consultar</button><a class="btn outline"
+        href="{{ url_for('reportes.export',desde=start,hasta=end,usuario=selected_user) }}">Exportar para Excel</a>
+</form>
+<div class="report-stat-grid">
+    <div class="report-stat"><strong>{{ '%.2f'|format(metrics.actual/60) }} h</strong><span>Trabajadas / {{
+            '%.2f'|format(metrics.expected/60) }} h de jornada</span></div>
+    <div class="report-stat"><strong>{{ metrics.pending }}</strong><span>Tareas pendientes</span></div>
+    <div class="report-stat"><strong>{{ metrics.late }}</strong><span>Tareas asignadas atrasadas</span></div>
+    <div class="report-stat"><strong>{{ metrics.unreviewed }}</strong><span>Tareas completadas por revisar</span></div>
+</div>
+<article class="report-card">
+    <h3>Jornada y tareas por diseñador</h3>
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Diseñador</th>
+                    <th>Horas trabajadas / jornada</th>
+                    <th>Cobertura</th>
+                    <th>Tareas completadas</th>
+                    <th>Pendientes personales / asignadas</th>
+                    <th>Detalle diario</th>
+                </tr>
+            </thead>
+            <tbody>{% for s in summaries %}<tr>
+                    <td><strong>{{ s.user.name }}</strong></td>
+                    <td>{{ '%.2f'|format(s.actual/60) }} / {{ '%.2f'|format(s.expected/60) }} h</td>
+                    <td>{{ s.coverage if s.coverage is not none else '—' }}{% if s.coverage is not none %}%{% endif %}
+                    </td>
+                    <td>{{ s.count }}</td>
+                    <td>{{ s.personal_pending }} / {{ s.assigned_pending }}</td>
+                    <td>
+                        <details>
+                            <summary>Ver jornadas</summary>{% for day in s.days %}<div class="report-task-meta">
+                                <strong>{{ day.day }}</strong><span>{{ '%.2f'|format(day.actual/60) }} / {{
+                                    '%.2f'|format(day.expected/60) }} h · {{ day.count }} tareas</span><span
+                                    class="report-badge {{ day.status }}">{{ day.status }}</span></div>{% endfor %}
+                        </details>
+                    </td>
+                </tr>{% else %}<tr>
+                    <td colspan="6">Configura los diseñadores de tu equipo.</td>
+                </tr>{% endfor %}</tbody>
+        </table>
+    </div>
+    <p class="report-muted">La cobertura compara horas registradas vigentes con la jornada neta. Incluye tareas enviadas
+        y revisadas; excluye devueltas. La jornada de hoy se compara con su duración completa. No hay mínimo de tareas.
+    </p>
+</article>
+<article class="report-card">
+    <h3>Tareas asignadas por el jefe</h3>
+    <p class="report-muted">Estado al {{ end }}. Incluye tareas pendientes anteriores al rango. {{ metrics.ahead }}
+        completada(s) antes de la fecha de entrega.</p>
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Tarea / diseñador</th>
+                    <th>Inicio / entrega</th>
+                    <th>Horas acumuladas / estimadas</th>
+                    <th>Estado</th>
+                    <th>Entrega</th>
+                </tr>
+            </thead>
+            <tbody>{% for task in assignments %}<tr>
+                    <td><strong>{{ task.title }}</strong><small>{{ names.get(task.user_id,'') }}</small>
+                        <p>{{ task.description }}</p>
+                    </td>
+                    <td>{{ task.start_date }} → {{ task.due_date }}</td>
+                    <td>{{ '%.2f'|format(task.actual_minutes/60) }} / {{ '%.2f'|format(task.planned_minutes/60) }} h
+                    </td>
+                    <td><span class="report-badge {{ task.task_state }}">{{ task.task_state }}</span></td>
+                    <td>{{ task.trend if task.task_state=='COMPLETADA' else ('Fecha vencida' if
+                        task.task_state=='ATRASADA' else ('Dentro del plazo' if task.task_state=='PENDIENTE' else '—'))
+                        }}</td>
+                </tr>{% else %}<tr>
+                    <td colspan="5">Aún no has asignado tareas a este equipo.</td>
+                </tr>{% endfor %}</tbody>
+        </table>
+    </div><a class="btn outline" href="{{ url_for('reportes.tasks') }}">Asignar tareas</a>
+</article>
+<article class="report-card">
+    <h3>Tareas programadas por los diseñadores</h3>
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Diseñador / día</th>
+                    <th>Actividad</th>
+                    <th>Horario previsto</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>{% for task in personal_tasks %}<tr>
+                    <td>{{ names.get(task.user_id,'') }}<small>{{ task.day }}</small></td>
+                    <td><strong>{{ task.details.get('activity') or task.description }}</strong><small>{{
+                            task.details.get('project','') }} · {{ task.details.get('equipment','') }}</small></td>
+                    <td>{{ time_label(task.start_minute) }}–{{ time_label(task.end_minute) }}<small>{{
+                            '%.2f'|format(task.net_minutes/60) }} h netas previstas</small></td>
+                    <td><span class="report-badge {{ task.task_state }}">{{ task.task_state }}</span></td>
+                </tr>{% else %}<tr>
+                    <td colspan="4">Sin tareas programadas en este período.</td>
+                </tr>{% endfor %}</tbody>
+        </table>
+    </div>
+    <p class="report-muted">Las tareas pendientes no suman horas trabajadas. El horario previsto puede diferir del
+        tiempo registrado al completarlas.</p>
+</article>
+<article class="report-card">
+    <h3>Tareas completadas y revisión</h3>
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Diseñador / jornada</th>
+                    <th>Actividad</th>
+                    <th>Horario real / horas netas</th>
+                    <th>Estado</th>
+                    <th>Revisión del jefe</th>
+                </tr>
+            </thead>
+            <tbody>{% for r in reports %}<tr>
+                    <td>{{ names.get(r.user_id,'') }}<small>{{ r.day }}</small></td>
+                    <td><strong>{{ r.metadata.get('activity') or r.task_title or r.description }}</strong><small>{{
+                            r.metadata.get('project') or r.project_label or '' }}</small>{% if
+                        r.metadata.get('equipment') %}<small>{{ r.metadata.equipment }} · {{
+                            r.metadata.get('equipment_number','') }}</small>{% endif %}{% if r.metadata.get('stage')
+                        %}<small>{{ r.metadata.stage }}</small>{% endif %}{% if r.metadata.get('workplace') %}<small>{{
+                            r.metadata.workplace }}</small>{% endif %}{% if r.blocker %}<div class="report-callout">{{
+                            r.blocker }}</div>{% endif %}</td>
+                    <td>{{ time_label(r.start_minute) }}–{{ time_label(r.end_minute) }}<small>{{
+                            '%.2f'|format(r.minutes/60) }} h</small></td>
+                    <td><span class="report-badge {{ r.status }}">{{ 'POR REVISAR' if r.status=='ENVIADO' else
+                            ('CONFORME' if r.status=='REVISADO' else 'POR CORREGIR') }}</span></td>
+                    <td>{% if r.status!='DEVUELTO' %}<form class="report-review" method="post"
+                            action="{{ url_for('reportes.review',report_id=r.id) }}"><input type="hidden"
+                                name="_csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version"
+                                value="{{ r.version }}"><input type="hidden" name="desde" value="{{ start }}"><input
+                                type="hidden" name="hasta" value="{{ end }}"><input type="hidden" name="usuario"
+                                value="{{ selected_user }}"><select name="status" required>
+                                <option value="REVISADO">Conforme</option>
+                                <option value="DEVUELTO">Devolver para corrección</option>
+                            </select><textarea name="review_note" maxlength="2000"
+                                placeholder="Comentario o motivo de devolución">{{ r.review_note }}</textarea><button
+                                class="btn outline small">Guardar revisión</button></form>{% else %}<p>{{ r.review_note
+                            }}</p><small>No suma horas. El diseñador debe corregir la tarea.</small>{% endif %}</td>
+                </tr>{% else %}<tr>
+                    <td colspan="5">No hay tareas completadas en este período.</td>
+                </tr>{% endfor %}</tbody>
+        </table>
+    </div>
+</article>
 {% endblock %}
