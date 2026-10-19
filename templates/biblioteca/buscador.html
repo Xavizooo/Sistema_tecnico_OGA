@@ -1,78 +1,49 @@
 {% extends 'biblioteca/base.html' %}
+{% block head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/biblioteca_search.css', v='20261015-2') }}">{% endblock %}
 {% block biblioteca_content %}
-<div class="content-grid search-grid">
-  <section class="card search-panel">
-    <div class="card-header"><h2>BUSCADOR DE REFERENCIAS</h2></div>
-    <div class="selected-title compact-title">
-      <span class="pill">{{ selected_equipo.codigo if selected_equipo else '' }}</span>
-      <select id="search-equipo" class="equip-select" onchange="changeSearchEquipo(this.value)">
-        {% for e in equipos %}
-        <option value="{{ e.codigo }}" {% if selected_equipo and e.codigo==selected_equipo.codigo %}selected{% endif %}>{{ e.nombre }}</option>
-        {% endfor %}
-      </select>
+<section class="bib-live-search" aria-label="Búsqueda de referencias">
+  <div class="bib-search-top">
+    <label class="bib-query-label" for="bibQuery">¿Qué equipo o especificación necesitas?</label>
+    <div class="bib-query-wrap">{{ biblio_icon('search') }}<input id="bibQuery" type="search" maxlength="300" autocomplete="off" placeholder="Ej. adaptador de descarga inox 304" value="{{ search_catalog.initial_query }}"><kbd>En vivo</kbd></div>
+    <p>Escribe el equipo, material, medida o código. Las coincidencias se actualizan mientras escribes.</p>
+  </div>
+  <div class="bib-live-layout">
+    <aside class="bib-filter-panel" aria-label="Filtros del catálogo">
+      <div class="bib-filter-heading"><h2>AFINAR BÚSQUEDA</h2><button id="bibClear" type="button" class="bib-text-button">Limpiar</button></div>
+      <label class="bib-filter-label" for="bibEquipo">Equipo</label>
+      <select id="bibEquipo"><option value="">Todos los equipos</option>{% for e in search_catalog.equipos %}<option value="{{ e.codigo }}" {% if e.codigo|string == search_catalog.initial_equipo %}selected{% endif %}>{{ e.nombre }} · {{ e.codigo }}</option>{% endfor %}</select>
+      <label class="bib-pdf-only"><input id="bibPdfOnly" type="checkbox"> Solo referencias con PDF</label>
+      <details id="bibDetailFilters" open><summary>Características del equipo</summary><div id="bibFacets"></div></details>
+      <p class="bib-filter-note" id="bibFacetNote">Selecciona un equipo o escribe su nombre para ver sus características.</p>
+    </aside>
+    <section class="bib-results-panel" aria-label="Resultados">
+      <div class="bib-results-heading"><div><h2>REFERENCIAS DEL CATÁLOGO</h2><p id="bibResultCount" role="status" aria-live="polite" aria-atomic="true"></p></div><span class="bib-live-badge"><i></i> Búsqueda en vivo</span></div>
+      <div id="bibChips" class="bib-filter-chips" aria-label="Filtros activos"></div>
+      <div id="bibResults" class="bib-reference-grid"></div>
+      <div id="bibEmpty" class="bib-empty" hidden><strong>No encontramos referencias con esos filtros.</strong><p>Prueba una palabra más general o quita una especificación.</p><button id="bibEmptyClear" class="secondary-btn" type="button">Limpiar búsqueda</button></div>
+      <div class="bib-more-wrap"><button id="bibLoadMore" type="button" class="secondary-btn" hidden>Mostrar más referencias</button></div>
+    </section>
+  </div>
+</section>
+<dialog id="bibPreviewModal" class="bib-preview-dialog" aria-labelledby="bibPreviewTitle" aria-describedby="bibPreviewSubtitle">
+  <div class="bib-preview-card">
+    <div class="modal-header">
+      <div><h3 id="bibPreviewTitle">Vista previa</h3><p id="bibPreviewSubtitle"></p></div>
+      <button class="bib-preview-close" type="button" aria-label="Cerrar vista previa" data-bib-close-preview autofocus>&times;</button>
     </div>
-    <div id="search-chars" class="search-char-list main-scroll">
-      {% for c in chars %}
-      <div class="search-char-block" data-orden="{{ c.orden }}">
-        <div class="char-index">{{ c.orden }}</div>
-        <div class="char-body">
-          <div class="char-label {{ color_class(c.grupo_color) }}">{{ c.nombre }}</div>
-          <select class="subchoice search-subchoice" data-orden="{{ c.orden }}" onchange="updateSearchFilters()">
-            <option value="">Seleccione...</option>
-            {% for s in c.subcaracteristicas %}
-            <option value="{{ s.codigo }}" {% if selected_map[c.orden]==s.codigo %}selected{% endif %} {% if not s.enabled %}disabled{% endif %}>{{ s.codigo }}. {{ s.texto }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-      {% endfor %}
+    <div class="bib-preview-image" id="bibPreviewImage"></div>
+    <div id="bibPreviewSpecs" class="bib-preview-specs"></div>
+    <div class="modal-actions">
+      <button class="secondary-btn" type="button" data-bib-close-preview>Cerrar</button>
+      <button id="bibPreviewDownload" class="secondary-btn" type="button">Descargar archivos</button>
+      <a id="bibPreviewOpen" class="primary-btn" target="_blank" rel="noopener">Abrir PDF completo</a>
     </div>
-    <div class="search-actions"><button type="button" class="secondary-btn" onclick="limpiarBuscador()">Limpiar</button></div>
-  </section>
-
-  <section class="card image-card search-image">
-    <div class="card-header"><h2>VISTA PREVIA</h2></div>
-    <div class="ref-label">Referencia Encontrada</div>
-    <div class="reference-box" id="search-ref-box">{{ selected_ref.referencia_codigo if selected_ref else '' }}</div>
-    <div class="cost-line">Costo: <strong id="search-cost">{{ format_money(selected_ref.costo if selected_ref else '') }}</strong></div>
-    <div class="status {% if selected_ref %}success-text{% else %}error-text{% endif %}" id="search-status">{% if selected_ref %}Referencia existente{% else %}Referencia no existente{% endif %}</div>
-    {% if selected_ref and selected_ref.has_planos %}
-    <div class="pdf-viewer-wrap" id="search-pdf-wrap"><iframe id="search-pdf" class="pdf-viewer" title="Vista previa del plano PDF" loading="lazy" src="{{ url_for('biblioteca.uploaded_file', kind='planos', filename=selected_ref.planos) }}#toolbar=0&navpanes=0&page=1"></iframe></div>
-    {% else %}
-    <div class="pdf-viewer-wrap empty" id="search-pdf-wrap"><span class="pdf-empty-message">Seleccione una referencia con plano PDF</span><iframe id="search-pdf" class="pdf-viewer hidden-frame" title="Vista previa del plano PDF"></iframe></div>
-    {% endif %}
-  </section>
-
-  <section class="card refs-card">
-    <div class="card-header"><h2>REFERENCIAS</h2></div>
-    <div class="tiny-tab">Detalles de las referencias de {{ selected_equipo.codigo if selected_equipo else '' }}</div>
-    <div class="search-results-summary" id="search-result-count" aria-live="polite"></div>
-    <div class="refs-table" id="search-refs-table">
-      <div class="refs-head no-image"><span>CÓDIGO</span><span>COSTO</span><span>Planos</span><span>3D</span><span>Lista M.</span><span>Ficha T.</span><span></span></div>
-      {% for r in referencias %}
-      <div class="refs-row no-image search-ref-row" data-ref='{{ r|tojson|safe }}'>
-        <button type="button" class="reference-link" title="Ver referencia" onclick='selectSearchReference({{ r|tojson }})'>{{ r.referencia_codigo }}</button>
-        <span>{{ format_money(r.costo) }}</span>
-        <span>{{ biblio_icon('check' if r.has_planos else 'minus', 'available' if r.has_planos else 'unavailable') }}</span>
-        <span>{{ biblio_icon('check' if r.has_modelo3d else 'minus', 'available' if r.has_modelo3d else 'unavailable') }}</span>
-        <span>{{ biblio_icon('check' if r.has_lista_materiales else 'minus', 'available' if r.has_lista_materiales else 'unavailable') }}</span>
-        <span>{{ biblio_icon('check' if r.has_ficha_tecnica else 'minus', 'available' if r.has_ficha_tecnica else 'unavailable') }}</span>
-        <div class="row-inline">
-          <button type="button" class="icon-btn green" title="Descargar archivos" onclick='openDownloadModal({{ r|tojson|safe }})'>{{ biblio_icon('download') }}</button>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </section>
-</div>
-
-<div class="modal" id="modalDescargar"><div class="modal-card"><div class="modal-header"><h3>Descargar archivos</h3><button class="close-btn" type="button" onclick="closeModal('modalDescargar')">&times;</button></div><div id="download-options" class="download-options"></div><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalDescargar')">Cerrar</button></div></div></div>
+  </div>
+</dialog>
+<div class="modal" id="modalDescargar"><div class="modal-card"><div class="modal-header"><h3>Descargar archivos</h3><button class="close-btn" type="button" aria-label="Cerrar descargas" onclick="closeModal('modalDescargar')">&times;</button></div><div id="download-options" class="download-options"></div><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalDescargar')">Cerrar</button></div></div></div>
+<noscript><p>Activa JavaScript para utilizar la búsqueda reactiva. Puedes consultar el catálogo desde Equipos y referencias.</p></noscript>
 {% endblock %}
 {% block biblioteca_scripts %}
-<script>
-window.searchReferences = {{ referencias|tojson }};
-window.searchAllOptions = {{ all_options|tojson }};
-window.searchSelected = {{ selected_map|tojson|safe }};
-window.searchBaseUrl = "{{ url_for('biblioteca.buscador', equipo=selected_equipo.codigo if selected_equipo else '') }}";
-</script>
+<script type="application/json" id="bibSearchCatalog">{{ search_catalog|tojson }}</script>
+<script src="{{ url_for('static', filename='js/biblioteca_search.js', v='20261015-2') }}"></script>
 {% endblock %}

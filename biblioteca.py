@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import tempfile
@@ -10,13 +11,14 @@ from typing import Dict, List
 
 import pandas as pd
 from flask import (Blueprint, abort, current_app, flash, g, redirect,
-                   render_template, request, send_from_directory, url_for)
+                   render_template, request, send_file, send_from_directory, url_for)
 from markupsafe import Markup
 from werkzeug.utils import secure_filename
 
 # REV15: a single Flask application, with the parent login and CSRF checks.
 biblioteca_bp = Blueprint("biblioteca", __name__, url_prefix="/biblioteca")
 _STORAGE_LOCK = threading.RLock()
+_THUMBNAIL_LOCK = threading.Lock()
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data" / "BIBLIOTECA"
@@ -483,48 +485,88 @@ def buscar_referencia():
 
 @biblioteca_bp.route("/buscador")
 def buscador():
-    equipos_df = get_equipos().sort_values("item")
-    selected_code = str(request.args.get("equipo", "")).strip().upper()
-    selected_equipo = get_equipo_row(selected_code)
-    if selected_equipo is None and not equipos_df.empty:
-        selected_equipo = equipos_df.iloc[0].to_dict()
-        selected_code = str(selected_equipo["codigo"])
+    """Catálogo de lectura para búsquedas reactivas, sin llamadas por pulsación."""
+    equipos = get_equipos().sort_values("item").to_dict(orient="records")
+    catalog_chars = {}
+    for _, row in get_caracteristicas().iterrows():
+        code = str(row["equipo_codigo"])
+        catalog_chars.setdefault(code, []).append({
+            "orden": str(row["orden"]), "nombre": str(row["nombre"]),
+            "grupo_color": str(row["grupo_color"] or "green"),
+            "subcaracteristicas": parse_json_list(row["subcaracteristicas_json"]),
+        })
+    for chars in catalog_chars.values():
+        chars.sort(key=lambda c: (float(c["orden"]) if c["orden"].replace(".", "", 1).isdigit() else 9999, c["orden"]))
+    names = {str(e["codigo"]): str(e["nombre"]) for e in equipos}
+    refs = references_for_equipo("")
+    for ref in refs:
+        ref["equipo_nombre"] = names.get(ref["equipo_codigo"], ref["equipo_nombre"])
+        labels = {c["orden"]: c["nombre"] for c in catalog_chars.get(ref["equipo_codigo"], [])}
+        ref["selecciones"] = [{**selection, "caracteristica": labels.get(str(selection.get("orden")), "")}
+                              for selection in ref["selecciones"]]
+        ref["thumbnail_url"] = ""
+        if ref["has_planos"]:
+            path = document_path("planos", ref["planos"])
+            try:
+                stamp = path.stat()
+                version = f"{stamp.st_mtime_ns}-{stamp.st_size}"
+                ref["thumbnail_url"] = url_for("biblioteca.pdf_thumbnail", filename=ref["planos"], v=version)
+            except OSError:
+                ref["has_planos"] = False
+    equipo = str(request.args.get("equipo", "")).strip().upper()
+    if equipo not in names:
+        equipo = ""
+    payload = {
+        "references": refs, "equipos": equipos, "characteristics": catalog_chars,
+        "initial_equipo": equipo, "initial_query": str(request.args.get("q", ""))[:300],
+        "initial_selections": {c["orden"]: str(request.args.get(f"sel_{c['orden']}", "")).strip().upper()
+                               for c in catalog_chars.get(equipo, [])},
+        "initial_reference": str(request.args.get("ref", "")).strip().upper(),
+    }
+    return render_template("biblioteca/buscador_reactivo_v3.html", current_page="buscador", search_catalog=payload)
 
-    chars = build_search_options(selected_code)
-    all_options = all_options_map(selected_code)
-    selected_map = {}
-    for c in chars:
-        selected_map[c["orden"]] = str(request.args.get(f"sel_{c['orden']}", "")).strip().upper()
 
-    all_refs = references_for_equipo(selected_code)
-    current_refs = all_refs
-    for orden, value in selected_map.items():
-        if value:
-            current_refs = [
-                r for r in current_refs
-                if any(str(s.get("orden")) == orden and str(s.get("codigo", "")).strip().upper() == value for s in r["selecciones"])
-            ]
-
-    selected_ref_code = str(request.args.get("ref", "")).strip().upper()
-    selected_ref = None
-    if selected_ref_code:
-        selected_ref = next((r for r in all_refs if r["referencia_codigo"] == selected_ref_code), None)
-    if selected_ref is None and len(current_refs) == 1:
-        selected_ref = current_refs[0]
-
-    return render_template(
-        "biblioteca/buscador.html",
-        current_page="buscador",
-        equipos=equipos_df.to_dict(orient="records"),
-        selected_equipo=selected_equipo,
-        chars=chars,
-        selected_map=selected_map,
-        referencias=all_refs,
-        filtered_refs=current_refs,
-        selected_ref=selected_ref,
-        all_options=all_options,
-        refs_json=json.dumps(all_refs, ensure_ascii=False),
-    )
+@biblioteca_bp.get("/miniatura/<filename>")
+def pdf_thumbnail(filename):
+    """Primera página real, con caché que cambia cuando se reemplaza el PDF."""
+    source = document_path("planos", filename)
+    if source is None or source.suffix.lower() != ".pdf" or not source.is_file():
+        abort(404, description="Plano PDF no encontrado.")
+    try:
+        stamp = source.stat()
+        prefix = hashlib.sha256(filename.encode("utf-8")).hexdigest()[:24]
+        signature = hashlib.sha256(f"{stamp.st_mtime_ns}-{stamp.st_size}".encode()).hexdigest()[:24]
+        folder = DATA_DIR / "miniaturas_pdf"
+        target = folder / f"{prefix}-{signature}.png"
+        with _THUMBNAIL_LOCK:
+            if not target.is_file():
+                import fitz
+                folder.mkdir(parents=True, exist_ok=True)
+                with fitz.open(source) as document:
+                    if document.needs_pass or not len(document):
+                        abort(422, description="El PDF no admite una miniatura.")
+                    page = document[0]
+                    scale = min(960 / max(page.rect.width, 1), 720 / max(page.rect.height, 1), 3)
+                    pixmap = page.get_pixmap(matrix=fitz.Matrix(scale, scale), alpha=False, colorspace=fitz.csRGB)
+                    data = pixmap.tobytes("png")
+                fd, name = tempfile.mkstemp(prefix=".thumbnail_", suffix=".png", dir=folder)
+                try:
+                    with os.fdopen(fd, "wb") as temporary:
+                        temporary.write(data)
+                    os.replace(name, target)
+                finally:
+                    Path(name).unlink(missing_ok=True)
+                for old in folder.glob(f"{prefix}-*.png"):
+                    if old != target:
+                        old.unlink(missing_ok=True)
+        # Revalidación: evita miniaturas antiguas incluso con la misma URL.
+        response = send_file(target, mimetype="image/png", conditional=True, max_age=0)
+        response.headers["Cache-Control"] = "private, no-cache"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+    except (OSError, RuntimeError, ValueError):
+        current_app.logger.exception("No se pudo generar una miniatura de Biblioteca.")
+        abort(422, description="No fue posible generar la miniatura de este PDF.")
 
 
 @biblioteca_bp.route("/costos", methods=["GET", "POST"])
@@ -811,6 +853,8 @@ def library_layout_context():
 @biblioteca_bp.before_request
 def lock_library_storage():
     # A shared catalog; the parent app has already validated user/session/CSRF.
+    if request.endpoint == "biblioteca.pdf_thumbnail":
+        return
     _STORAGE_LOCK.acquire()
     g.biblioteca_storage_locked = True
     ensure_storage()

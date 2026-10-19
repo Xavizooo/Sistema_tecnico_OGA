@@ -39,7 +39,7 @@ document.addEventListener('keydown', event => {
   }
 });
 function openEditEquipo(e) {
-  document.getElementById('formEquipoEditar').action = bUrl(libraryUrls.editEquipo, {'__CODE__': e.codigo});
+  document.getElementById('formEquipoEditar').action = bUrl(libraryUrls.editEquipo, { '__CODE__': e.codigo });
   document.getElementById('edit-equipo-codigo').value = e.codigo;
   document.getElementById('edit-equipo-nombre').value = e.nombre;
   openModal('modalEquipoEditar');
@@ -70,7 +70,7 @@ function ensureBaseRows(id, total = 10) { const list = document.getElementById(i
 function resetSubList(id) { document.getElementById(id)?.replaceChildren(); }
 function removeSubRow(button) { const row = button.closest('.sub-row'); const list = row?.parentElement; row?.remove(); if (list) renumberSubRows(list.id); }
 function openEditChar(c) {
-  document.getElementById('formCaracteristicaEditar').action = bUrl(libraryUrls.editChar, {'__CODE__': c.equipo_codigo, '__ORDER__': c.orden});
+  document.getElementById('formCaracteristicaEditar').action = bUrl(libraryUrls.editChar, { '__CODE__': c.equipo_codigo, '__ORDER__': c.orden });
   document.getElementById('edit-char-orden').value = c.orden;
   document.getElementById('edit-char-nombre').value = c.nombre;
   document.getElementById('edit-char-color').value = c.grupo_color;
@@ -80,7 +80,7 @@ function openEditChar(c) {
 }
 function openEditReferencia(r) {
   const form = document.getElementById('formReferenciaEditar'); form.reset();
-  form.action = bUrl(libraryUrls.editReferencia, {'__CODE__': r.referencia_codigo});
+  form.action = bUrl(libraryUrls.editReferencia, { '__CODE__': r.referencia_codigo });
   document.getElementById('edit-ref-code').value = r.referencia_codigo;
   document.getElementById('edit-ref-costo').value = r.costo || '';
   openModal('modalReferenciaEditar');
@@ -100,7 +100,7 @@ function openDownloadModal(r) {
     const element = document.createElement(ok ? 'a' : 'span');
     element.className = `download-item ${ok ? 'ok' : 'disabled'}`;
     element.textContent = label + (ok ? '' : ' - No disponible');
-    if (ok) element.href = bUrl(libraryUrls.download, {'__KIND__': kind, '__FILE__': filename});
+    if (ok) element.href = bUrl(libraryUrls.download, { '__KIND__': kind, '__FILE__': filename });
     el.append(element);
   });
   openModal('modalDescargar');
@@ -118,7 +118,7 @@ function updateSearchOptionStates() {
     const order = sel.dataset.orden; const current = sel.value;
     sel.replaceChildren(new Option('Seleccione...', ''));
     (window.searchAllOptions?.[order] || []).forEach(opt => {
-      const matches = {...selections, [order]: opt.codigo};
+      const matches = { ...selections, [order]: opt.codigo };
       const option = new Option(`${opt.codigo}. ${opt.texto}`, opt.codigo);
       option.disabled = !window.searchReferences.some(ref => referenceMatchesSelections(ref, matches));
       option.selected = current === String(opt.codigo); sel.append(option);
@@ -135,7 +135,7 @@ function formatMoneyJs(value) {
   const raw = String(value ?? '').trim(); if (!raw) return 'Sin costo';
   // Same convention as the source Excel: numeric values, optionally $ and commas.
   const num = Number(raw.replace(/[$,\s]/g, '')); if (!Number.isFinite(num)) return raw;
-  return '$ ' + num.toLocaleString('es-CO', {maximumFractionDigits: 0});
+  return '$ ' + num.toLocaleString('es-CO', { maximumFractionDigits: 0 });
 }
 function updateSearchPreview(filtered) {
   const box = document.getElementById('search-ref-box'), cost = document.getElementById('search-cost'), status = document.getElementById('search-status');
