@@ -1,0 +1,34 @@
+{% extends 'biblioteca/base.html' %}
+{% block head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/biblioteca_search_v3.css', v='20261015-3') }}">{% endblock %}
+{% block biblioteca_content %}
+<section data-bib-search-revision="REV03" class="bib-live-search" aria-label="Búsqueda de referencias">
+  <div class="bib-search-top">
+    <label class="bib-query-label" for="bibQuery">¿Qué equipo o especificación necesitas?</label>
+    <div class="bib-query-wrap">{{ biblio_icon('search') }}<input id="bibQuery" type="search" maxlength="300" autocomplete="off" placeholder="Ej. adaptador de descarga inox 304" value="{{ search_catalog.initial_query }}"><kbd>En vivo</kbd></div>
+    <p>Escribe el equipo, material, medida o código. Las coincidencias se actualizan mientras escribes.</p>
+  </div>
+  <div class="bib-live-layout">
+    <aside class="bib-filter-panel" aria-label="Filtros del catálogo">
+      <div class="bib-filter-heading"><h2>AFINAR BÚSQUEDA</h2><button id="bibClear" type="button" class="bib-text-button">Limpiar</button></div>
+      <label class="bib-filter-label" for="bibEquipo">Equipo</label>
+      <select id="bibEquipo"><option value="">Todos los equipos</option>{% for e in search_catalog.equipos %}<option value="{{ e.codigo }}" {% if e.codigo|string == search_catalog.initial_equipo %}selected{% endif %}>{{ e.nombre }} · {{ e.codigo }}</option>{% endfor %}</select>
+      <label class="bib-pdf-only"><input id="bibPdfOnly" type="checkbox"> Solo referencias con PDF</label>
+      <details id="bibDetailFilters" open><summary>Características del equipo</summary><div id="bibFacets"></div></details>
+      <p class="bib-filter-note" id="bibFacetNote">Selecciona un equipo o escribe su nombre para ver sus características.</p>
+    </aside>
+    <section class="bib-results-panel" aria-label="Resultados">
+      <div class="bib-results-heading"><div><h2>REFERENCIAS DEL CATÁLOGO</h2><p id="bibResultCount" role="status" aria-live="polite" aria-atomic="true"></p></div><span class="bib-live-badge"><i></i> Búsqueda en vivo</span></div>
+      <div id="bibChips" class="bib-filter-chips" aria-label="Filtros activos"></div>
+      <div id="bibResults" class="bib-reference-grid"></div>
+      <div id="bibEmpty" class="bib-empty" hidden><strong>No encontramos referencias con esos filtros.</strong><p>Prueba una palabra más general o quita una especificación.</p><button id="bibEmptyClear" class="secondary-btn" type="button">Limpiar búsqueda</button></div>
+      <div class="bib-more-wrap"><button id="bibLoadMore" type="button" class="secondary-btn" hidden>Mostrar más referencias</button></div>
+    </section>
+  </div>
+</section>
+<div class="modal" id="modalDescargar"><div class="modal-card"><div class="modal-header"><h3>Descargar archivos</h3><button class="close-btn" type="button" aria-label="Cerrar descargas" onclick="closeModal('modalDescargar')">&times;</button></div><div id="download-options" class="download-options"></div><div class="modal-actions"><button type="button" class="secondary-btn" onclick="closeModal('modalDescargar')">Cerrar</button></div></div></div>
+<noscript><p>Activa JavaScript para utilizar la búsqueda reactiva. Puedes consultar el catálogo desde Equipos y referencias.</p></noscript>
+{% endblock %}
+{% block biblioteca_scripts %}
+<script type="application/json" id="bibSearchCatalog">{{ search_catalog|tojson }}</script>
+<script src="{{ url_for('static', filename='js/biblioteca_search_v3.js', v='20261015-3') }}"></script>
+{% endblock %}
